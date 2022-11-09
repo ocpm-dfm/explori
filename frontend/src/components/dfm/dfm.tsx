@@ -134,11 +134,19 @@ export const FilteredDFM = (props: {dfm: DirectlyFollowsMultigraph, threshold: n
 
     function storeNodePositions() {
         const node_positions: {[key:number]: [number, number]} = {};
+        // Keep the positions of nodes that were filtered.
+        for (let nodeId = 0; nodeId < dfm.nodes.length; nodeId += 1)
+            if (state.node_positions[nodeId])
+                node_positions[nodeId] = state.node_positions[nodeId];
+
+        // Update the with the positions from the rendered graph.
         for (const node of filteredNodes) {
             if (node.x !== undefined && node.y !== undefined) {
                 node_positions[node.id] = [node.x, node.y];
             }
         }
+
+        // Update the state.
         setState((old) => Object.assign({}, old, {node_positions}));
     }
 
@@ -149,7 +157,7 @@ export const FilteredDFM = (props: {dfm: DirectlyFollowsMultigraph, threshold: n
                       linkDirectionalArrowLength={3.5}
                       linkDirectionalArrowRelPos={1}
                       linkColor="color"
-                      nodeCanvasObject={(node, ctx, globalScale) => {
+                      nodeCanvasObject={(node, ctx, _globalScale) => {
                           const tsNode = node as FilteredNode;
                           const label: string = tsNode.label;
                           const x = tsNode.x;
