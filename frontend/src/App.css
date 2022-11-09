@@ -1,0 +1,25 @@
+.App {
+  height: 100vh;
+  width: 100vh;
+  display: grid;
+  grid-template-rows: auto 2rem;
+}
+
+.App-DetailSlider {
+  width: calc(100% - 2rem);
+  display: flex;
+  flex-direction: row;
+  gap: 1rem;
+
+  margin: 0 1rem;
+}
+
+.App-DetailSlider-Label {
+  display: flex;
+  align-items: center;
+}
+
+.App-DetailSlider-Slider {
+  flex-grow: 1;
+  margin: auto 0;
+}
