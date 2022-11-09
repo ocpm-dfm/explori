@@ -29,6 +29,18 @@ type FilteredNode = {
     fy: number | undefined
 }
 
+const linkColors = [
+    '#E53935',
+    '#1E88E5',
+    '#7CB342',
+    '#FF9800',
+    '#5E35B1',
+    '#FDD835',
+    '#00897B',
+    '#D81B60',
+    '#795548'
+]
+
 
 export const FilteredDFM = (props: {dfm: DirectlyFollowsMultigraph, threshold: number}) => {
     const dfm = props.dfm;
@@ -73,7 +85,11 @@ export const FilteredDFM = (props: {dfm: DirectlyFollowsMultigraph, threshold: n
     // Edge counts keeps track of how many edges exist between two nodes thus far.
     const edgeCounts: {[key:number]:{[key:number]:number}} = {}
     const links: any[] = [];
+    let colorIndex = 0;
     for (const objectType of Object.keys(dfm.subgraphs)) {
+        const objectTypeColor = linkColors[colorIndex];
+        colorIndex = (colorIndex + 1) % linkColors.length;
+
         const edges = dfm.subgraphs[objectType];
         for (const edge of edges) {
 
@@ -101,6 +117,7 @@ export const FilteredDFM = (props: {dfm: DirectlyFollowsMultigraph, threshold: n
             links.push({
                 source: edge.source,
                 target: edge.target,
+                color: objectTypeColor,
                 curvature,
                 objectType
             })
@@ -131,7 +148,7 @@ export const FilteredDFM = (props: {dfm: DirectlyFollowsMultigraph, threshold: n
                       linkCurvature="curvature"
                       linkDirectionalArrowLength={3.5}
                       linkDirectionalArrowRelPos={1}
-                      linkAutoColorBy="objectType"
+                      linkColor="color"
                       nodeCanvasObject={(node, ctx, globalScale) => {
                           const tsNode = node as FilteredNode;
                           const label: string = tsNode.label;

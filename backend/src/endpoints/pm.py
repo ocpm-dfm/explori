@@ -33,11 +33,10 @@ def calculate_dfm_with_thresholds(file: str):
     exploded_df = succint_mdl_to_exploded_mdl(df)
 
     # The DFM data structure we will use for filtering.
-    edge_counts: Dict[Tuple[str, str], int] = {}
+    # edge = (sourceNode: str, targetNode: str, objectType: str)
+    edge_counts: Dict[Tuple[str, str, str], int] = {}
     # edge -> [(trace, trace_count)]
-    edge_traces: Dict[Tuple[str, str], List[Tuple[List[str], int]]] = {}
-    # ege -> [object_type]
-    edge_object_types: Dict[Tuple[str, str], Set[str]] = {}
+    edge_traces: Dict[Tuple[str, str, str], List[Tuple[List[str], int]]] = {}
     total_objects = 0
 
     # Step 1: Build DFM.
@@ -46,33 +45,38 @@ def calculate_dfm_with_thresholds(file: str):
         projected: EventLog = project_log(exploded_df, object_type)
         variants = pm4py.get_variants_as_tuples(projected)
         for (variant, cases) in variants.items():
+
             count_of_cases = len(cases)
             total_objects += count_of_cases
             trace_tuple = (variant, count_of_cases)
 
+            print(object_type, variant, count_of_cases)
+
             for i in range(len(variant) - 1):
-                edge = (variant[i], variant[i + 1])
+                edge = (variant[i], variant[i + 1], object_type)
 
                 edge_counts.setdefault(edge, 0)
                 edge_counts[edge] += count_of_cases
                 edge_traces.setdefault(edge, []).append(trace_tuple)
-                edge_object_types.setdefault(edge, set()).add(object_type)
 
     # Step 2: Determine thresholds for every edge.
     # Sort edges from least frequent to most frequent
     edges = sorted(list(edge_counts.keys()), key=lambda edge: edge_counts[edge])
     current_objects = total_objects
-    edge_thresholds: Dict[Tuple[str, str], float] = {}
+    edge_thresholds: Dict[Tuple[str, str, str], float] = {}
 
     for edge in edges:
         assert current_objects >= 0
+
+        _, _, object_type = edge
 
         # Remove all traces that go through that edge.
         for trace_tuple in edge_traces[edge]:
             (trace, trace_count) = trace_tuple
             for i in range(len(trace) - 1):
-                trace_step = (trace[i], trace[i + 1])
+                trace_step = (trace[i], trace[i + 1], object_type)
                 edge_traces[trace_step].remove(trace_tuple)
+
             current_objects -= trace_count
 
         # Calculate threshold of the edge:
@@ -109,8 +113,7 @@ def calculate_dfm_with_thresholds(file: str):
             'threshold': edge_thresholds[edge]
         }
 
-        for object_type in edge_object_types[edge]:
-            frontend_subgraphs.setdefault(object_type, []).append(frontend_edge)
+        frontend_subgraphs.setdefault(edge[2], []).append(frontend_edge)
 
     frontend_dfm = {
         'nodes': frontend_nodes,
