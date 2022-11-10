@@ -1,125 +1,48 @@
-import React, {useState} from 'react';
+import React from 'react';
 import './App.css';
-import {DirectlyFollowsMultigraph, FilteredDFM} from "./components/dfm/dfm";
+import 'bootstrap/dist/css/bootstrap.min.css';
+import Home from "./components/Home/Home";
+import { Session } from "./components/Session/Session";
+import { Routes, Route, Link } from "react-router-dom";
+import Nav from 'react-bootstrap/Nav';
+import Navbar from 'react-bootstrap/Navbar';
+import NavDropdown from 'react-bootstrap/NavDropdown';
 
 function App() {
-    const [state, setState] = useState({
-        threshold: 100
-    })
-
-    // const dfm: DirectlyFollowsMultigraph = {
-    //     nodes: [
-    //         {
-    //             label: "First activity",
-    //             threshold: 0
-    //         },
-    //         {
-    //             label: "Optional activity, only for obj-t-1",
-    //             threshold: 0.5
-    //         },
-    //         {
-    //             label: "Third activity",
-    //             threshold: 0
-    //         }
-    //     ],
-    //     subgraphs: {
-    //         "obj-t-1": [
-    //             {
-    //                 source: 0,
-    //                 target: 2,
-    //                 threshold: 0
-    //             },
-    //             {
-    //                 source: 0,
-    //                 target: 1,
-    //                 threshold: 0.5,
-    //             },
-    //             {
-    //                 source: 1,
-    //                 target: 2,
-    //                 threshold: 0.5
-    //             }
-    //         ],
-    //         "obj-t-2": [
-    //             {
-    //                 source: 0,
-    //                 target: 2,
-    //                 threshold: 0
-    //             }
-    //         ]
-    //     }
-    // };
-
-    const dfm: DirectlyFollowsMultigraph = {'nodes': [{'label': 'Create Purchase Order', 'threshold': 0.0},
-            {'label': 'Receive Goods', 'threshold': 0.0},
-            {'label': 'Issue Goods Receipt', 'threshold': 0.0},
-            {'label': 'Receive Invoice', 'threshold': 0.5300896286811779},
-            {'label': 'Clear Invoice', 'threshold': 0.5300896286811779},
-            {'label': 'Create Purchase Requisition', 'threshold': 0.0},
-            {'label': 'Plan Goods Issue', 'threshold': 0.0},
-            {'label': 'Verify Material', 'threshold': 0.0},
-            {'label': 'Goods Issue', 'threshold': 0.0}],
-        'subgraphs': {'GDSRCPT': [{'source': 1,
-                'target': 2,
-                'threshold': 0.6927016645326505},
-                {'source': 2,
-                    'target': 4,
-                    'threshold': 0.6927016645326505}],
-            'INVOICE': [{'source': 3,
-                'target': 4,
-                'threshold': 0.5300896286811779}],
-            'MATERIAL': [{'source': 2,
-                'target': 6,
-                'threshold': 0.323943661971831},
-                {'source': 6,
-                    'target': 7,
-                    'threshold': 0.323943661971831},
-                {'source': 7,
-                    'target': 8,
-                    'threshold': 0.323943661971831},
-                {'source': 2, 'target': 7, 'threshold': 0.0},
-                {'source': 7, 'target': 6, 'threshold': 0.0},
-                {'source': 6, 'target': 8, 'threshold': 0.0},
-                {'source': 5, 'target': 0, 'threshold': 0.0},
-                {'source': 0, 'target': 1, 'threshold': 0.0},
-                {'source': 1, 'target': 2, 'threshold': 0.0}],
-            'PURCHORD': [{'source': 0,
-                'target': 1,
-                'threshold': 0.8975672215108835},
-                {'source': 1,
-                    'target': 2,
-                    'threshold': 0.8975672215108835},
-                {'source': 2,
-                    'target': 3,
-                    'threshold': 0.8975672215108835},
-                {'source': 3,
-                    'target': 4,
-                    'threshold': 0.8975672215108835}],
-            'PURCHREQ': [{'source': 5,
-                'target': 0,
-                'threshold': 0.795134443021767}]}};
-
-
+                
     return (
-        <div className="App">
-            <FilteredDFM dfm={dfm} threshold={state.threshold / 100} />
-            <div className="App-DetailSlider">
-                <div className="App-DetailSlider-Label">
-                    Less detail
-                </div>
-                <input type="range" min="0" max="100"
-                       className="App-DetailSlider-Slider"
-                       value={state.threshold} onInput={(e) => {
-                    setState((old) => {
-                        return Object.assign({}, old, {threshold: (e.target as HTMLInputElement).value})
-                    })
-                }}/>
-                <div className="App-DetailSlider-Label">
-                    More detail
-                </div>
-            </div>
-
-        </div>
+        <React.Fragment>
+            <Navbar 
+                bg="dark" 
+                variant="dark" 
+                fixed="top" // this does currently help in rendering the graph component correctly, but will be removed
+            > 
+                <Navbar.Brand as={Link} to="/" className='navbar_padded'>Explori</Navbar.Brand> {/*  add img here for logo */}
+                <Navbar.Toggle aria-controls="basic-navbar-nav" />
+                <Navbar.Collapse id="basic-navbar-nav">
+                <Nav className="justify-content-end flex-grow-1 pe-3">
+                    <Nav.Link as={Link} to="/">Home</Nav.Link>
+                    <Nav.Link as={Link} to="/session">New Session</Nav.Link>
+                    <NavDropdown title="Dropdown Demo" id="basic-nav-dropdown">
+                    <NavDropdown.Item href="#action/3.1">Action</NavDropdown.Item>
+                    <NavDropdown.Item href="#action/3.2">
+                        Another action
+                    </NavDropdown.Item>
+                    <NavDropdown.Item href="#action/3.3">Something</NavDropdown.Item>
+                    <NavDropdown.Divider />
+                    <NavDropdown.Item href="#action/3.4">
+                        Separated link
+                    </NavDropdown.Item>
+                    </NavDropdown>
+                </Nav>
+                </Navbar.Collapse>
+            </Navbar>
+        
+            <Routes>
+                <Route path="/" element={<Home/>}></Route>
+                <Route path="/session" element={<Session/>}></Route> 
+            </Routes>
+        </React.Fragment>
     );
 }
 
