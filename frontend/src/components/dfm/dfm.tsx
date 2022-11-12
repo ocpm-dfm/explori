@@ -42,6 +42,14 @@ const linkColors = [
 ]
 
 
+export const getCurvature = (edgeNr: number) => {
+    if (edgeNr % 2 === 0)
+        return - edgeNr / 4
+    else
+        return (edgeNr - 1) / 4 + 0.5
+}
+
+
 export const FilteredDFM = (props: {dfm: DirectlyFollowsMultigraph, threshold: number}) => {
     const dfm = props.dfm;
     const thresh = props.threshold;
@@ -112,7 +120,7 @@ export const FilteredDFM = (props: {dfm: DirectlyFollowsMultigraph, threshold: n
             // Now, edgeNr = edgeCounts[edge.source][edge.target] - 1
 
             // Alternate curvature to be left or right, first edge is straight.
-            const curvature: number = ((edgeNr % 2 === 0) ? 1 : -1) * edgeNr / 2;
+            let curvature: number = getCurvature(edgeNr);
 
             links.push({
                 source: edge.source,
