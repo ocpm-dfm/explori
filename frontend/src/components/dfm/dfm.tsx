@@ -172,7 +172,7 @@ export const FilteredDFM = (props: {dfm: DirectlyFollowsMultigraph, threshold: n
     }
 
     return (
-        <div className="DFM-container">
+        <div className="DFM-container" id="DFM-container">
             <ForceGraph2D graphData={graphData} ref={forceGraphRef}
                           height={.8 * window.innerHeight}
                           linkCurvature="curvature"
@@ -240,8 +240,6 @@ export const FilteredDFM = (props: {dfm: DirectlyFollowsMultigraph, threshold: n
                               }
 
                               storeNodePositions();
-
-                              // forceGraphRef.current && forceGraphRef.current?.resumeAnimation();
                           }}
                           onNodeDragEnd={() => storeNodePositions()}
             />
@@ -278,4 +276,28 @@ function getCurvature(edgeNr: number): number {
         return - (edgeNr / 4)
     else
         return (edgeNr - 1) / 4 + 0.5
+}
+
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+function getCanvas(): HTMLCanvasElement | null {
+    // forceGraphRef.current && forceGraphRef.current?.resumeAnimation();
+    const containerElement = document.getElementById('DFM-container');
+    if (containerElement) {
+        for (let i = 0; i < containerElement.children.length; i += 1) {
+            const child = containerElement.children.item(i);
+            if (child && child.className.length === 0) {
+                const child2 = child.children.item(0);
+                if (child2) {
+                    for (let j = 0; j < child2.children.length; j += 1) {
+                        const child3 = child2.children.item(j);
+                        if (child3 && (child3 instanceof HTMLCanvasElement)) {
+                            return child3;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    return null;
 }

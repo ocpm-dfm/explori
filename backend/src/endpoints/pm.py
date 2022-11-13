@@ -2,7 +2,7 @@ import os.path
 from typing import Dict, Tuple, List, Set, Any
 
 import pm4py
-from fastapi import HTTPException, APIRouter, Query
+from fastapi import HTTPException, APIRouter, Query, Depends
 from ocpa.algo.util.util import project_log
 from ocpa.objects.log.importer.csv.util import succint_mdl_to_exploded_mdl
 from ocpa.objects.log.ocel import OCEL
@@ -11,6 +11,8 @@ from pm4py.objects.log.obj import EventLog
 from pydantic import BaseModel
 from starlette import status
 from ocpa.objects.log.importer.ocel import factory as ocel_import_factory
+
+from cache import ExploriCache, get_cache, dfm
 
 router = APIRouter(prefix="/pm",
                    tags=['Process mining'])
@@ -39,11 +41,15 @@ class DFMResponseModel(BaseModel):
 
 
 @router.get('/dfm', response_model=DFMResponseModel)
-def calculate_dfm_with_thresholds(file: str = Query(example="uploaded/p2p-normal.jsonocel")):
+def calculate_dfm_with_thresholds(file: str = Query(example="uploaded/p2p-normal.jsonocel"),
+                                  cache: ExploriCache = get_cache()):
     """
     Tries to load the given OCEL from the data folder, calculates the DFM and the threshold associated with
     each edge and node.
     """
+
+    if dfm() in cache:
+        return cache.get(dfm())
 
     # SECURITY: Prevent path traversal trickery.
     abs_file = os.path.abspath(os.path.join("data", file))
@@ -180,6 +186,8 @@ def calculate_dfm_with_thresholds(file: str = Query(example="uploaded/p2p-normal
         'nodes': frontend_nodes,
         'subgraphs': frontend_subgraphs
     }
+
+    cache[dfm()] = frontend_dfm
 
     return frontend_dfm
 # endregion
