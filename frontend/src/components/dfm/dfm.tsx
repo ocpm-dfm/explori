@@ -264,9 +264,11 @@ export const FilteredDFM = (props: {dfm: DirectlyFollowsMultigraph, threshold: n
 
 function getCountAtThreshold(counts: [number, number][], threshold: number): number {
     let rangeStart = 0;
-    for (const [rangeEnd, count] of counts)
+    for (const [rangeEnd, count] of counts) {
         if (rangeStart <= threshold && threshold < rangeEnd)
             return count;
+        rangeStart = rangeEnd;
+    }
     return 0;
 }
 
