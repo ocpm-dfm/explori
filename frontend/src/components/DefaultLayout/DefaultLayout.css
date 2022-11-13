@@ -1,0 +1,8 @@
+.DefaultLayout-Container {
+    display: grid;
+    grid-template-rows: auto auto;
+}
+
+.DefaultLayout-Content {
+    padding: 2rem 2rem 0 2rem;
+}

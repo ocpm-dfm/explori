@@ -1,19 +1,11 @@
 import React from 'react';
 import './Session.css';
+import {DefaultLayout} from "../DefaultLayout/DefaultLayout";
 
-export class Session extends React.Component {
-   
-    constructor(props: any) {
-        super(props);
-    }
+export function Session(_props: any) {
+    const content = (
+        "This is the page to initialize a new session."
+    );
 
-    render() {
-        return (
-            <div className="Session">
-                This is the component to start a new session!
-            </div>
-        ); 
-    }
-
-    
+    return <DefaultLayout content={content} />
 }
