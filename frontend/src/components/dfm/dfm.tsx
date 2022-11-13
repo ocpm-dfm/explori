@@ -45,14 +45,6 @@ const linkColors = [
 ]
 
 
-export const getCurvature = (edgeNr: number) => {
-    if (edgeNr % 2 === 0)
-        return - edgeNr / 4
-    else
-        return (edgeNr - 1) / 4 + 0.5
-}
-
-
 export const FilteredDFM = (props: {dfm: DirectlyFollowsMultigraph, threshold: number}) => {
     const dfm = props.dfm;
     const thresh = props.threshold;
