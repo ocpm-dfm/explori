@@ -1,11 +1,8 @@
-from main import ENDPOINT_PREFIX, app
+from fastapi import APIRouter
 
-URI_PREFIX = ENDPOINT_PREFIX + 'session/'
+router = APIRouter(prefix="/session")
 
 
-@app.get(URI_PREFIX + 'test')
+@router.get('/test')
 def test():
     return {'status': 'successful'}
-
-
-SESSION_ENDPOINTS_IMPORTED = True

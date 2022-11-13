@@ -1,6 +1,11 @@
+@font-face {
+  font-family: Nunito;
+  src: url("../public/Nunito.ttf") format("truetype");
+}
+
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+  font-family: "Nunito", -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
     'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
     sans-serif;
   -webkit-font-smoothing: antialiased;
@@ -19,6 +24,16 @@ html {
   --text-default: var(--text-dark);
   --text-complementory: var(--text-light);
 
+  --background-color: #ECEFF1;
+
   --node-color: 25, 118, 210;
   --node-text: var(--text-light);
+
+  --color1: 3, 155, 299;
+  --color2: #591C21;
+  --color3: #044040;
+  --color4: #D92525;
+  --color5: #F2F2F2;
+
+  background-color: var(--background-color);
 }
