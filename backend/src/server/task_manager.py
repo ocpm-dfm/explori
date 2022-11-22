@@ -1,4 +1,4 @@
-from typing import Any, List, Dict
+from typing import Any, List, Dict, TypeVar, Generic
 
 from celery import Celery
 from celery.result import AsyncResult
@@ -10,11 +10,13 @@ from cache import ShortTermCache, LongTermCache, task as task_key, preliminary_r
 from task_names import TaskName
 from worker.main import app
 
+T = TypeVar("T")
 
-class TaskStatus(BaseModel):
+
+class TaskStatus(BaseModel, Generic[T]):
     status: str
-    result: Any = None
-    preliminary: Any = None
+    result: T | None = None
+    preliminary: T | None = None
 
 
 class TaskManager:

@@ -35,11 +35,11 @@ class DFMResponseModel(BaseModel):
         pass  # TODO: Create example output
 
 
-@router.get('/dfm', response_model=TaskStatus)
+@router.get('/dfm', response_model=TaskStatus[DFMResponseModel], tags=['Process Mining'])
 def calculate_dfm_with_thresholds(ocel: str = Depends(ocel_filename_from_query),
                     task_manager: TaskManager = Depends(get_task_manager)):
     """
-    Tries to load the given OCEL from the data folder, calculates the DFM and the threshold associated with
+    Async: Tries to load the given OCEL from the data folder, calculates the DFM and the threshold associated with
     each edge and node.
     """
     return task_manager.cached_task(ocel, dfm_task, [ocel], None,

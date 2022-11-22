@@ -45,7 +45,7 @@ const linkColors = [
 ]
 
 
-export const FilteredDFM = (props: {dfm: DirectlyFollowsMultigraph, threshold: number}) => {
+export const FilteredDFM = (props: {dfm: DirectlyFollowsMultigraph | null, threshold: number}) => {
     const dfm = props.dfm;
     const thresh = props.threshold;
 
@@ -54,12 +54,10 @@ export const FilteredDFM = (props: {dfm: DirectlyFollowsMultigraph, threshold: n
     });
     const forceGraphRef = useRef<ForceGraphMethods>();
 
-    if (dfm === undefined) {
-        setState({
-            node_positions: {}
-        });
-        return <div />
+    if (dfm === null) {
+        return <div style={{ height: '80vh' }} />
     }
+    const numberOfNodes = dfm.nodes.length;
 
     // Filter the nodes by threshold and prepare them for forcegraph.
     const filteredNodes: FilteredNode[] = [...Array(dfm.nodes.length).keys()]   // Generates 0, 1, 2, ..., dfm.nodes.length - 1
@@ -146,7 +144,7 @@ export const FilteredDFM = (props: {dfm: DirectlyFollowsMultigraph, threshold: n
     function storeNodePositions() {
         const node_positions: {[key:number]: [number, number]} = {};
         // Keep the positions of nodes that were filtered.
-        for (let nodeId = 0; nodeId < dfm.nodes.length; nodeId += 1)
+        for (let nodeId = 0; nodeId < numberOfNodes; nodeId += 1)
             if (state.node_positions[nodeId])
                 node_positions[nodeId] = state.node_positions[nodeId];
 
