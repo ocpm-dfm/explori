@@ -15,9 +15,9 @@ Option 1: The lazy / JetBarins route
 1. Install PyCharm and WebStorm
 2. Clone this repository manually (by calling `git clone ...` in a folder)
 3. In WebStorm: File > Open > Select the frontend folder, let Webstorm automatically install dependencies
-4. Install Python 3.10 oder 3.11 on your system
+4. Install Python 3.10 or 3.11 on your system
 5. In PyCharm: File > Open > Select backend folder, select Python 3.10, let PyCharm automatically install dependencies.
-6. To run backend: Open the file "puycharm-launcher.py", click on the green arrow. Then on the upper right open the configuration settings and remove the "/src" from the working directory.
+6. To run backend: Open the file "pycharm-launcher.py", click on the green arrow. Then on the upper right open the configuration settings and remove the "/src" from the working directory.
 
 You might need to tell WebStorm / PyCharm that these projects are part of a larger repository, to do so, go into Settings > Version Control > Directory Mappings.
 
@@ -33,7 +33,7 @@ Not quite sure whether it is correct and / or complete.
 
     a. `python -m venv venv`, this should create an virtual environment.
 
-    b. Windows: `venv\Scripts\activate.bat`, most Linux shells: `source venv/bin/activate`
+    b. Windows: `venv\Scripts\activate.bat` (or `...\activate.ps1` for powershell), most Linux shells: `source venv/bin/activate`
 
     c. `pip install -r requirements.txt`
 
