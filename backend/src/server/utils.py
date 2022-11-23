@@ -10,6 +10,7 @@ def ocel_filename_from_query(ocel: str = Query(example="uploaded/p2p-normal.json
 
 def secure_ocel_filename(file: str) -> str:
     # SECURITY: Prevent path traversal trickery.
+    file = os.path.normpath(file)
     abs_file = os.path.abspath(os.path.join("data", file))
     if abs_file[-len(file):] != file:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
