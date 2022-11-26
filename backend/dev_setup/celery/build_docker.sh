@@ -12,7 +12,7 @@ docker build . -f dev_setup/celery/Dockerfile -t explori-celery
 #   without needing to rebuild the image and recreate the container.
 # - Use mounts instead of volumes as -v doesn't work correctly on windows apparently
 # - Use `pwd` to avoid hard coding absolute paths (which docker needs here)
-docker create --mount type=bind,source="$(pwd)/src",target=/app/src/,readonly --name explori-celery explori-celery
+docker create --mount type=bind,source="$(pwd)/src",target=/explori-celery/src/,readonly --name explori-celery explori-celery
 
 docker network create explori-network
 docker network connect explori-network explori-redis
