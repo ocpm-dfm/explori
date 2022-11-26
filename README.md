@@ -34,6 +34,11 @@ Goal: `docker compose up`, open link.
 __Important:__ Run the following commands from inside the `backend/` directory! See `dev_setup/celery/build_docker.sh` for more information about the why.
 - Create container: `dev_setup/celery/build_docker.sh`
 - Start container: `docker start explori-celery`
+- In case of code changes: `docker restart explori-celery`
+
+It is sufficient to restart the docker container when updating celery worker related code on the host machine as the code 
+is mounted into the container (read-only). There's no need to rebuild the image or recreate the container, 
+a simple restart is enough.
 
 ### 4. Running the backend
 - Start the backend server: `PYTHONPATH="src/" DEV=1 uvicorn server.main:app --host 0.0.0.0`
