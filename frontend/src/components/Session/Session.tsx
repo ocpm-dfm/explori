@@ -33,11 +33,11 @@ export function Session(_props: any) {
         <div className="Session">
             <ExploriNavbar lowerRowSlot={objectSelection} />
             <form id="uploadEventLogForm">
-                <label htmlFor="uploadEventttLog">Upload an event log:</label>
+                <label htmlFor="uploadEventLog">Upload an event log:</label>
                 <input
                     type="file"
                     accept=".jsonocel, .xmlocel"
-                    name="uploadEventttLog"
+                    name="uploadEventLog"
                     onChange={handleFileSelection}
                     multiple >
                 </input>
@@ -58,7 +58,7 @@ export function Session(_props: any) {
                 }
                 <button
                     form='uploadEventLogForm'
-                    disabled={false}
+                    disabled={selectedFile.length >= 1 ? false : true}
                     onClick={uploadFile} >
                     Confirm Upload
                 </button>
