@@ -17,7 +17,7 @@ export function EventLogList(props: EventLogListProps) {
         { name: 'name', header: 'File name', defaultFlex: 8 },
         { name: 'type', header: 'Type', defaultFlex: 2 },
         { name: 'size', header: 'File size', defaultFlex: 2 },
-        { name: 'extra', header: 'Mounted', defaultFlex: 2 }
+        { name: 'extra', header: 'Uploaded', defaultFlex: 2 }
     ]
 
     let dataSource = []
@@ -29,7 +29,7 @@ export function EventLogList(props: EventLogListProps) {
                 {
                     name: file[0].split("/")[1].split(".").slice(0, -1),
                     size: file[1] + " KB",
-                    extra: file[0].split("/")[0] === "mounted" ? <FontAwesomeIcon icon={faCheck} /> : <FontAwesomeIcon icon={faMultiply} />,
+                    extra: file[0].split("/")[0] === "uploaded" ? <FontAwesomeIcon icon={faCheck} /> : <FontAwesomeIcon icon={faMultiply} />,
                     type: file[0].split(".").pop()
                 })
         }
