@@ -11,7 +11,7 @@ function App() {
     return (
         <QueryClientProvider client={queryClient}>
             <Routes>
-                <Route path="/" element={<Home/>}></Route>
+                <Route path="/" element={<Home ocel={"uploaded/p2p-normal.jsonocel"}/>}></Route>
                 <Route path="/session" element={<EventLogList/>}></Route>
             </Routes>
         </QueryClientProvider>
