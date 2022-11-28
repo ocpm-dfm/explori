@@ -1,15 +1,28 @@
 import React from 'react';
-import {useAsyncAPI} from "../../api";
+import {getURI} from "../../api";
 import ReactDataGrid from '@inovua/reactdatagrid-community';
 import '@inovua/reactdatagrid-community/index.css';
 import '@inovua/reactdatagrid-community/theme/blue-light.css'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCheck, faMultiply } from "@fortawesome/free-solid-svg-icons";
 import {DefaultLayout} from "../DefaultLayout/DefaultLayout";
+import {useQuery} from "react-query";
 
 export function EventLogList(props: EventLogListProps) {
 
-    const dfm_query = useAsyncAPI<String[][]>("/logs/available", {});
+    const uri = getURI("/logs/available", {});
+
+    const { isLoading, error, data } = useQuery('TBD', () =>
+        fetch(uri).then(res =>
+            res.json()
+        )
+    )
+
+    if (isLoading) console.log('Loading...')
+
+    if (error) {
+        console.log('An error has occurred: ' + error)
+    }
 
     const gridStyle = { maxHeight: "40vh", maxWidth: "50vw" }
 
@@ -22,9 +35,9 @@ export function EventLogList(props: EventLogListProps) {
 
     let dataSource = []
 
-    if (dfm_query.result !== null){
-        for (let i = 0; i < dfm_query.result.length; i++){
-            let file = dfm_query.result[i]
+    if (data !== undefined && data !== null){
+        for (let i = 0; i < data.length; i++){
+            let file = data[i]
             dataSource.push(
                 {
                     name: file[0].split("/")[1].split(".").slice(0, -1),

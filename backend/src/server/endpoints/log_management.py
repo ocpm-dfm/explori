@@ -12,7 +12,7 @@ router = APIRouter(prefix='/logs',
 
 # region /available
 class AvailableLogsResponseModel(BaseModel):
-    __root__: List[str]
+    __root__: List[List[str | float]]
     class Config:
         schema_extra = {
             "example": [
@@ -22,7 +22,7 @@ class AvailableLogsResponseModel(BaseModel):
         }
 
 
-@router.get('/available', response_model=TaskStatus[AvailableLogsResponseModel])
+@router.get('/available', response_model=AvailableLogsResponseModel)
 def list_available_logs() -> TaskStatus:
     """
     Lists all available OCELS and returns them as list of strings that can be used to access them using other
@@ -42,9 +42,9 @@ def list_available_logs() -> TaskStatus:
     def cut_filename(filename: str):
         return filename[5:]
 
-    def extend_result_by_filesize(logs: List[str]):
+    def extend_result_by_filesize(log: List[str]):
         results = []
-        for entry in logs:
+        for entry in log:
             results.append([cut_filename(entry), round(os.stat(entry).st_size / 1024, 0)])
         return results
 
@@ -54,5 +54,5 @@ def list_available_logs() -> TaskStatus:
     # Extend results by file size
     extended_logs = extend_result_by_filesize(logs)
 
-    return TaskStatus(status="done", result=extended_logs)
+    return extended_logs
 # endregion
