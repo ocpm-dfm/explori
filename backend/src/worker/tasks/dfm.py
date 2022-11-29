@@ -1,4 +1,5 @@
 from typing import Dict, List, Tuple
+from pathlib import PureWindowsPath
 
 from worker.main import app
 from worker.utils import get_all_projected_traces
@@ -6,6 +7,13 @@ from worker.utils import get_all_projected_traces
 
 @app.task()
 def dfm(ocel_filename: str):
+    # At least for development the backend can potentially run on Windows in which case `ocel_filename` is a Windows
+    # path as it was constructed using `os.path` functionality (which just operates on strings).
+    # Because Celery has no official support for Windows, we assume it will be run on a POSIX compatible platform.
+    # This means `ocel_filename` needs to be translated from a Windows path or a POSIX path to a POSIX path.
+    # The following transformation has no effect if `ocel_filename` is already a POSIX path.
+    ocel_filename = PureWindowsPath(ocel_filename).as_posix()
+
     projected_traces: Dict[str, List[Tuple[List[str], int]]] = get_all_projected_traces(ocel_filename,
                                                                                         build_if_non_existent=True)
 
