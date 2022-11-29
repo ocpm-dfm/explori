@@ -3,6 +3,12 @@ import os
 from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
 
+import server.endpoints.pm
+import server.endpoints.log_management
+import server.endpoints.session
+
+import worker.main
+
 DEVELOPMENT_MODE = 'DEV' in os.environ
 
 app = FastAPI()
@@ -20,11 +26,8 @@ if DEVELOPMENT_MODE:
     )
 
 
-import endpoints.pm
-app.include_router(endpoints.pm.router)
+app.include_router(server.endpoints.pm.router)
 
-import endpoints.log_management
-app.include_router(endpoints.log_management.router)
+app.include_router(server.endpoints.log_management.router)
 
-import endpoints.session
-app.include_router(endpoints.session.router)
+app.include_router(server.endpoints.session.router)
