@@ -1,7 +1,7 @@
 import os
 from typing import List
 
-from fastapi import APIRouter
+from fastapi import APIRouter, File, UploadFile
 from pydantic import BaseModel
 
 router = APIRouter(prefix='/logs',
@@ -18,7 +18,6 @@ class AvailableLogsResponseModel(BaseModel):
                 "mounted/b2c-unfiltered.csv"
             ]
         }
-
 
 @router.get('/available', response_model=AvailableLogsResponseModel)
 def list_available_logs() -> List[str]:
@@ -44,3 +43,14 @@ def list_available_logs() -> List[str]:
 
     return logs
 # endregion
+
+@router.put('/upload')
+async def upload_event_logs(file: UploadFile):
+    fileLocation = file.filename
+    fileContent = await file.read()
+    with open(fileLocation, "wb") as f:
+        f.write(fileContent)
+
+    return {
+        "status": "successful"
+    }

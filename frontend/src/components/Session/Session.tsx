@@ -2,31 +2,47 @@ import './Session.css';
 import { ExploriNavbar } from '../ExploriNavbar/ExploriNavbar';
 import { ObjectSelection } from '../ObjectSelection/ObjectSelection';
 import { useEffect, useState } from 'react';
+import { API_BASE_URL } from '../../api';
 
 export function Session(_props: any) {
-    const initialSelectedFile: object[] = []
+    const initialSelectedFile: any = {}
     const [selectedFile, setSelectedFile] = useState(initialSelectedFile)
     const [isFileSelected, setIsFileSelected] = useState(false)
+    const [fileStatus, setFileStatus] = useState("")
     const objectSelection = <ObjectSelection />
 
     useEffect(() => {
-        setIsFileSelected(
-            selectedFile.length >= 1 ? true : false
-        )
+        setIsFileSelected('name' in selectedFile)
+        if ('name' in selectedFile) {
+            setFileStatus("Selected file ready to be uploaded")
+        }
     }, [selectedFile])
 
     const handleFileSelection = async (event: any) => {
         event.preventDefault()
-
-        setSelectedFile((oldFiles) => {
-            const newFiles = event.target.files
-            return [...oldFiles, ...newFiles]
-        })
+        setSelectedFile(event.target.files[0])
     }
 
     const uploadFile = async (event: any) => {
         event.preventDefault()
-        //TODO: send files to backend 
+
+        const formdata = new FormData()
+        formdata.append('file', selectedFile)
+
+        const uploadFileUrl: string = API_BASE_URL.concat('/logs/upload')
+        console.log(uploadFileUrl + ": " + uploadFileUrl)
+        fetch(uploadFileUrl, {
+            method: 'PUT',
+            body: formdata
+        })
+            .then((response) => response.json())
+            .then((result) => {
+                console.log(result)
+                if (result.status == "successful") {
+                    setFileStatus("File uploaded!")
+                }
+            })
+
     }
 
     return (
@@ -38,27 +54,12 @@ export function Session(_props: any) {
                     type="file"
                     accept=".jsonocel, .xmlocel"
                     name="uploadEventLog"
-                    onChange={handleFileSelection}
-                    multiple >
+                    onChange={handleFileSelection} >
                 </input>
-                {
-                    isFileSelected ?
-                        <div>
-                            <div>Files ready to be uploaded:</div>
-                            <div>{
-                                selectedFile.map((file: any, index: number) => {
-                                    return (
-                                        <div key={index.toString()}>
-                                            {file.name}
-                                        </div>
-                                    )
-                                })
-                            }</div>
-                        </div> : <div></div>
-                }
+                <div>{fileStatus}</div>
                 <button
                     form='uploadEventLogForm'
-                    disabled={selectedFile.length >= 1 ? false : true}
+                    disabled={!isFileSelected}
                     onClick={uploadFile} >
                     Confirm Upload
                 </button>

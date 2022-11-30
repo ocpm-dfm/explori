@@ -1,7 +1,7 @@
-import {useState, useEffect, useRef} from "react";
-import {stat} from "fs";
+import { useState, useEffect, useRef } from "react";
+import { stat } from "fs";
 
-let API_BASE_URL = 'https://production.com/api';
+export let API_BASE_URL = 'https://production.com/api';
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 if (window.webpackHotUpdate || (process.env.NODE_ENV !== "production" && process.env.NODE_ENV !== "test" && typeof console !== "undefined")
@@ -47,7 +47,7 @@ type ApiResponse<DataType> = {
     result: DataType | null
 }
 
-export function useAsyncAPI<DataType>(endpoint: string, parameters: { [key:string]: string | number}) {
+export function useAsyncAPI<DataType>(endpoint: string, parameters: { [key: string]: string | number }) {
     const [state, setState] = useState<AsyncApiState<DataType>>({
         preliminary: null,
         result: null,

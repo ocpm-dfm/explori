@@ -47,6 +47,8 @@ Not quite sure whether it is correct and / or complete.
 
     c. `pip install -r requirements.txt`
 
+To set development environment variable, type `export $DEV="1"` in bash terminal (wsl2). Verify that variable has been set using `echo $DEV`
+
 Now, you can start the frontend server using `npm run start`, and the FastAPI server using
-`PYTHONPATH="src/" uvicorn main:app --host 0.0.0.0` and a Celery worker using
+`PYTHONPATH="src/" uvicorn server.main:app --host 0.0.0.0 --port 8080` and a Celery worker using
 `PYTHONPATH="src/" celery -A worker.main.app worker --loglevel=INFO`.
