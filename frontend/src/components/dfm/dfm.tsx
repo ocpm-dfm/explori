@@ -263,17 +263,19 @@ export const FilteredDFM = (props: {dfm: DirectlyFollowsMultigraph | null, thres
                           }}
                           onNodeDragEnd={() => storeNodePositions()}
             />
-            <ul className="DFM-Legend">
-                {
-                    legendObjectTypeColors.map(([type, color]) => (
-                        <li key={type}>
-                            <div className="DFM-Legend-Circle" style={{ backgroundColor: color}}>
-                            </div>
-                            {type}
-                        </li>
-                    ))
-                }
-            </ul>
+            { legendObjectTypeColors.length > 0 &&
+                <ul className="DFM-Legend">
+                    {
+                        legendObjectTypeColors.map(([type, color]) => (
+                            <li key={type}>
+                                <div className="DFM-Legend-Circle" style={{backgroundColor: color}}>
+                                </div>
+                                {type}
+                            </li>
+                        ))
+                    }
+                </ul>
+            }
         </div>
 
     )
