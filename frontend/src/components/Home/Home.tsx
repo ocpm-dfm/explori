@@ -6,10 +6,18 @@ import {ExploriNavbar} from "../ExploriNavbar/ExploriNavbar";
 
 import "./Home.css";
 import {useAsyncAPI} from "../../api";
+import {selectedObjectTypesUpdateCallback} from "../ObjectSelection/ObjectSelection";
+import {MultiValue} from "react-select";
+
+type HomeState = {
+    threshold: number,
+    selectedObjectTypes: string[],
+}
 
 function Home() {
-    const [state, setState] = useState({
-        threshold: 100
+    const [state, setState] = useState<HomeState>({
+        threshold: 100,
+        selectedObjectTypes: [],
     })
 
     // const dfm: DirectlyFollowsMultigraph = {
@@ -55,11 +63,16 @@ function Home() {
     //     }
     // };
 
+    const updateCallback: selectedObjectTypesUpdateCallback = function(selection: string[]) {
+        setState((old) => Object.assign({}, old, {
+            selectedObjectTypes: selection,
+        }));
+    }
 
     const dfm_query = useAsyncAPI<DirectlyFollowsMultigraph>("/pm/dfm", {ocel: "uploaded/p2p-normal.jsonocel"});
 
-
-    const objectSelection = <ObjectSelection />
+    const objectTypes: string[] = dfm_query.result ? Object.keys(dfm_query.result.subgraphs) : [];
+    const objectSelection = <ObjectSelection objectTypes={objectTypes} updateCallback={updateCallback} selectAllObjectTypesInitially={true} />
 
     return (
         <React.Fragment>
