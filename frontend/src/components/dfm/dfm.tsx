@@ -44,10 +44,33 @@ const linkColors = [
     '#795548'
 ]
 
+// https://stackoverflow.com/questions/1484506/random-color-generator/7419630#7419630
+function rainbow(numColors: number, colorIndex: number) {
+    let h = colorIndex / numColors;
+    let i = ~~(h * 6);
+    let f = h * 6 - i;
+    let q = 1 - f;
 
-export const FilteredDFM = (props: {dfm: DirectlyFollowsMultigraph | null, threshold: number}) => {
+    let r, g, b;
+    switch(i % 6){
+        case 0: r = 1; g = f; b = 0; break;
+        case 1: r = q; g = 1; b = 0; break;
+        case 2: r = 0; g = 1; b = f; break;
+        case 3: r = 0; g = q; b = 1; break;
+        case 4: r = f; g = 0; b = 1; break;
+        case 5: r = 1; g = 0; b = q; break;
+        default: r = 0; g = 0; b = 0; break; // to make typescript happy and avoid r,g,b "possibly" being undefined
+    }
+
+    let color = "#" + ("00" + (~ ~(r * 255)).toString(16)).slice(-2) + ("00" + (~ ~(g * 255)).toString(16)).slice(-2) + ("00" + (~ ~(b * 255)).toString(16)).slice(-2);
+    return color;
+}
+
+
+export const FilteredDFM = (props: {dfm: DirectlyFollowsMultigraph | null, threshold: number, selectedObjectTypes: string[]}) => {
     const dfm = props.dfm;
     const thresh = props.threshold;
+    const selectedObjectTypes = props.selectedObjectTypes;
 
     const [state, setState] = useState<FilteredDFMState>({
         node_positions: {}
@@ -57,10 +80,57 @@ export const FilteredDFM = (props: {dfm: DirectlyFollowsMultigraph | null, thres
     if (dfm === null) {
         return <div style={{ height: '80vh' }} />
     }
-    const numberOfNodes = dfm.nodes.length;
 
-    // Filter the nodes by threshold and prepare them for forcegraph.
-    const filteredNodes: FilteredNode[] = [...Array(dfm.nodes.length).keys()]   // Generates 0, 1, 2, ..., dfm.nodes.length - 1
+    // Edge counts keeps track of how many edges exist between two nodes thus far.
+    const edgeCounts: {[key:number]:{[key:number]:number}} = {}
+    const links: any[] = [];
+    const legendObjectTypeColors: [string, string][] = [];
+
+    let allNodesOfSelectedObjectTypes = new Set<number>();
+
+    Object.keys(dfm.subgraphs).forEach((objectType, i) => {
+        if (selectedObjectTypes.includes(objectType)) {
+            const objectTypeColor = rainbow(Object.keys(dfm.subgraphs).length, i);
+
+            const edges = dfm.subgraphs[objectType];
+            for (const edge of edges) {
+
+                // Ignore edges below the threshold
+                if (thresh < edge.threshold)
+                    continue;
+
+                // Determine the edge nr of the current edge (starting with zero).
+                let edgeNr = 0;
+                if (edgeCounts[edge.source]) {
+                    if (edgeCounts[edge.source][edge.target])
+                        edgeNr = edgeCounts[edge.source][edge.target]++; // I hate this but also I am lazy.
+                    else
+                        edgeCounts[edge.source][edge.target] = 1; // Edge number remains zero.
+                } else {
+                    edgeCounts[edge.source] = {};
+                    edgeCounts[edge.source][edge.target] = 1; // Edge number remains zero.
+                }
+                // Now, edgeNr = edgeCounts[edge.source][edge.target] - 1
+
+                links.push({
+                    source: edge.source,
+                    target: edge.target,
+                    label: `${getCountAtThreshold(edge.counts, thresh)}`,
+                    color: objectTypeColor,
+                    curvature: getCurvature(edgeNr),
+                    objectType
+                });
+
+                allNodesOfSelectedObjectTypes.add(edge.source);
+                allNodesOfSelectedObjectTypes.add(edge.target);
+            }
+
+            legendObjectTypeColors.push([objectType, objectTypeColor]);
+        }
+    });
+
+    // Filter the nodes by threshold and object type and prepare them for forcegraph.
+    const filteredNodes: FilteredNode[] = Array.from(allNodesOfSelectedObjectTypes)
         .filter(i => (thresh >= dfm.nodes[i].threshold))        // Removes nodes that are below our threshold.
         .map((i: number) => (
             {
@@ -83,54 +153,6 @@ export const FilteredDFM = (props: {dfm: DirectlyFollowsMultigraph | null, thres
             }
         ));
 
-    // Edge counts keeps track of how many edges exist between two nodes thus far.
-    const edgeCounts: {[key:number]:{[key:number]:number}} = {}
-    const links: any[] = [];
-    let colorIndex = 0;
-    const legendObjectTypeColors: [string, string][] = [];
-
-    for (const objectType of Object.keys(dfm.subgraphs)) {
-        const objectTypeColor = linkColors[colorIndex];
-        colorIndex = (colorIndex + 1) % linkColors.length;
-
-        const edges = dfm.subgraphs[objectType];
-        let objectTypeDisplayed: boolean = false;
-
-        for (const edge of edges) {
-
-            // Ignore edges below the threshold
-            if (thresh < edge.threshold)
-                continue;
-
-            // Determine the edge nr of the current edge (starting with zero).
-            let edgeNr = 0;
-            if (edgeCounts[edge.source]) {
-                if (edgeCounts[edge.source][edge.target])
-                    edgeNr = edgeCounts[edge.source][edge.target]++; // I hate this but also I am lazy.
-                else
-                    edgeCounts[edge.source][edge.target] = 1; // Edge number remains zero.
-            }
-            else {
-                edgeCounts[edge.source] = {};
-                edgeCounts[edge.source][edge.target] = 1; // Edge number remains zero.
-            }
-            // Now, edgeNr = edgeCounts[edge.source][edge.target] - 1
-
-            links.push({
-                source: edge.source,
-                target: edge.target,
-                label: `${getCountAtThreshold(edge.counts, thresh)}`,
-                color: objectTypeColor,
-                curvature: getCurvature(edgeNr),
-                objectType
-            });
-            objectTypeDisplayed = true;
-        }
-
-        // Add object type to the legend.
-        if (objectTypeDisplayed)
-            legendObjectTypeColors.push([objectType, objectTypeColor]);
-    }
 
     const graphData = {
         nodes: filteredNodes,
@@ -144,7 +166,7 @@ export const FilteredDFM = (props: {dfm: DirectlyFollowsMultigraph | null, thres
     function storeNodePositions() {
         const node_positions: {[key:number]: [number, number]} = {};
         // Keep the positions of nodes that were filtered.
-        for (let nodeId = 0; nodeId < numberOfNodes; nodeId += 1)
+        for (let nodeId = 0; nodeId < allNodesOfSelectedObjectTypes.size; nodeId += 1)
             if (state.node_positions[nodeId])
                 node_positions[nodeId] = state.node_positions[nodeId];
 

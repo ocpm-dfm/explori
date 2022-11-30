@@ -78,7 +78,7 @@ function Home() {
         <React.Fragment>
             <div className="Home">
                 <ExploriNavbar lowerRowSlot={objectSelection} />
-                <FilteredDFM dfm={dfm_query.result} threshold={state.threshold / 100} />
+                <FilteredDFM dfm={dfm_query.result} threshold={state.threshold / 100} selectedObjectTypes={state.selectedObjectTypes} />
                 <div className="Home-DetailSlider">
                     <div className="Home-DetailSlider-Label">
                         Less detail
