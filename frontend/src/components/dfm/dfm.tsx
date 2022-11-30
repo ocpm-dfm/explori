@@ -32,7 +32,7 @@ type FilteredNode = {
     fy: number | undefined
 }
 
-const linkColors = [
+const preselectedColors = [
     '#E53935',
     '#1E88E5',
     '#7CB342',
@@ -45,7 +45,7 @@ const linkColors = [
 ]
 
 // https://stackoverflow.com/questions/1484506/random-color-generator/7419630#7419630
-function rainbow(numColors: number, colorIndex: number) {
+function generateColors(numColors: number, colorIndex: number) {
     let h = colorIndex / numColors;
     let i = ~~(h * 6);
     let f = h * 6 - i;
@@ -66,6 +66,19 @@ function rainbow(numColors: number, colorIndex: number) {
     return color;
 }
 
+// Either choose from preselected set of colors or generate an arbitrary amount of colors if not enough were preselected.
+// Note that we cannot mix these two approaches and give back preselected colors until we don't have enough and then use
+// the color generation as we currently can't make sure we don't generate a color that's identical (or too close) to a
+// preselected (and already returned and therefore used) color.
+function getEdgeColor(numberOfColorsNeeded: number, indexOfCurrentColor: number) {
+    console.assert(indexOfCurrentColor >= 0 && indexOfCurrentColor < numberOfColorsNeeded);
+
+    if(numberOfColorsNeeded <= preselectedColors.length) {
+        return preselectedColors[indexOfCurrentColor];
+    } else {
+        return generateColors(numberOfColorsNeeded, indexOfCurrentColor);
+    }
+}
 
 export const FilteredDFM = (props: {dfm: DirectlyFollowsMultigraph | null, threshold: number, selectedObjectTypes: string[]}) => {
     const dfm = props.dfm;
@@ -87,10 +100,11 @@ export const FilteredDFM = (props: {dfm: DirectlyFollowsMultigraph | null, thres
     const legendObjectTypeColors: [string, string][] = [];
 
     let allNodesOfSelectedObjectTypes = new Set<number>();
+    const numberOfColorsNeeded = Object.keys(dfm.subgraphs).length;
 
     Object.keys(dfm.subgraphs).forEach((objectType, i) => {
         if (selectedObjectTypes.includes(objectType)) {
-            const objectTypeColor = rainbow(Object.keys(dfm.subgraphs).length, i);
+            const objectTypeColor = getEdgeColor(numberOfColorsNeeded, i);
 
             const edges = dfm.subgraphs[objectType];
             for (const edge of edges) {
