@@ -24,18 +24,22 @@ const Option = (props: any) => {
 };
 
 type ObjectSelectionState = {
+    // current state of selection component
     selectedObjectTypes: MultiValue<any>,
+    // have we already selected all object types once at the start of visualizing a new dfm?
     selectedAllObjectTypesInitiallyAlready: boolean,
 }
 
 export type selectedObjectTypesUpdateCallback = (selection: string[]) => void;
 
 export const ObjectSelection = (props: {
+    // all available object types in the currently visualized dfm (empty list means object types have not been determined  yet)
     objectTypes: string[],
+    // callback to signal a change in selected object types (Visualization is sibling component -> need to pass information up, such that parent can pass back down to FilteredDFM)
     updateCallback: selectedObjectTypesUpdateCallback,
+    // should we select all object types at the start of visualizing a new dfm?
     selectAllObjectTypesInitially: boolean,
 }) => {
-    // Current assumption: Empty objectTypes list means the objectTypes haven't been determined, yet.
     const objectTypes = props.objectTypes;
     const updateCallback = props.updateCallback;
     const selectAllObjectTypesInitially = props.selectAllObjectTypesInitially;
@@ -45,6 +49,7 @@ export const ObjectSelection = (props: {
         selectedAllObjectTypesInitiallyAlready: false,
     });
 
+    // all available selection options
     let objectTypeOptions: MultiValue<any> = objectTypes.map((typeName) => {
         return {
             value: typeName,
@@ -52,7 +57,7 @@ export const ObjectSelection = (props: {
         }
     });
 
-    // select all object types by default
+    // select all object types?
     useEffect(() => {
         if (objectTypes.length > 0 && selectAllObjectTypesInitially && !state.selectedAllObjectTypesInitiallyAlready) {
             setSelectedObjectTypes(objectTypeOptions);
@@ -62,6 +67,7 @@ export const ObjectSelection = (props: {
         }
     });
 
+    // update current selection state and pass information up to parent
     const setSelectedObjectTypes = function(selection: MultiValue<any>) {
         setState((old) => Object.assign({}, old, {
             selectedObjectTypes: selection,
