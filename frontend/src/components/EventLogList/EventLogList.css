@@ -1,0 +1,17 @@
+.EventLogList {
+    position: relative;
+    margin: auto;
+    width: 70vw;
+    height: 50vh;
+    top: 20%;
+    bottom: 20%;
+}
+
+.UploadButton {
+    background-color: rgb(var(--color1));
+}
+
+.SelectButton {
+    color: rgb(var(--color1));
+    border-color: rgb(var(--color1));
+}

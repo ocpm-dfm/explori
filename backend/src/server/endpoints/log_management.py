@@ -4,13 +4,15 @@ from typing import List
 from fastapi import APIRouter, File, UploadFile
 from pydantic import BaseModel
 
+from server.task_manager import TaskStatus
+
 router = APIRouter(prefix='/logs',
                    tags=['Log management'])
 
 
 # region /available
 class AvailableLogsResponseModel(BaseModel):
-    __root__: List[str]
+    __root__: List[List[str | float]]
     class Config:
         schema_extra = {
             "example": [
@@ -20,7 +22,7 @@ class AvailableLogsResponseModel(BaseModel):
         }
 
 @router.get('/available', response_model=AvailableLogsResponseModel)
-def list_available_logs() -> List[str]:
+def list_available_logs() -> TaskStatus:
     """
     Lists all available OCELS and returns them as list of strings that can be used to access them using other
     API endpoints. OCELs that were uploaded by the user over the web interface will be prefixed by "uploaded/".
@@ -35,13 +37,23 @@ def list_available_logs() -> List[str]:
                 result.extend(find_available_logs(complete_path))
         return result
 
+    # Cut of the data/ from the log names
+    def cut_filename(filename: str):
+        return filename[5:]
+
+    def extend_result_by_filesize(log: List[str]):
+        results = []
+        for entry in log:
+            results.append([cut_filename(entry), round(os.stat(entry).st_size / 1024, 0)])
+        return results
+
     # Find all logs in the data folder.
     logs = find_available_logs("data")
 
-    # Cut of the data/ from the log names
-    logs = [log[5:] for log in logs]
+    # Extend results by file size
+    extended_logs = extend_result_by_filesize(logs)
 
-    return logs
+    return extended_logs
 # endregion
 
 @router.put('/upload')
