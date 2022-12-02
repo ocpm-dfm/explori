@@ -64,5 +64,10 @@ async def upload_event_logs(file: UploadFile):
         f.write(fileContent)
 
     return {
-        "status": "successful"
+        "status": "successful",
+        "data": [
+            "dir/file.ocel", 
+            "420"
+        ]
+        
     }

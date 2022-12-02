@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { stat } from "fs";
 
-export let API_BASE_URL = 'https://production.com/api';
+let API_BASE_URL = 'https://production.com/api';
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 if (window.webpackHotUpdate || (process.env.NODE_ENV !== "production" && process.env.NODE_ENV !== "test" && typeof console !== "undefined")
@@ -114,7 +114,7 @@ export function useAsyncAPI<DataType>(endpoint: string, parameters: { [key: stri
     };
 }
 
-export function getURI (endpoint: string, parameters: { [key:string]: string | number}) {
+export function getURI(endpoint: string, parameters: { [key: string]: string | number }) {
 
     const parameters_empty = Object.keys(parameters).length === 0;
 
