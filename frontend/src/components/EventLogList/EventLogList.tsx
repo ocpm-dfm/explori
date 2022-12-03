@@ -11,7 +11,6 @@ import '@inovua/reactdatagrid-community/index.css';
 import '@inovua/reactdatagrid-community/theme/blue-light.css'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCheck, faMultiply } from "@fortawesome/free-solid-svg-icons";
-import { useQuery } from "react-query";
 import { TypeDataSource } from '@inovua/reactdatagrid-community/types';
 import { Session } from '../Session/Session';
 
@@ -83,6 +82,11 @@ export function EventLogList(props: EventLogListProps) {
                     })
 
                     formattedData.sort(compare)
+
+                    // Give items correct id for selection, we get a wrong id if we assign it in the data.map already
+                    for (let i = 0; i < formattedData.length; i++){
+                        formattedData[i].id = i;
+                    }
 
                     setDataSource(formattedData)
                 }

@@ -1,5 +1,4 @@
 import './Session.css';
-import { ObjectSelection } from '../ObjectSelection/ObjectSelection';
 import { useEffect, useState } from 'react';
 import { getURI } from '../../api';
 
@@ -18,7 +17,6 @@ export function Session(_props: any) {
     const [selectedFile, setSelectedFile] = useState(initialSelectedFile)
     //const [isFileSelected, setIsFileSelected] = useState(false)
     //const [fileStatus, setFileStatus] = useState("")
-    const objectSelection = <ObjectSelection />
 
     useEffect(() => {
         /*
@@ -48,7 +46,7 @@ export function Session(_props: any) {
         })
             .then((response) => response.json())
             .then((result) => {
-                if (result.status == "successful") {
+                if (result.status === "successful") {
                     const eventLogMetadata = formatEventLogMetadata(result.data)
                     eventLogMetadata.id = dataSource.length + 1
                     let newDataSource = [
@@ -56,6 +54,11 @@ export function Session(_props: any) {
                         eventLogMetadata
                     ]
                     newDataSource = newDataSource.sort(compare)
+
+                    for (let i = 0; i < newDataSource.length; i++){
+                        newDataSource[i].id = i;
+                    }
+
                     setDataSource(newDataSource)
                 }
             })
