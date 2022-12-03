@@ -58,10 +58,10 @@ def list_available_logs() -> TaskStatus:
 
 @router.put('/upload')
 async def upload_event_logs(file: UploadFile):
-    fileLocation = file.filename
-    fileContent = await file.read()
-    with open(fileLocation, "wb") as f:
-        f.write(fileContent)
+    file_location = "./data/uploaded/" + file.filename
+    file_content = await file.read()
+    with open(file_location, "wb") as f:
+        f.write(file_content)
 
     return {
         "status": "successful",
