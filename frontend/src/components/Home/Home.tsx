@@ -16,7 +16,7 @@ type HomeState = {
 }
 
 function Home(props: {ocel: string}) {
-    const [state, setState] = useState({
+    const [state, setState] = useState<HomeState>({
         threshold: 100,
         selectedObjectTypes: [],
     })
