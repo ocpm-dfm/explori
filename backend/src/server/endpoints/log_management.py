@@ -66,8 +66,8 @@ async def upload_event_logs(file: UploadFile):
     return {
         "status": "successful",
         "data": [
-            "dir/file.ocel", 
-            "420"
+            file_location,
+            round(os.stat(file_location).st_size / 1024, 0)
         ]
-        
+
     }
