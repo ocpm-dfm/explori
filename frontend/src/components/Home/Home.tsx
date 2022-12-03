@@ -7,10 +7,18 @@ import { useLocation } from 'react-router-dom';
 
 import "./Home.css";
 import {useAsyncAPI} from "../../api";
+import {selectedObjectTypesUpdateCallback} from "../ObjectSelection/ObjectSelection";
+import {MultiValue} from "react-select";
+
+type HomeState = {
+    threshold: number,
+    selectedObjectTypes: string[],
+}
 
 function Home(props: {ocel: string}) {
-    const [state, setState] = useState({
-        threshold: 100
+    const [state, setState] = useState<HomeState>({
+        threshold: 100,
+        selectedObjectTypes: [],
     })
 
     const location = useLocation();
@@ -58,6 +66,12 @@ function Home(props: {ocel: string}) {
     //     }
     // };
 
+    const updateCallback: selectedObjectTypesUpdateCallback = function(selection: string[]) {
+        setState((old) => Object.assign({}, old, {
+            selectedObjectTypes: selection,
+        }));
+    }
+    
     // This command clears the location.state which is saved even upon refreshing the browser
     // So for development, uncomment this line so the location gets cleared on each re-render. Can also lead to unwanted side-effects!
     // For production, this makes sense I guess?
@@ -67,14 +81,14 @@ function Home(props: {ocel: string}) {
         location.state === null || location.state === undefined? {ocel: 'uploaded/p2p-normal.jsonocel'} : location.state
     );
 
-
-    const objectSelection = <ObjectSelection />
+    const objectTypes: string[] = dfm_query.result ? Object.keys(dfm_query.result.subgraphs) : [];
+    const objectSelection = <ObjectSelection objectTypes={objectTypes} updateCallback={updateCallback} selectAllObjectTypesInitially={true} />
 
     return (
         <React.Fragment>
             <div className="Home">
                 <ExploriNavbar lowerRowSlot={objectSelection} />
-                <FilteredDFM dfm={dfm_query.result} threshold={state.threshold / 100} />
+                <FilteredDFM dfm={dfm_query.result} threshold={state.threshold / 100} selectedObjectTypes={state.selectedObjectTypes} />
                 <div className="Home-DetailSlider">
                     <div className="Home-DetailSlider-Label">
                         Less detail
