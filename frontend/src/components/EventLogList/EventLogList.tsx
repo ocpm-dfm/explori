@@ -110,7 +110,7 @@ export function EventLogList(props: EventLogListProps) {
                     //enableSelection={true}
                     onSelectionChange={onSelection}
                 ></ReactDataGrid>
-                <Stack spacing={3} direction="row" justifyContent="flex-end">
+                <Stack spacing={1} direction="row" justifyContent="flex-end">
                     <Session
                         dataSource={dataSource}
                         setDataSource={setDataSource}
@@ -118,7 +118,7 @@ export function EventLogList(props: EventLogListProps) {
                         compare={compare}
                     />
                     <Button component={Link} to={"/"} state={{ ocel: String(dataSource[Number(selected)]?.full_path) }} variant="outlined" onClick={onSelect} className="SelectButton" sx={
-                        { 'margin-top': '10px', 'color': 'rgb(var(--color1))', 'border-color': 'rgb(var(--color1))' }
+                        { 'top': '10px', 'margin-top': '10px', 'color': 'rgb(var(--color1))', 'border-color': 'rgb(var(--color1))' }
                     }>
                         Select
                     </Button>

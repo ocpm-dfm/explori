@@ -1,6 +1,8 @@
 import './Session.css';
-import { useEffect, useState } from 'react';
+import {RefObject, useEffect, useState} from 'react';
 import { getURI } from '../../api';
+import React from "react";
+import {Button, TextField, Stack} from "@mui/material";
 
 export function Session(_props: any) {
     /*
@@ -12,6 +14,8 @@ export function Session(_props: any) {
     const dataSource = _props.dataSource
     const setDataSource = _props.setDataSource
     const formatEventLogMetadata = _props.formatEventLogMetadata
+    
+    let inputRef: RefObject<HTMLInputElement> = React.createRef();
 
     const initialSelectedFile: any = {}
     const [selectedFile, setSelectedFile] = useState(initialSelectedFile)
@@ -29,20 +33,21 @@ export function Session(_props: any) {
 
     const handleFileSelection = async (event: any) => {
         event.preventDefault()
+        console.log(event.target.files[0])
         setSelectedFile(event.target.files[0])
     }
 
     const uploadFile = async (event: any) => {
         event.preventDefault()
 
-        const formdata = new FormData()
-        formdata.append('file', selectedFile)
+        const formData = new FormData()
+        formData.append('file', selectedFile)
 
         const uploadFileUrl: string = getURI('/logs/upload', {})
         console.log(uploadFileUrl + ": " + uploadFileUrl)
         fetch(uploadFileUrl, {
             method: 'PUT',
-            body: formdata
+            body: formData
         })
             .then((response) => response.json())
             .then((result) => {
@@ -68,24 +73,46 @@ export function Session(_props: any) {
 
     return (
         <div className="Session">
+            <Stack spacing={3} direction="row" justifyContent="flex-end">
+            <TextField
+                sx={{'top': '10px', 'color': 'rgb(var(--color1))'}}
+                id="standard-read-only-input"
+                value={selectedFile.name}
+                InputProps={{
+                   readOnly: true,
+                }}
+                variant="standard"
+            />
             <form id="uploadEventLogForm">
-                <label htmlFor="uploadEventLog">Upload an event log:</label>
-                <input
-                    type="file"
-                    accept=".jsonocel, .xmlocel"
-                    name="uploadEventLog"
-                    onChange={handleFileSelection} >
-                </input>
+                { /* <label htmlFor="uploadEventLog">Upload an event log:</label> */ }
+                <Button variant="contained" component="label" sx={{'top': '10px', 'background-color': 'rgb(var(--color1))'}}>
+                    Upload
+                    <input
+                        type="file"
+                        hidden
+                        accept=".jsonocel, .xmlocel"
+                        name="uploadEventLog"
+                        onChange={handleFileSelection}
+                        ref={inputRef}
+                    >
+                    </input>
+                </Button>
+
                 {
                     //FIX: <div>{fileStatus}</div>
                 }
-                <button
-                    form='uploadEventLogForm'
-                    disabled={false}
-                    onClick={uploadFile} >
-                    Confirm Upload
-                </button>
+                <Button variant="contained" component="label" sx={{ 'top': '10px', 'margin-left': '10px', 'background-color': 'rgb(var(--color1))' }}>
+                    Confirm upload
+                    <button
+                        form='uploadEventLogForm'
+                        hidden
+                        disabled={false}
+                        onClick={uploadFile} >
+                        Confirm Upload
+                    </button>
+                </Button>
             </form>
+            </Stack>
         </div>
     )
 }
