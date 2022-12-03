@@ -3,6 +3,7 @@ import '../../App.css';
 import {DirectlyFollowsMultigraph, FilteredDFM} from "../dfm/dfm";
 import { ObjectSelection } from "../ObjectSelection/ObjectSelection";
 import {ExploriNavbar} from "../ExploriNavbar/ExploriNavbar";
+import { useLocation } from 'react-router-dom';
 
 import "./Home.css";
 import {useAsyncAPI} from "../../api";
@@ -14,11 +15,13 @@ type HomeState = {
     selectedObjectTypes: string[],
 }
 
-function Home() {
-    const [state, setState] = useState<HomeState>({
+function Home(props: {ocel: string}) {
+    const [state, setState] = useState({
         threshold: 100,
         selectedObjectTypes: [],
     })
+
+    const location = useLocation();
 
     // const dfm: DirectlyFollowsMultigraph = {
     //     nodes: [
@@ -68,8 +71,15 @@ function Home() {
             selectedObjectTypes: selection,
         }));
     }
+    
+    // This command clears the location.state which is saved even upon refreshing the browser
+    // So for development, uncomment this line so the location gets cleared on each re-render. Can also lead to unwanted side-effects!
+    // For production, this makes sense I guess?
+    // window.history.replaceState({}, document.title)
 
-    const dfm_query = useAsyncAPI<DirectlyFollowsMultigraph>("/pm/dfm", {ocel: "uploaded/p2p-normal.jsonocel"});
+    const dfm_query = useAsyncAPI<DirectlyFollowsMultigraph>("/pm/dfm",
+        location.state === null || location.state === undefined? {ocel: 'uploaded/p2p-normal.jsonocel'} : location.state
+    );
 
     const objectTypes: string[] = dfm_query.result ? Object.keys(dfm_query.result.subgraphs) : [];
     const objectSelection = <ObjectSelection objectTypes={objectTypes} updateCallback={updateCallback} selectAllObjectTypesInitially={true} />
