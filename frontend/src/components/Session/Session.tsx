@@ -1,7 +1,6 @@
 import './Session.css';
 import {RefObject, useEffect, useState} from 'react';
 import { getURI } from '../../api';
-import React from "react";
 import {Button, TextField, Stack} from "@mui/material";
 
 export function Session(_props: any) {
@@ -14,8 +13,6 @@ export function Session(_props: any) {
     const dataSource = _props.dataSource
     const setDataSource = _props.setDataSource
     const formatEventLogMetadata = _props.formatEventLogMetadata
-    
-    let inputRef: RefObject<HTMLInputElement> = React.createRef();
 
     const initialSelectedFile: any = {}
     const [selectedFile, setSelectedFile] = useState(initialSelectedFile)
@@ -33,7 +30,6 @@ export function Session(_props: any) {
 
     const handleFileSelection = async (event: any) => {
         event.preventDefault()
-        console.log(event.target.files[0])
         setSelectedFile(event.target.files[0])
     }
 
@@ -93,7 +89,6 @@ export function Session(_props: any) {
                         accept=".jsonocel, .xmlocel"
                         name="uploadEventLog"
                         onChange={handleFileSelection}
-                        ref={inputRef}
                     >
                     </input>
                 </Button>
