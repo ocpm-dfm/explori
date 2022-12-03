@@ -6,49 +6,80 @@ Let people know what your project can do specifically. Provide context and add a
 ## Installation
 Goal: `docker compose up`, open link.
 
-## Development
+## Development - Backend
 
-### Setting up the environment
+### Requirements
+- Python >=3.10
+- Docker
 
-Setting up Redis:
+### 0. Changing directory 
+- Change directory to backend: `cd backend/` **(also needed for the following steps!)**
 
-1. Install docker if not yet installed.
-2. `docker run -d --name redis -p 6379:6379 redis:alpine`
-3. If you need to start the server again at a later point (e.g. after a reboot), you can do so by executing `docker start redis`.
+### 1. Installing dependencies
+- Create a new virtual environment: `python -m venv ./venv`
+- Activate said environment
+  - Windows: `venv\Scripts\activate.bat` (or `activate.ps1` for powershell)
+  - Most Linux shells: `source venv/bin/activate`
+- Install dependencies: `pip install -r requirements.txt`
 
-Option 1: The lazy / JetBarins route
+### 2. Setting up Redis using Docker
+- Create container: `docker create --name explori-redis -p 6379:6379 redis:alpine`
+- Start container: `docker start explori-redis`
 
-1. Install PyCharm and WebStorm
-2. Clone this repository manually (by calling `git clone ...` in a folder)
-3. In WebStorm: File > Open > Select the frontend folder, let Webstorm automatically install dependencies
-4. Install Python 3.10 or 3.11 on your system
-5. In PyCharm: File > Open > Select backend folder, select Python 3.10, let PyCharm automatically install dependencies.
-6. To run backend: Open the file "pycharm-launcher.py", click on the green arrow. Then on the upper right open the configuration settings and remove the "/src" from the working directory. Add ";DEV=1" to the environment variables.
-7. On the upper left of the "Run/Debug Configurations" window, click the "+" and select "Python".
-8. As the script path, choose `venv/bin/celery`.
-9. As parameters set `-A worker.main.app worker --loglevel=INFO`
-10. Set the working directory to the `backend` folder.
+### 3. Setting up Celery
+#### Celery "native" (this does __not__ work on Windows as Celery doesn't fully support Windows)
+- `PYTHONPATH="src/" celery -A worker.main.app worker --loglevel=INFO`
 
-You might need to tell WebStorm / PyCharm that these projects are part of a larger repository, to do so, go into Settings > Version Control > Directory Mappings.
+#### Celery using Docker
+__Important:__ Run the following commands from inside the `backend/` directory! See `dev_setup/celery/build_docker.sh` for more information about the why.
+- Create container: `dev_setup/celery/build_docker.sh`
+- Start container: `docker start explori-celery`
+- In case of code changes: `docker restart explori-celery`
 
+It is sufficient to restart the docker container when updating celery worker related code on the host machine as the code 
+is mounted into the container (read-only). There's no need to rebuild the image or recreate the container, 
+a simple restart is enough.
 
-Option 2: Manual route
+### 4. Running the backend
+- Start the backend server: `PYTHONPATH="src/" DEV=1 uvicorn server.main:app --host 0.0.0.0`
+- See backend address in terminal output
 
-Not quite sure whether it is correct and / or complete.
+### 5. Testing the backend
+- __Assuming__ step 4 above signaled Uvicorn running at `http://0.0.0.0:8000`: The fastapi openapi can be found at `http://0.0.0.0:8000/docs`
 
-1. Install Node.js and Python 3.11
-2. Clone the repository
-3. In the frontend folder run `npm install`.
-4. In the backend folder run the following commands:
+### Backend IDE Alternative
+- Install Jetbrains PyCharm
+- In PyCharm: `File > Open` and select `backend/` folder, select Python 3.10, let PyCharm automatically install dependencies
+- To have a run target for the backend
+  - Open the file `pycharm-launcher.py`
+  - Click on the green arrow
+  - On the upper right open the configuration settings
+    - Set the working directory to the `backend/` directory (without `src/` at the end)
+    - Add `;DEV=1` to the environment variables
+- To have a run target for Celery (this does __not__ work on Windows, as Celery doesn't officially support Windows. See `Celery using Docker` above)
+  - On the upper left of the "Run/Debug Configurations" window
+    - Click the "+" and select "Python"
+    - As the script path, choose `venv/bin/celery`
+    - As parameters set `-A worker.main.app worker --loglevel=INFO`
+    - Set the working directory to the `backend/` directory
+- You might need to tell PyCharm that these projects are part of a larger repository, to do so, go into Settings > Version Control > Directory Mappings
 
-    a. `python -m venv venv`, this should create an virtual environment.
+## Development - Frontend
 
-    b. Windows: `venv\Scripts\activate.bat` (or `...\activate.ps1` for powershell), most Linux shells: `source venv/bin/activate`
+### Requirements
+- Python >=3.10
+- Nodejs
 
-    c. `pip install -r requirements.txt`
+### 0. Changing directory
+- Change directory to frontend: `cd frontend/` **(also needed for the following steps!)**
 
-To set development environment variable, type `export $DEV="1"` in bash terminal (wsl2). Verify that variable has been set using `echo $DEV`
+### 1. Installing dependencies
+- Install dependencies: `npm install`.
 
-Now, you can start the frontend server using `npm run start`, and the FastAPI server using
-`PYTHONPATH="src/" uvicorn server.main:app --host 0.0.0.0 --port 8080` and a Celery worker using
-`PYTHONPATH="src/" celery -A worker.main.app worker --loglevel=INFO`.
+### 2. Running the frontend
+- Start the frontend server: `npm run start`
+
+### Frontend IDE Alternative
+- Install Jetbrains WebStorm
+- In WebStorm: `File > Open` and select the frontend folder, let Webstorm automatically install dependencies
+- You might need to tell WebStorm that these projects are part of a larger repository, to do so, go into Settings > Version Control > Directory Mappings
