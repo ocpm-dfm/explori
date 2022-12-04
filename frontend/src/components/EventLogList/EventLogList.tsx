@@ -114,6 +114,7 @@ export function EventLogList(props: EventLogListProps) {
                     <Session
                         dataSource={dataSource}
                         setDataSource={setDataSource}
+                        setSelected={setSelected}
                         formatEventLogMetadata={formatEventLogMetadata}
                         compare={compare}
                     />

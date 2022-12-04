@@ -12,6 +12,7 @@ export function Session(_props: any) {
     const compare = _props.compare
     const dataSource = _props.dataSource
     const setDataSource = _props.setDataSource
+    const setSelected = _props.setSelected
     const formatEventLogMetadata = _props.formatEventLogMetadata
 
     const initialSelectedFile: any = {}
@@ -61,6 +62,7 @@ export function Session(_props: any) {
                     }
 
                     setDataSource(newDataSource)
+                    setSelected(eventLogMetadata.id)
                 }
             })
             .catch(err => console.log("Error in uploading ..."))
