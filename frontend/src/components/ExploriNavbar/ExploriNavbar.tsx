@@ -37,15 +37,17 @@ export function ExploriNavbar(props: ExploriNavbarProps) {
                     <img src="/explori.png" alt="" />
                     <span>Explori</span>
                 </div>
-                <Link to="/session" className="ENAV-new-session">
-                    <FontAwesomeIcon icon={faFile} />
-                </Link>
-                <Link to="/user-session/store" className="ENAV-new-session">
-                    <FontAwesomeIcon icon={faSave} />
-                </Link>
-                <Link to="/user-session/restore" className="ENAV-new-session">
-                    <FontAwesomeIcon icon={faDownload} />
-                </Link>
+                <div>
+                    <Link to="/session" className="ENAV-new-session">
+                        <FontAwesomeIcon icon={faFile} />
+                    </Link>
+                    <Link to="/user-session/store" className="ENAV-new-session">
+                        <FontAwesomeIcon icon={faSave} />
+                    </Link>
+                    <Link to="/user-session/restore" className="ENAV-new-session">
+                        <FontAwesomeIcon icon={faDownload} />
+                    </Link>
+                </div>
             </div>
             <div className="ENAV-Row ENAV-Row2">
                 <div className="ENAV-links">
