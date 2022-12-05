@@ -2,12 +2,17 @@ import React from 'react';
 import './UserSession.css';
 import {DefaultLayout} from "../DefaultLayout/DefaultLayout";
 import {getURI} from "../../api";
-import {useQuery} from "react-query";
 
 export type UserSessionState = {
     ocel: string,
     filteringThreshold: number,
     selectedObjectTypes: string[],
+}
+
+type BackendSession = {
+    base_ocel: string,
+    threshold: number,
+    object_types: string[],
 }
 
 export function UserSession(props: {storeOrRestore: string, userSessionState?: UserSessionState, stateChangeCallback?: any}) {
@@ -25,11 +30,7 @@ export function UserSession(props: {storeOrRestore: string, userSessionState?: U
             },
             body: JSON.stringify({
                 name: name,
-                session: {
-                    base_ocel: session.ocel,
-                    threshold: session.filteringThreshold,
-                    object_types: session.selectedObjectTypes,
-                },
+                session: translateToBackend(session.ocel, session.filteringThreshold, session.selectedObjectTypes),
             })
         })
             .then((response) => response.json())
@@ -43,12 +44,19 @@ export function UserSession(props: {storeOrRestore: string, userSessionState?: U
             .catch(err => console.log("Error in uploading ..."))
     }
 
-    function restoreSession(name: string, stateChangeCallback: any) {
-        //const uri = getURI("/session/restore", {name: name});
-        const uri = getURI("/session/available", {});
-        const session = ""; // TODO: request session from backend at {uri}
+    async function restoreSession(name: string, stateChangeCallback: any) {
+        const uri = getURI("/session/restore", {name: name});
+        //const uri = getURI("/session/available", {});
+        let session = ""; // TODO: request session from backend at {uri}
 
-        fetch(uri)
+        await fetch(uri)
+            .then((response) => response.json())
+            .then((result) => {
+                session = result
+            })
+            .catch(err => console.log("Error in uploading ..."))
+
+        /*fetch(uri)
             .then((response) => response.json())
             .then((result) => {
                 console.log(result)
@@ -56,10 +64,25 @@ export function UserSession(props: {storeOrRestore: string, userSessionState?: U
                     console.log("nice")
                 }
             })
-            .catch(err => console.log("Error in uploading ..."))
+            .catch(err => console.log("Error in uploading ...")) */
+        console.log(session)
+        stateChangeCallback(translateToFrontend(session));
+    }
 
-        //const state = JSON.parse(session);
-        //stateChangeCallback(state);
+    function translateToBackend(ocel: string, threshold: number, objectTypes: string[]){
+        return {
+            base_ocel: ocel,
+            threshold: threshold,
+            object_types: objectTypes,
+        }
+    }
+
+    function translateToFrontend(session: any){
+        return {
+            ocel: session.base_ocel,
+            filteringThreshold: session.threshold,
+            selectedObjectTypes: session.object_types,
+        }
     }
 
     let content;
@@ -70,7 +93,7 @@ export function UserSession(props: {storeOrRestore: string, userSessionState?: U
                 value={"Store session"}
                 onClick={() => {
                     // TODO: for now just use ocel name
-                    storeSession(props.userSessionState!.ocel, userSessionState);
+                    storeSession('default', userSessionState);
                 }
             }></input>
         );
@@ -80,7 +103,7 @@ export function UserSession(props: {storeOrRestore: string, userSessionState?: U
                 type={"button"}
                 value={"Restore session"}
                 onClick={() => {
-                    restoreSession("sessionName", stateChangeCallback);
+                    restoreSession("default", stateChangeCallback);
                 }
                 }></input>
         );
