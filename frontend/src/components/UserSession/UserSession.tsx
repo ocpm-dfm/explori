@@ -16,26 +16,21 @@ export function UserSession(props: {storeOrRestore: string, userSessionState?: U
     const stateChangeCallback = props.stateChangeCallback;
 
     async function storeSession(name: string, session: UserSessionState) {
-        const sessionJson = JSON.stringify(session);
-
-        const sessionJson2 = JSON.stringify({
-            base_ocel: 'test',
-            threshold: 1.5
-        })
-
-        const uri = getURI("/session/store", {name: name, session: sessionJson2 });
-
-        console.log(sessionJson2)
-
-        const formData = new FormData()
-        formData.append('session', sessionJson2)
+        const uri = getURI("/session/store", {});
 
         await fetch(uri, {
             method: 'PUT',
             headers: {
                 "Content-type": "application/json"
             },
-            body: formData
+            body: JSON.stringify({
+                name: name,
+                session: {
+                    base_ocel: session.ocel,
+                    threshold: session.filteringThreshold,
+                    object_types: session.selectedObjectTypes,
+                },
+            })
         })
             .then((response) => response.json())
             .then((result) => {
@@ -43,13 +38,9 @@ export function UserSession(props: {storeOrRestore: string, userSessionState?: U
                     localStorage.setItem('explori', JSON.stringify({
                         latest_session_name: name,
                     }));
-                    console.log("nice")
                 }
             })
             .catch(err => console.log("Error in uploading ..."))
-
-        console.log("after nice")
-
     }
 
     function restoreSession(name: string, stateChangeCallback: any) {

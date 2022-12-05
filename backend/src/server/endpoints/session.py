@@ -16,6 +16,7 @@ os.makedirs(SESSIONS_FOLDER, exist_ok=True)
 class Session(BaseModel):
     base_ocel: str
     threshold: float
+    object_types: List[str]
 
     class Config:
         schema_extra = {
@@ -33,8 +34,6 @@ class StoreSessionPayload(BaseModel):
 
 @router.put('/store')
 async def store_session(payload: StoreSessionPayload):
-    print(payload)
-    print("test")
     session_file = get_session_file(payload.name)
     with open(session_file, 'w') as f:
         json.dump(payload.session.dict(), f)
