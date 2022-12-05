@@ -1,6 +1,7 @@
 import json
 import os
 from typing import List, Tuple
+from pathlib import PureWindowsPath
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
@@ -82,8 +83,14 @@ def list_available_sessions():
 
 def get_session_file(session_name: str):
     """Determines the file to store the session to. Prevents path traversals."""
+
     session_file_unvalidated = os.path.join(SESSIONS_FOLDER, session_name + ".json")
-    session_file = os.path.abspath(session_file_unvalidated)
+
+    # The backend might run on windows which results in a mixture of windows and posix paths (as we simply use strings as path representations for now)
+    # If the path is a posix path, then the following transformation has no effect. If the path is a windows path, then afterwards it will be a posix path
+    session_file_unvalidated = PureWindowsPath(session_file_unvalidated).as_posix()
+    session_file = PureWindowsPath(os.path.abspath(session_file_unvalidated)).as_posix()
+
     if session_file[-len(session_file_unvalidated):] != session_file_unvalidated:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Path traversals are not allowed!")
     return session_file
