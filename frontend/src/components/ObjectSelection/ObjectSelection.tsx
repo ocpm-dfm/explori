@@ -2,6 +2,7 @@ import React, {useEffect, useState} from 'react';
 import "./ObjectSelection.css";
 import { default as ReactSelect } from "react-select";
 import { components, MultiValue } from "react-select";
+import {StateChangeCallback} from "../../App";
 
 
 /* TODO:
@@ -30,13 +31,11 @@ type ObjectSelectionState = {
     selectedAllObjectTypesInitiallyAlready: boolean,
 }
 
-export type selectedObjectTypesUpdateCallback = (selection: string[]) => void;
-
 export const ObjectSelection = (props: {
     // all available object types in the currently visualized dfm (empty list means object types have not been determined  yet)
     objectTypes: string[],
     // callback to signal a change in selected object types (Visualization is sibling component -> need to pass information up, such that parent can pass back down to FilteredDFM)
-    updateCallback: selectedObjectTypesUpdateCallback,
+    updateCallback: StateChangeCallback,
     // should we select all object types at the start of visualizing a new dfm?
     selectAllObjectTypesInitially: boolean,
 }) => {
@@ -72,9 +71,11 @@ export const ObjectSelection = (props: {
         setState((old) => Object.assign({}, old, {
             selectedObjectTypes: selection,
         }));
-        updateCallback(selection.map((value, _idx, _arr) => {
-            return value.value;
-        }));
+        updateCallback({
+            selectedObjectTypes: selection.map((value, _idx, _arr) => {
+                return value.value;
+            }),
+        });
     }
 
     return (

@@ -33,6 +33,8 @@ class StoreSessionPayload(BaseModel):
 
 @router.put('/store')
 async def store_session(payload: StoreSessionPayload):
+    print(payload)
+    print("test")
     session_file = get_session_file(payload.name)
     with open(session_file, 'w') as f:
         json.dump(payload.session.dict(), f)

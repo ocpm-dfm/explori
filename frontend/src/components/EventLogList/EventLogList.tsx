@@ -13,8 +13,10 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCheck, faMultiply } from "@fortawesome/free-solid-svg-icons";
 import { TypeDataSource } from '@inovua/reactdatagrid-community/types';
 import { Session } from '../Session/Session';
+import {StateChangeCallback} from "../../App";
 
 export function EventLogList(props: EventLogListProps) {
+    const stateChangeCallback = props.stateChangeCallback;
 
     let initialDataSource: TypeDataSource = [];
     const uri = getURI("/logs/available", {});
@@ -30,6 +32,10 @@ export function EventLogList(props: EventLogListProps) {
     let onSelect = () => {
         if (selected !== null) {
             const selectedData = dataSource[selected]
+
+            stateChangeCallback({
+                ocel: String(dataSource[Number(selected)].full_path)
+            });
             // @ts-ignore
             console.log(selectedData.full_path);
         }
@@ -118,7 +124,7 @@ export function EventLogList(props: EventLogListProps) {
                         formatEventLogMetadata={formatEventLogMetadata}
                         compare={compare}
                     />
-                    <Button component={Link} to={"/"} state={{ ocel: String(dataSource[Number(selected)]?.full_path) }} variant="outlined" onClick={onSelect} className="SelectButton" sx={
+                    <Button component={Link} to={"/"} variant="outlined" onClick={onSelect} className="SelectButton" sx={
                         { 'top': '10px', 'margin-top': '10px', 'color': 'rgb(var(--color1))', 'border-color': 'rgb(var(--color1))' }
                     }>
                         Select
@@ -133,7 +139,7 @@ export function EventLogList(props: EventLogListProps) {
 
 
 interface EventLogListProps {
-
+    stateChangeCallback: StateChangeCallback,
 }
 
 /*interface EventLogListState {

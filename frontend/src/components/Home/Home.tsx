@@ -7,19 +7,21 @@ import { useLocation } from 'react-router-dom';
 
 import "./Home.css";
 import {useAsyncAPI} from "../../api";
-import {selectedObjectTypesUpdateCallback} from "../ObjectSelection/ObjectSelection";
-import {MultiValue} from "react-select";
+import {UserSessionState} from "../UserSession/UserSession";
 
-export const Home = (props: { filteringThreshold: number, stateChangeCallback: any}) => {
-    const filteringThreshold = props.filteringThreshold;
+
+export const Home = (props: { userSessionState: UserSessionState, stateChangeCallback: any}) => {
+    const location = useLocation();
+
+    const filteringThreshold = props.userSessionState.filteringThreshold;
+    const selectedObjectTypes = props.userSessionState.selectedObjectTypes;
+    const selectedOcel = props.userSessionState.ocel;
     const stateChangeCallback = props.stateChangeCallback;
 
-    const dfm_query = useAsyncAPI<DirectlyFollowsMultigraph>("/pm/dfm",
-        location.state === null || location.state === undefined? {ocel: 'uploaded/p2p-normal.jsonocel'} : location.state
-    );
+    const dfm_query = useAsyncAPI<DirectlyFollowsMultigraph>("/pm/dfm", {ocel: selectedOcel});
 
     const objectTypes: string[] = dfm_query.result ? Object.keys(dfm_query.result.subgraphs) : [];
-    const objectSelection = <ObjectSelection objectTypes={objectTypes} updateCallback={updateCallback} selectAllObjectTypesInitially={true} />
+    const objectSelection = <ObjectSelection objectTypes={objectTypes} updateCallback={stateChangeCallback} selectAllObjectTypesInitially={true} />
 
     return (
         <React.Fragment>
