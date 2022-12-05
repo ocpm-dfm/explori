@@ -1,5 +1,5 @@
-import {useState, useEffect, useRef} from "react";
-import {stat} from "fs";
+import { useState, useEffect, useRef } from "react";
+import { stat } from "fs";
 
 let API_BASE_URL = 'https://production.com/api';
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -47,17 +47,20 @@ type ApiResponse<DataType> = {
     result: DataType | null
 }
 
-export function useAsyncAPI<DataType>(endpoint: string, parameters: { [key:string]: string | number}) {
+export function useAsyncAPI<DataType>(endpoint: string, parameters: { [key: string]: string | number }) {
     const [state, setState] = useState<AsyncApiState<DataType>>({
         preliminary: null,
         result: null,
         failed: false
     });
 
-    const encoded_parameters = Object.keys(parameters)
+    const parameters_empty = Object.keys(parameters).length === 0;
+
+    const encoded_parameters = !parameters_empty ? Object.keys(parameters)
         .map((key) => `${key}=${encodeURIComponent(parameters[key])}`)
-        .reduce((a, b) => a + "&" + b)
-    const uri = API_BASE_URL + endpoint + "?" + encoded_parameters;
+        .reduce((a, b) => a + "&" + b) : ''
+
+    const uri = !parameters_empty ? API_BASE_URL + endpoint + "?" + encoded_parameters : API_BASE_URL + endpoint;
 
     const isDone = state.result != null || state.failed;
 
@@ -111,7 +114,7 @@ export function useAsyncAPI<DataType>(endpoint: string, parameters: { [key:strin
     };
 }
 
-export function getURI (endpoint: string, parameters: { [key:string]: string | number}) {
+export function getURI(endpoint: string, parameters: { [key: string]: string | number }) {
 
     const parameters_empty = Object.keys(parameters).length === 0;
 
