@@ -1,7 +1,9 @@
-import React from 'react';
+import React, {useState} from 'react';
 import './UserSession.css';
-import {DefaultLayout} from "../DefaultLayout/DefaultLayout";
+import  "../DefaultLayout/DefaultLayout.css";
 import {getURI} from "../../api";
+import {Button, TextField, Stack} from "@mui/material";
+import {ExploriNavbar} from "../ExploriNavbar/ExploriNavbar";
 
 export type UserSessionState = {
     ocel: string,
@@ -19,6 +21,11 @@ export function UserSession(props: {storeOrRestore: string, userSessionState?: U
     const storeOrRestore = props.storeOrRestore;
     const userSessionState = props.userSessionState;
     const stateChangeCallback = props.stateChangeCallback;
+    const [fileName, setfileName] = useState('default')
+
+    const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        setfileName(event.target.value);
+    };
 
     async function storeSession(name: string, session: UserSessionState) {
         const uri = getURI("/session/store", {});
@@ -90,10 +97,9 @@ export function UserSession(props: {storeOrRestore: string, userSessionState?: U
         content = (
             <input
                 type={"button"}
-                value={"Store session"}
+                hidden
                 onClick={() => {
-                    // TODO: for now just use ocel name
-                    storeSession('default', userSessionState);
+                    storeSession(fileName, userSessionState);
                 }
             }></input>
         );
@@ -101,13 +107,33 @@ export function UserSession(props: {storeOrRestore: string, userSessionState?: U
         content = (
             <input
                 type={"button"}
-                value={"Restore session"}
                 onClick={() => {
                     restoreSession("default", stateChangeCallback);
                 }
-                }></input>
+            }></input>
         );
     }
 
-    return <DefaultLayout content={content} />
+    return (
+        <div className="DefaultLayout-Container">
+            <ExploriNavbar />
+            <div className="DefaultLayout-Content">
+                <Stack spacing={3} direction="row" justifyContent="center">
+                    <TextField
+                        label={"Name"}
+                        sx={{'top': '10px', 'color': 'rgb(var(--color1))'}}
+                        id="outlined-basic"
+                        defaultValue={'default'}
+                        value={fileName}
+                        onChange={handleChange}
+                        variant="outlined"
+                    />
+                    <Button variant="contained" component="label" sx={{'top': '10px', 'background-color': 'rgb(var(--color1))'}}>
+                        Store session
+                        {content}
+                    </Button>
+                </Stack>
+            </div>
+        </div>
+    )
 }
