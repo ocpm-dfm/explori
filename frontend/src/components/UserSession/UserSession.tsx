@@ -32,8 +32,10 @@ export function UserSession(props: {storeOrRestore: string, userSessionState?: U
     let initialDataSource: TypeDataSource = [];
     const [dataSource, setDataSource] = useState(initialDataSource);
     const columns = [
-        { name: 'name', header: 'Session name', defaultFlex: 8 },
-        { name: 'age', header: 'Last change date', defaultFlex: 2 },
+        { name: 'name', header: 'Session name', defaultFlex: 9 },
+        { name: 'age', header: 'Last change date', defaultFlex: 4 },
+        { name: 'ocel', header: 'Used OCEL', defaultFlex: 4 },
+        { name: 'threshold', header: 'Threshold', defaultFlex: 1.5 }
     ]
 
     let compareDates = (a: { age: number; }, b: { age: number; }) => {
@@ -51,7 +53,9 @@ export function UserSession(props: {storeOrRestore: string, userSessionState?: U
     const formatSessionMetadata = (data: any) => {
         return {
             name: data[0],
-            age: data[1],
+            age: new Date(data[1] * 1000).toLocaleString('en-US'),
+            ocel: data[2].split("/").pop().split(".").slice(0, -1),
+            threshold: data[3]
         }
     }
 
