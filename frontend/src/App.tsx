@@ -17,6 +17,10 @@ function App() {
 
     const queryClient = new QueryClient();
 
+    const switchOcelsCallback = (ocel: string) => {
+        restoreAutoSessionOrCreateNew(ocel);
+    };
+
     const stateChangeCallback: StateChangeCallback = (update: any) => {
         let validUpdates: {[key: string]: any} = {};
         for (const key of Object.keys(update)) {
@@ -35,8 +39,8 @@ function App() {
         <QueryClientProvider client={queryClient}>
             <Routes>
                 <Route path="/" element={<Home userSessionState={state} stateChangeCallback={stateChangeCallback} />}></Route>
-                <Route path="/session" element={<EventLogList stateChangeCallback={stateChangeCallback} />}></Route>
-                <Route path="/user-session/store" element={<UserSession storeOrRestore={"store"} userSessionState={state} />}></Route>
+                <Route path="/session" element={<EventLogList switchOcelsCallback={switchOcelsCallback} />}></Route>
+                <Route path="/user-session/store" element={<UserSession storeOrRestore={"store"} userSessionState={sessionState} />}></Route>
                 <Route path="/user-session/restore" element={<UserSession storeOrRestore={"restore"} stateChangeCallback={stateChangeCallback} />}></Route>
             </Routes>
         </QueryClientProvider>

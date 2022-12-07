@@ -13,10 +13,10 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCheck, faMultiply } from "@fortawesome/free-solid-svg-icons";
 import { TypeDataSource } from '@inovua/reactdatagrid-community/types';
 import { Session } from '../Session/Session';
-import {StateChangeCallback} from "../../App";
+import { SwitchOcelsCallback } from "../../App";
 
 export function EventLogList(props: EventLogListProps) {
-    const stateChangeCallback = props.stateChangeCallback;
+    const switchOcelsCallback = props.switchOcelsCallback;
 
     let initialDataSource: TypeDataSource = [];
     const uri = getURI("/logs/available", {});
@@ -32,10 +32,8 @@ export function EventLogList(props: EventLogListProps) {
     let onSelect = () => {
         if (selected !== null) {
             const selectedData = dataSource[selected]
+            switchOcelsCallback(String(dataSource[Number(selected)].full_path));
 
-            stateChangeCallback({
-                ocel: String(dataSource[Number(selected)].full_path)
-            });
             // @ts-ignore
             console.log(selectedData.full_path);
         }
@@ -79,7 +77,6 @@ export function EventLogList(props: EventLogListProps) {
             .then(data => {
                 if (data !== undefined || data !== null) {
                     const formattedData = data.map((eventLog: any, index: number) => {
-                        console.log(eventLog)
                         const eventLogMetadata = formatEventLogMetadata(eventLog)
                         return {
                             ...eventLogMetadata,
@@ -137,10 +134,6 @@ export function EventLogList(props: EventLogListProps) {
 
 }
 
-
 interface EventLogListProps {
-    stateChangeCallback: StateChangeCallback,
+    switchOcelsCallback: SwitchOcelsCallback,
 }
-
-/*interface EventLogListState {
-} */
