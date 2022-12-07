@@ -8,7 +8,7 @@ import { Link } from "react-router-dom";
 import { getURI } from "../../api";
 import ReactDataGrid from '@inovua/reactdatagrid-community';
 import '@inovua/reactdatagrid-community/index.css';
-import '@inovua/reactdatagrid-community/theme/blue-light.css'
+import '@inovua/reactdatagrid-community/theme/blue-light.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCheck, faMultiply } from "@fortawesome/free-solid-svg-icons";
 import { TypeDataSource } from '@inovua/reactdatagrid-community/types';

@@ -52,7 +52,7 @@ def restore_session(name: str) -> Session:
 
 
 class AvailableSessionsResponseModel(BaseModel):
-    __root__: List[Tuple[str, float]]
+    __root__: List[Tuple[str, float, str, float]]
 
     class Config:
         schema_extra = {
@@ -77,7 +77,15 @@ def list_available_sessions():
         if file.endswith(".json"):
             session_name = file[:-5]
             last_change = os.path.getmtime(os.path.join(SESSIONS_FOLDER, file))
-            result.append((session_name, last_change))
+            # Get ocel and threshold information
+            session_file = get_session_file(session_name)
+            if not os.path.isfile(session_file):
+                #raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Wrong files in session storage.")
+                continue
+
+            with open(session_file, 'r') as f:
+                session = Session(**json.load(f))
+            result.append((session_name, last_change, session.base_ocel, session.threshold))
     return result
 
 

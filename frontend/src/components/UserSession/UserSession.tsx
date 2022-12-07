@@ -1,7 +1,13 @@
-import React from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import './UserSession.css';
-import {DefaultLayout} from "../DefaultLayout/DefaultLayout";
+import  "../DefaultLayout/DefaultLayout.css";
 import {getURI} from "../../api";
+import {Button, TextField, Stack} from "@mui/material";
+import {ExploriNavbar} from "../ExploriNavbar/ExploriNavbar";
+import ReactDataGrid from '@inovua/reactdatagrid-community';
+import '@inovua/reactdatagrid-community/index.css';
+import '@inovua/reactdatagrid-community/theme/blue-light.css';
+import { TypeDataSource } from '@inovua/reactdatagrid-community/types';
 
 export type UserSessionState = {
     ocel: string,
@@ -20,31 +26,141 @@ export function UserSession(props: {storeOrRestore: string, userSessionState?: U
     const storeOrRestore = props.storeOrRestore;
     const userSessionState = props.userSessionState;
     const stateChangeCallback = props.stateChangeCallback;
+    const [fileName, setFileName] = useState('default');
+    const [updated, setUpdated] = useState(false);
+    const [selected, setSelected] = useState(null);
+
+    let initialDataSource: TypeDataSource = [];
+    const [dataSource, setDataSource] = useState(initialDataSource);
+    const columns = [
+        { name: 'name', header: 'Session name', defaultFlex: 9 },
+        { name: 'age', header: 'Last change date', defaultFlex: 4 },
+        { name: 'ocel', header: 'Used OCEL', defaultFlex: 4 },
+        { name: 'threshold', header: 'Threshold', defaultFlex: 1.5 }
+    ]
+
+    let compareDates = (a: { age: number; }, b: { age: number; }) => {
+        if (a.age < b.age) {
+            return 1;
+        }
+        if (a.age > b.age) {
+            return -1;
+        }
+        return 0;
+    }
+
+    const gridStyle = { maxHeight: "70vh", maxWidth: "70vw" }
+
+    const formatSessionMetadata = (data: any) => {
+        return {
+            name: data[0],
+            age: new Date(data[1] * 1000).toLocaleString('en-US'),
+            ocel: data[2].split("/").pop().split(".").slice(0, -1),
+            threshold: data[3]
+        }
+    }
+
+    const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        setFileName(event.target.value);
+    };
+
+    // @ts-ignore
+    let onSelection = useCallback(({ selected }) => {
+        setSelected(selected);
+    }, []);
+
+    let availableURI = getURI("/session/available", {});
+    useEffect(() => {
+        fetch(availableURI)
+            .then((response) => response.json())
+            .then((result) => {
+                if (result !== undefined || result !== null) {
+                    const formattedData = result.map((session: any, index: number) => {
+                        const sessionMetadata = formatSessionMetadata(session)
+                        return {
+                            ...sessionMetadata,
+                            id: index
+                        }
+                    })
+
+                    formattedData.sort(compareDates)
+
+                    // Give items correct id for selection, we get a wrong id if we assign it in the data.map already
+                    for (let i = 0; i < formattedData.length; i++){
+                        formattedData[i].id = i;
+                    }
+
+                    setDataSource(formattedData)
+                }
+            })
+            .catch(err => console.log("Error in fetching available sessions ..."))
+    }, [updated])
 
     let content;
     if (storeOrRestore === "store" && userSessionState) {
         content = (
-            <input
-                type={"button"}
-                value={"Store session"}
-                onClick={() => {
-                    storeSession("default", userSessionState);
-                }
-            }></input>
+            <Stack spacing={3} direction="row" justifyContent="center">
+                <TextField
+                    label={"Name"}
+                    sx={{'top': '10px', 'color': 'rgb(var(--color1))'}}
+                    id="outlined-basic"
+                    defaultValue={'default'}
+                    value={fileName}
+                    onChange={handleChange}
+                    variant="outlined"
+                />
+                <Button variant="contained" component="label" sx={{'top': '10px', 'background-color': 'rgb(var(--color1))'}}>
+                    Store session
+                    <input
+                        type={"button"}
+                        hidden
+                        onClick={() => {
+                            storeSession(fileName, userSessionState);
+                            setUpdated(!updated);
+                        }
+                    }></input>
+                </Button>
+            </Stack>
         );
     } else if (storeOrRestore === "restore" && stateChangeCallback) {
         content = (
-            <input
-                type={"button"}
-                value={"Restore session"}
-                onClick={() => {
-                    restoreSession("default", stateChangeCallback);
-                }
-                }></input>
+            <div className={"UserSessionRestore"}>
+                <ReactDataGrid
+                    idProperty={"id"}
+                    theme={"blue-light"}
+                    columns={columns}
+                    dataSource={dataSource}
+                    style={gridStyle}
+                    selected={selected}
+                    //enableSelection={true}
+                    onSelectionChange={onSelection}
+                ></ReactDataGrid>
+                <Stack spacing={3} direction="row" justifyContent="center">
+                    <Button variant="contained" component="label" sx={{'top': '10px', 'background-color': 'rgb(var(--color1))'}}>
+                        Restore session
+                        <input
+                            type={"button"}
+                            hidden
+                            onClick={() => {
+                                restoreSession(
+                                    selected === null? 'default' : String(dataSource[Number(selected)].name), stateChangeCallback
+                                );
+                            }
+                            }></input>
+                    </Button>
+                </Stack>
+            </div>
         );
     }
 
-    return <DefaultLayout content={content} />
+    return (
+        <div className="DefaultLayout-Container">
+            <ExploriNavbar />
+            <div className="DefaultLayout-Content">
+                {content}
+            </div>
+        </div>
+    )
 }
 
 export async function storeSession(name: string, session: UserSessionState) {
@@ -71,7 +187,7 @@ export async function storeSession(name: string, session: UserSessionState) {
 
 export async function restoreSession(name: string, stateChangeCallback: any) {
     const uri = getURI("/session/restore", {name: name});
-
+    
     await fetch(uri)
         .then((response) => response.json())
         .then((result) => {

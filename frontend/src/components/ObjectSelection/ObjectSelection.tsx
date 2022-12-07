@@ -1,28 +1,16 @@
 import React, {useEffect} from 'react';
 import "./ObjectSelection.css";
-import { default as ReactSelect } from "react-select";
-import { components, MultiValue } from "react-select";
 import {StateChangeCallback} from "../../App";
-
-
-/* TODO:
-    - [ ] store object selection when switching tabs (currently not clear how tabs will work exactly, keep this for later for now)
- */
-
-const Option = (props: any) => {
-    return (
-      <div>
-        <components.Option {...props}>
-          <input
-            type="checkbox"
-            checked={props.isSelected}
-            onChange={() => null}
-          />{" "}
-          <label>{props.label}</label>
-        </components.Option>
-      </div>
-    );
-};
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import {faTrash, faCheckSquare} from "@fortawesome/free-solid-svg-icons";
+import Select, { SelectChangeEvent } from '@mui/material/Select';
+import MenuItem from '@mui/material/MenuItem';
+import Checkbox from '@mui/material/Checkbox';
+import FormControl from '@mui/material/FormControl';
+import OutlinedInput from '@mui/material/OutlinedInput';
+import InputLabel from '@mui/material/InputLabel';
+import Button from '@mui/material/Button';
+import Stack from '@mui/material/Stack';
 
 export const ObjectSelection = (props: {
     // all available object types in the currently visualized dfm (empty list means object types have not been determined  yet)
@@ -43,29 +31,22 @@ export const ObjectSelection = (props: {
     const alreadySelectedAllObjectTypesInitially = props.alreadySelectedAllObjectTypesInitially;
 
     // propagate current selection state up to parent
-    const setSelectedObjectTypes = function(selection: MultiValue<any>) {
+    const setSelectedObjectTypes = function(selection: string[]) {
         updateCallback({
-            selectedObjectTypes: selection.map((value, _idx, _arr) => {
-                return value.value;
-            }),
+            selectedObjectTypes: selection,
         });
     }
 
-    // all available selection options
-    let availableOptions: MultiValue<any> = availableObjectTypes.map((typeName) => {
-        return {
-            value: typeName,
-            label: typeName,
+    const handleChange = (event: SelectChangeEvent<string[]>) => {
+        const {
+            target: { value },
+        } = event;
+        if (typeof value === "string") {
+            setSelectedObjectTypes([value])
+        } else {
+            setSelectedObjectTypes(value)
         }
-    });
-
-    // all selected selection options
-    let selectedOptions:  MultiValue<any> = selectedObjectTypes.map((typeName) => {
-        return {
-            value: typeName,
-            label: typeName,
-        }
-    });
+    };
 
     // select all object types?
     useEffect(() => {
@@ -81,20 +62,63 @@ export const ObjectSelection = (props: {
         }
     });
 
+    const MenuProps = {
+        PaperProps: {
+            style: {
+                //maxHeight: ITEM_HEIGHT * 4.5 + ITEM_PADDING_TOP,
+                width: 100,
+            },
+        },
+    };
+
     return (
         <div className="ObjectSelection">
-            <ReactSelect
-                options={availableOptions}
-                isMulti={true}
-                closeMenuOnSelect={false}
-                hideSelectedOptions={false}
-                //allowSelectAll={true}
-                components={{
-                    Option
-                }}
-                onChange={setSelectedObjectTypes}
-                value={selectedOptions}
-            />
+            <Stack spacing={1} direction="row" justifyContent="flex-end">
+                <FormControl size="small" sx={{ m: 1, width: 300 }}>
+                    <InputLabel id="demo-multiple-name-label">Objects</InputLabel>
+                    <Select
+                        labelId="demo-multiple-name-label"
+                        id="demo-multiple-name"
+                        multiple
+                        value={selectedObjectTypes}
+                        onChange={handleChange}
+                        input={<OutlinedInput label="Objects" />}
+                        renderValue={(selected) => selected.join(', ')}
+                        MenuProps={MenuProps}
+                    >
+                        {availableObjectTypes.map((name) => (
+                            <MenuItem
+                                key={name}
+                                value={name}
+                                //style={getStyles(name, personName, theme)}
+                            >
+                                <Checkbox checked={selectedObjectTypes.indexOf(name) > -1} />
+                                {name}
+                            </MenuItem>
+                        ))}
+                    </Select>
+                </FormControl>
+                <Button
+                    onClick={() => {
+                        setSelectedObjectTypes(availableObjectTypes)
+                    }}
+                    sx={
+                        { 'min-width': '0px', 'color': 'rgb(var(--color1))', 'border-color': 'rgb(var(--color1))' }
+                    }
+                >
+                    <FontAwesomeIcon icon={faCheckSquare} />
+                </Button>
+                <Button
+                    onClick={() => {
+                        setSelectedObjectTypes([])
+                    }}
+                    sx={
+                        {  'min-width': '0px', 'color': 'rgb(var(--color1))', 'border-color': 'rgb(var(--color1))' }
+                    }
+                >
+                    <FontAwesomeIcon icon={faTrash} />
+                </Button>
+            </Stack>
         </div>
     );
 }
