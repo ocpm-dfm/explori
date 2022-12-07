@@ -7,6 +7,7 @@ export type UserSessionState = {
     ocel: string,
     filteringThreshold: number,
     selectedObjectTypes: string[],
+    alreadySelectedAllObjectTypesInitially: boolean,
 }
 
 type BackendSession = {
@@ -20,71 +21,6 @@ export function UserSession(props: {storeOrRestore: string, userSessionState?: U
     const userSessionState = props.userSessionState;
     const stateChangeCallback = props.stateChangeCallback;
 
-    async function storeSession(name: string, session: UserSessionState) {
-        const uri = getURI("/session/store", {});
-
-        await fetch(uri, {
-            method: 'PUT',
-            headers: {
-                "Content-type": "application/json"
-            },
-            body: JSON.stringify({
-                name: name,
-                session: translateToBackend(session.ocel, session.filteringThreshold, session.selectedObjectTypes),
-            })
-        })
-            .then((response) => response.json())
-            .then((result) => {
-                if (result.status === "successful") {
-                    localStorage.setItem('explori', JSON.stringify({
-                        latest_session_name: name,
-                    }));
-                }
-            })
-            .catch(err => console.log("Error in uploading ..."))
-    }
-
-    async function restoreSession(name: string, stateChangeCallback: any) {
-        const uri = getURI("/session/restore", {name: name});
-        //const uri = getURI("/session/available", {});
-        let session = ""; // TODO: request session from backend at {uri}
-
-        await fetch(uri)
-            .then((response) => response.json())
-            .then((result) => {
-                session = result
-            })
-            .catch(err => console.log("Error in uploading ..."))
-
-        /*fetch(uri)
-            .then((response) => response.json())
-            .then((result) => {
-                console.log(result)
-                if (result.status === "successful") {
-                    console.log("nice")
-                }
-            })
-            .catch(err => console.log("Error in uploading ...")) */
-        console.log(session)
-        stateChangeCallback(translateToFrontend(session));
-    }
-
-    function translateToBackend(ocel: string, threshold: number, objectTypes: string[]){
-        return {
-            base_ocel: ocel,
-            threshold: threshold,
-            object_types: objectTypes,
-        }
-    }
-
-    function translateToFrontend(session: any){
-        return {
-            ocel: session.base_ocel,
-            filteringThreshold: session.threshold,
-            selectedObjectTypes: session.object_types,
-        }
-    }
-
     let content;
     if (storeOrRestore === "store" && userSessionState) {
         content = (
@@ -92,8 +28,7 @@ export function UserSession(props: {storeOrRestore: string, userSessionState?: U
                 type={"button"}
                 value={"Store session"}
                 onClick={() => {
-                    // TODO: for now just use ocel name
-                    storeSession('default', userSessionState);
+                    storeSession("default", userSessionState);
                 }
             }></input>
         );
@@ -110,4 +45,57 @@ export function UserSession(props: {storeOrRestore: string, userSessionState?: U
     }
 
     return <DefaultLayout content={content} />
+}
+
+export async function storeSession(name: string, session: UserSessionState) {
+    const uri = getURI("/session/store", {});
+
+    await fetch(uri, {
+        method: 'PUT',
+        headers: {
+            "Content-type": "application/json"
+        },
+        body: JSON.stringify({
+            name: name,
+            session: translateToBackend(session),
+        })
+    })
+        .then((response) => response.json())
+        .then((result) => {
+            if (result.status === "successful") {
+                console.log("Storing of session " + name + " successful!");
+            }
+        })
+        .catch(err => console.log("Error in uploading ..."));
+}
+
+export async function restoreSession(name: string, stateChangeCallback: any) {
+    const uri = getURI("/session/restore", {name: name});
+
+    await fetch(uri)
+        .then((response) => response.json())
+        .then((result) => {
+            stateChangeCallback(translateToFrontend(result));
+            console.log("Restoring of session " + name + " successful!");
+        })
+        .catch(err => console.log("Error in uploading ..."));
+}
+
+function translateToBackend(session: UserSessionState): BackendSession{
+    return {
+        base_ocel: session.ocel,
+        threshold: session.filteringThreshold,
+        object_types: session.selectedObjectTypes,
+    }
+}
+
+function translateToFrontend(session: BackendSession): UserSessionState {
+    return {
+        ocel: session.base_ocel,
+        filteringThreshold: session.threshold,
+        selectedObjectTypes: session.object_types,
+        // Set `alreadySelectedAllObjectTypesInitially` to true as we're in the process of restoring a session
+        // which implies an existing object type selection which we don't want to overwrite!
+        alreadySelectedAllObjectTypesInitially: true,
+    }
 }
