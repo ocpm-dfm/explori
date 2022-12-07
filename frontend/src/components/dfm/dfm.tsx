@@ -107,11 +107,14 @@ export const FilteredDFM = (props: {dfm: DirectlyFollowsMultigraph | null, thres
             const objectTypeColor = getEdgeColor(numberOfColorsNeeded, i);
 
             const edges = dfm.subgraphs[objectType];
+            let hasDisplayedEdge = false;
+
             for (const edge of edges) {
 
                 // Ignore edges below the threshold
                 if (thresh < edge.threshold)
                     continue;
+                hasDisplayedEdge = true;
 
                 // Determine the edge nr of the current edge (starting with zero).
                 let edgeNr = 0;
@@ -139,7 +142,8 @@ export const FilteredDFM = (props: {dfm: DirectlyFollowsMultigraph | null, thres
                 allNodesOfSelectedObjectTypes.add(edge.target);
             }
 
-            legendObjectTypeColors.push([objectType, objectTypeColor]);
+            if (hasDisplayedEdge)
+                legendObjectTypeColors.push([objectType, objectTypeColor]);
         }
     });
 
