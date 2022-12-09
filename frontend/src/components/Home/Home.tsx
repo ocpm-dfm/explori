@@ -7,6 +7,7 @@ import {ExploriNavbar} from "../ExploriNavbar/ExploriNavbar";
 import "./Home.css";
 import {useAsyncAPI} from "../../api";
 import {UserSessionState} from "../UserSession/UserSession";
+import { FilteredCytoDFM } from '../cytoscape-dfm/cytodfm';
 
 
 export const Home = (props: { userSessionState: UserSessionState, stateChangeCallback: any}) => {
@@ -32,7 +33,7 @@ export const Home = (props: { userSessionState: UserSessionState, stateChangeCal
         <React.Fragment>
             <div className="Home">
                 <ExploriNavbar lowerRowSlot={objectTypeSelection} />
-                <FilteredDFM dfm={dfm_query.result} threshold={filteringThreshold / 100} selectedObjectTypes={selectedObjectTypes} />
+                <FilteredCytoDFM dfm={dfm_query.result} threshold={filteringThreshold / 100} selectedObjectTypes={selectedObjectTypes} />
                 <div className="Home-DetailSlider">
                     <div className="Home-DetailSlider-Label">
                         Less detail
