@@ -1,10 +1,13 @@
 import os
+import shutil
 from typing import List
 
-from fastapi import APIRouter, File, UploadFile
+from fastapi import APIRouter, File, UploadFile, HTTPException
 from pydantic import BaseModel
+from starlette import status
 
 from server.task_manager import TaskStatus
+from cache import get_long_term_cache
 
 router = APIRouter(prefix='/logs',
                    tags=['Log management'])
@@ -70,4 +73,31 @@ async def upload_event_logs(file: UploadFile):
             round(os.stat(file_location).st_size / 1024, 0)
         ]
 
+    }
+
+@router.get('/delete')
+def delete_event_log(file_path: str, uuid: str):
+    file_path_extended = "data/" + file_path
+    # Delete ocel and corresponding cache folder
+    if os.path.exists(file_path_extended):
+        os.remove(file_path_extended)
+        cache = get_long_term_cache()
+        folder = cache.get_folder(file_path_extended)
+        try:
+            shutil.rmtree(folder)
+        except OSError as e:
+            print("Error: %s - %s." % (e.filename, e.strerror))
+
+    else:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="File not found!")
+
+    # Delete corresponding autosave
+    autosave_path = "cache/sessions/autosave-" + uuid + ".json"
+    if os.path.exists(autosave_path):
+        os.remove(autosave_path)
+
+    # Delete hardsaved sessions ? TODO: if sessions make it into the final product
+
+    return {
+        "status": "successful"
     }

@@ -10,10 +10,11 @@ import ReactDataGrid from '@inovua/reactdatagrid-community';
 import '@inovua/reactdatagrid-community/index.css';
 import '@inovua/reactdatagrid-community/theme/blue-light.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCheck, faMultiply } from "@fortawesome/free-solid-svg-icons";
+import {faCheck, faMultiply, faTrash} from "@fortawesome/free-solid-svg-icons";
 import { TypeDataSource } from '@inovua/reactdatagrid-community/types';
 import { Session } from '../Session/Session';
 import { SwitchOcelsCallback } from "../../App";
+import getUuid from "uuid-by-string";
 
 export function EventLogList(props: EventLogListProps) {
     const switchOcelsCallback = props.switchOcelsCallback;
@@ -39,6 +40,20 @@ export function EventLogList(props: EventLogListProps) {
         }
     };
 
+    async function onDelete() {
+        if (selected !== null) {
+            const ocel = String(dataSource[Number(selected)].full_path)
+            const uri = getURI("/logs/delete", {file_path: ocel, uuid: getUuid(ocel)});
+            await fetch(uri)
+                .then((response) => response.json())
+                .then((result) => {
+                    setSelected(null)
+                    fetchData()
+                })
+                .catch(err => console.log("Error in deleting ..."));
+        }
+    }
+
     let compare = (a: { dir_type: string; }, b: { dir_type: string; }) => {
         if (a.dir_type < b.dir_type) {
             return 1;
@@ -55,7 +70,7 @@ export function EventLogList(props: EventLogListProps) {
         { name: 'name', header: 'File name', defaultFlex: 8 },
         { name: 'type', header: 'Type', defaultFlex: 2 },
         { name: 'size', header: 'File size', defaultFlex: 2 },
-        { name: 'extra', header: 'Uploaded', defaultFlex: 2 }
+        { name: 'extra', header: 'Uploaded', defaultFlex: 2 },
     ]
 
     const formatEventLogMetadata = (data: any) => {
@@ -65,13 +80,13 @@ export function EventLogList(props: EventLogListProps) {
             size: data[1] + " KB",
             dir_type: data[0].split("/")[0],
             extra: data[0].split("/")[0] === "uploaded" ? <FontAwesomeIcon icon={faCheck} /> : <FontAwesomeIcon icon={faMultiply} />,
-            type: data[0].split(".").pop()
+            type: data[0].split(".").pop(),
         }
 
         return eventLogMetadata
     }
 
-    useEffect(() => {
+    async function fetchData(){
         fetch(uri)
             .then(res => res.json())
             .then(data => {
@@ -97,12 +112,24 @@ export function EventLogList(props: EventLogListProps) {
             .catch(err => {
                 console.log("Error in loading ...")
             })
+    }
+
+    useEffect(() => {
+        fetchData()
     }, [])
 
     return (
         <div className="DefaultLayout-Container">
             <ExploriNavbar />
             <div className="EventLogList">
+                <Stack direction="row" justifyContent="flex-end">
+                    <Button variant={'outlined'} color={"error"} onClick={onDelete} className="SelectButton" sx={
+                        { 'min-width': '20px', 'bottom' : '10px'}
+                    }>
+                        <FontAwesomeIcon icon={faTrash} style={{marginRight: '10px'}}/>
+                        Delete
+                    </Button>
+                </Stack>
                 <ReactDataGrid
                     idProperty={"id"}
                     theme={"blue-light"}

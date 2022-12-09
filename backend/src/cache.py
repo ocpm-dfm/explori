@@ -124,6 +124,10 @@ class LongTermCache(ABC):
             value_type: LongTermCacheEntryType = LongTermCacheEntryType.JSONABLE) -> Any:
         pass
 
+    @abstractmethod
+    def get_folder(self, ocel: str) -> Any:
+        pass
+
 class FileBasedLongTermCache(LongTermCache):
 
     __cache_folder: str
@@ -161,6 +165,9 @@ class FileBasedLongTermCache(LongTermCache):
                 return pm4py.read_xes(filename)
             case _:
                 raise NotImplementedError()
+
+    def get_folder(self, ocel: str) -> str:
+        return self.__get_ocel_cache_folder(ocel)
 
     def __get_file_name(self, ocel: str, key: str, value_type: LongTermCacheEntryType) -> str:
         return os.path.join(self.__get_ocel_cache_folder(ocel), f"{key}.{value_type.value}")
