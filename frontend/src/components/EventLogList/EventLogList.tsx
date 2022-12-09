@@ -1,6 +1,11 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
+import Dialog from '@mui/material/Dialog';
+import DialogActions from '@mui/material/DialogActions';
+import DialogContent from '@mui/material/DialogContent';
+import DialogContentText from '@mui/material/DialogContentText';
+import DialogTitle from '@mui/material/DialogTitle';
 import './EventLogList.css';
 import '../DefaultLayout/DefaultLayout.css';
 import { ExploriNavbar } from "../ExploriNavbar/ExploriNavbar";
@@ -23,6 +28,15 @@ export function EventLogList(props: EventLogListProps) {
     const uri = getURI("/logs/available", {});
     const [selected, setSelected] = useState(null);
     const [dataSource, setDataSource] = useState(initialDataSource);
+    const [open, setOpen] = useState(false);
+
+    const handleClickOpen = () => {
+        setOpen(true);
+    };
+
+    const handleClose = () => {
+        setOpen(false);
+    };
 
 
     // @ts-ignore
@@ -123,12 +137,41 @@ export function EventLogList(props: EventLogListProps) {
             <ExploriNavbar />
             <div className="EventLogList">
                 <Stack direction="row" justifyContent="flex-end">
-                    <Button variant={'outlined'} color={"error"} onClick={onDelete} className="SelectButton" sx={
+                    <Button variant={'outlined'} color={"error"} onClick={() => {
+                        if (selected !== null){
+                            handleClickOpen()
+                        }
+                    }} className="SelectButton" sx={
                         { 'min-width': '20px', 'bottom' : '10px'}
                     }>
                         <FontAwesomeIcon icon={faTrash} style={{marginRight: '10px'}}/>
                         Delete
                     </Button>
+                    <Dialog
+                        open={open}
+                        onClose={handleClose}
+                        aria-labelledby="alert-dialog-title"
+                        aria-describedby="alert-dialog-description"
+                    >
+                        <DialogTitle id="alert-dialog-title">
+                            {"Do you really want to delete the selected OCEL?"}
+                        </DialogTitle>
+                        <DialogContent>
+                            <DialogContentText id="alert-dialog-description">
+                                If you decide to delete the selected OCEL, also all corresponding data like caches, autosaves, etc. will be deleted.
+                                Only press yes, if you know what you are doing.
+                            </DialogContentText>
+                        </DialogContent>
+                        <DialogActions>
+                            <Button onClick={handleClose} autoFocus>No</Button>
+                            <Button onClick={() => {
+                                onDelete()
+                                handleClose()
+                            }}>
+                                Yes
+                            </Button>
+                        </DialogActions>
+                    </Dialog>
                 </Stack>
                 <ReactDataGrid
                     idProperty={"id"}
