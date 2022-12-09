@@ -134,51 +134,6 @@ def calculate_threshold_counts_on_dfg(edge_totals: Dict[Edge, int], node_totals:
 
     return edge_counts, node_counts
 
-
-def prepare_threshold_computation(projected_traces: Dict[str, List[Tuple[List[str], int]]]) -> (
-        Dict[Tuple[str, str, str], int],
-        Dict[str, int],
-        Dict[Tuple[str, str, str], List[Tuple[List[str], int]]],
-        int):
-    # The DFM data structure we will use for filtering.
-    # edge := (sourceNode: str, targetNode: str, objectType: str)
-    # edge_counts := edge -> <nr of objects passing through that edge>: int
-    # node_counts := node -> <nr of objects passing through that node>: int
-    # edge_traces := edge -> [(trace: [nodes: str], <frequency of the trace>: int)]
-    # total_objects := <the total number of objects>: int
-    edge_counts: Dict[Tuple[str, str, str], int] = {}
-    node_counts: Dict[str, int] = {}
-    # edge -> [(trace, trace_count)]
-    edge_traces: Dict[Tuple[str, str, str], List[Tuple[List[str], int]]] = {}
-    total_objects = 0
-
-    # Step 1: Build DFM.
-    for object_type in projected_traces.keys():
-
-        for (variant, count_of_cases) in projected_traces[object_type]:
-
-            total_objects += count_of_cases
-            trace_tuple = (variant, count_of_cases)
-
-            seen_edges = set()
-
-            for i in range(len(variant) - 1):
-                edge = (variant[i], variant[i + 1], object_type)
-
-                edge_counts.setdefault(edge, 0)
-                edge_counts[edge] += count_of_cases
-
-                # An edge might repeat itself within a trace. We don't want the trace to be added twice.
-                if edge not in seen_edges:
-                    edge_traces.setdefault(edge, []).append(trace_tuple)
-                    seen_edges.add(edge)
-
-            for node in variant:
-                node_counts.setdefault(node, 0)
-                node_counts[node] += count_of_cases
-    return edge_counts, node_counts, edge_traces, total_objects
-
-
 def combine_node_counts(object_type_node_counts: Dict[ObjectType, Dict[Node, List[CountSeperator]]]) -> Dict[Node, List[CountSeperator]]:
     result: Dict[Node, List[CountSeperator]] = {}
     for type_counts in object_type_node_counts.values():

@@ -2,7 +2,7 @@ import json
 import os
 from unittest import TestCase
 
-from worker.tasks.dfm import prepare_threshold_computation, prepare_dfg_computation, \
+from worker.tasks.dfm import prepare_dfg_computation, \
     calculate_threshold_counts_on_dfg, combine_node_counts, START_TOKEN, STOP_TOKEN, CountSeperator
 
 
@@ -54,72 +54,6 @@ class DfmTests(TestCase):
         self.assertEqual(1, edge_counts[("b", "a")])
         self.assertEqual(wrapped[:], edge_traces[("a", "b")])
         self.assertEqual(wrapped[:], edge_traces[("b", "a")])
-
-    def test_preparation_on_simple(self):
-        projected_traces = DfmTests.get_simple_traces()
-        traces_tA = projected_traces["type_a"]
-        traces_tB = projected_traces["type_b"]
-
-        edge_counts, node_counts, edge_traces, total_objects = prepare_threshold_computation(projected_traces)
-
-        self.assertEqual(edge_counts[("a", "b", "type_a")], 15)
-        self.assertEqual(edge_counts[("a", "b", "type_a")], 15)
-        self.assertEqual(edge_counts[("a", "b", "type_b")], 10)
-        self.assertEqual(edge_counts[("b", "c", "type_b")], 15)
-        self.assertEqual(edge_counts[("a", "c", "type_b")], 1)
-
-        self.assertEqual(26, node_counts['a'])
-        self.assertEqual(30, node_counts['b'])
-        self.assertEqual(26, node_counts['c'])
-
-        self.assertEqual(traces_tA[0:2], edge_traces[("a", "b", "type_a")])
-        self.assertEqual(traces_tA[0:1], edge_traces[("b", "c", "type_a")])
-        self.assertEqual(traces_tB[0:1], edge_traces[("a", "b", "type_b")])
-        self.assertEqual(traces_tB[0:2], edge_traces[("b", "c", "type_b")])
-        self.assertEqual(traces_tB[2:3], edge_traces[("a", "c", "type_b")])
-
-        self.assertEqual(31, total_objects)
-
-    def test_preparation_on_looping(self):
-        projected_traces = DfmTests.get_simple_looping_traces()
-        traces_one = projected_traces["one"]
-        traces_two = projected_traces["two"]
-
-        edge_counts, node_counts, edge_traces, total_objects = prepare_threshold_computation(projected_traces)
-
-        self.assertEqual(5, node_counts["a"])
-        self.assertEqual(2, node_counts["b"])
-
-        self.assertEqual(2, edge_counts[("a", "a", "one")])
-        self.assertEqual(2, edge_counts[("a", "b", "two")])
-        self.assertEqual(1, edge_counts[("b", "a", "two")])
-
-        self.assertEqual(traces_one, edge_traces[("a", "a", "one")])
-        self.assertEqual(traces_two, edge_traces[("a", "b", "two")])
-        self.assertEqual(traces_two, edge_traces[("b", "a", "two")])
-
-        self.assertEqual(2, total_objects)
-
-    def test_preparation_using_sanity_checks(self):
-        def test(projected_traces):
-            edge_counts, node_counts, edge_traces, total_objects = prepare_threshold_computation(projected_traces)
-
-            alternative_node_counts = {}
-            alternative_total_objects = 0
-            for object_type in projected_traces:
-                for (trace, count) in projected_traces[object_type]:
-                    alternative_total_objects += count
-                    for node in trace:
-                        alternative_node_counts.setdefault(node, 0)
-                        alternative_node_counts[node] += count
-
-            self.assertEqual(alternative_node_counts, node_counts)
-            self.assertEqual(alternative_total_objects, total_objects)
-
-
-        test(DfmTests.get_simple_traces())
-        test(DfmTests.get_simple_looping_traces())
-        test(DfmTests.load_traces_from_resources("github-pm4py-traces.json"))
 
     def test_all_counts_have_a_zero_range(self):
         def test(projected_traces):
