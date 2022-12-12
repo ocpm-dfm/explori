@@ -1,15 +1,7 @@
 import CytoscapeComponent from "react-cytoscapejs";
 import {DirectlyFollowsMultigraph} from "../dfm/dfm";
 
-
-type FilteredNode = {
-    id: number,
-    label: string,
-    x: number | undefined,
-    y: number | undefined
-    fx: number | undefined
-    fy: number | undefined
-}
+import './cytodfm.css';
 
 
 const preselectedColors = [
@@ -23,6 +15,128 @@ const preselectedColors = [
     '#D81B60',
     '#795548'
 ]
+
+
+const startIcon = `data:image/svg+xml;utf8,${encodeURIComponent("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>\n" +
+    "<!-- Created with Inkscape (http://www.inkscape.org/) -->\n" +
+    "\n" +
+    "<svg\n" +
+    "   width=\"64\"\n" +
+    "   height=\"64\"\n" +
+    "   viewBox=\"0 0 16.933333 16.933333\"\n" +
+    "   version=\"1.1\"\n" +
+    "   id=\"svg5\"\n" +
+    "   inkscape:version=\"1.2.1 (9c6d41e410, 2022-07-14, custom)\"\n" +
+    "   sodipodi:docname=\"start.svg\"\n" +
+    "   xmlns:inkscape=\"http://www.inkscape.org/namespaces/inkscape\"\n" +
+    "   xmlns:sodipodi=\"http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd\"\n" +
+    "   xmlns=\"http://www.w3.org/2000/svg\"\n" +
+    "   xmlns:svg=\"http://www.w3.org/2000/svg\">\n" +
+    "  <sodipodi:namedview\n" +
+    "     id=\"namedview7\"\n" +
+    "     pagecolor=\"#ffffff\"\n" +
+    "     bordercolor=\"#666666\"\n" +
+    "     borderopacity=\"1.0\"\n" +
+    "     inkscape:showpageshadow=\"2\"\n" +
+    "     inkscape:pageopacity=\"0.0\"\n" +
+    "     inkscape:pagecheckerboard=\"0\"\n" +
+    "     inkscape:deskcolor=\"#d1d1d1\"\n" +
+    "     inkscape:document-units=\"mm\"\n" +
+    "     showgrid=\"true\"\n" +
+    "     inkscape:zoom=\"9.6402198\"\n" +
+    "     inkscape:cx=\"41.181634\"\n" +
+    "     inkscape:cy=\"33.401728\"\n" +
+    "     inkscape:window-width=\"1920\"\n" +
+    "     inkscape:window-height=\"979\"\n" +
+    "     inkscape:window-x=\"0\"\n" +
+    "     inkscape:window-y=\"0\"\n" +
+    "     inkscape:window-maximized=\"1\"\n" +
+    "     inkscape:current-layer=\"layer1\">\n" +
+    "    <inkscape:grid\n" +
+    "       type=\"xygrid\"\n" +
+    "       id=\"grid930\"\n" +
+    "       empspacing=\"8\" />\n" +
+    "  </sodipodi:namedview>\n" +
+    "  <defs\n" +
+    "     id=\"defs2\" />\n" +
+    "  <g\n" +
+    "     inkscape:label=\"Layer 1\"\n" +
+    "     inkscape:groupmode=\"layer\"\n" +
+    "     id=\"layer1\">\n" +
+    "    <circle\n" +
+    "       style=\"fill:none;fill-opacity:1;stroke:#1976d2;stroke-width:1.5875;stroke-opacity:1;stroke-dasharray:none\"\n" +
+    "       id=\"path989\"\n" +
+    "       cx=\"8.4666662\"\n" +
+    "       cy=\"8.4666662\"\n" +
+    "       r=\"6.3499999\" />\n" +
+    "    <path\n" +
+    "       style=\"fill:#1976d2;fill-opacity:1;stroke:none;stroke-width:0.363802px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1\"\n" +
+    "       d=\"M 6.4492186,5.5562503 10.484115,8.4666668 6.4492186,11.377083 Z\"\n" +
+    "       id=\"path4051\"\n" +
+    "       sodipodi:nodetypes=\"cccc\" />\n" +
+    "  </g>\n" +
+    "</svg>\n")}`
+const stopIcon = `data:image/svg+xml;utf8,${encodeURIComponent("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>\n" +
+    "<!-- Created with Inkscape (http://www.inkscape.org/) -->\n" +
+    "\n" +
+    "<svg\n" +
+    "   width=\"64\"\n" +
+    "   height=\"64\"\n" +
+    "   viewBox=\"0 0 16.933333 16.933333\"\n" +
+    "   version=\"1.1\"\n" +
+    "   id=\"svg5\"\n" +
+    "   inkscape:version=\"1.2.1 (9c6d41e410, 2022-07-14, custom)\"\n" +
+    "   sodipodi:docname=\"stop.svg\"\n" +
+    "   xmlns:inkscape=\"http://www.inkscape.org/namespaces/inkscape\"\n" +
+    "   xmlns:sodipodi=\"http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd\"\n" +
+    "   xmlns=\"http://www.w3.org/2000/svg\"\n" +
+    "   xmlns:svg=\"http://www.w3.org/2000/svg\">\n" +
+    "  <sodipodi:namedview\n" +
+    "     id=\"namedview7\"\n" +
+    "     pagecolor=\"#ffffff\"\n" +
+    "     bordercolor=\"#666666\"\n" +
+    "     borderopacity=\"1.0\"\n" +
+    "     inkscape:showpageshadow=\"2\"\n" +
+    "     inkscape:pageopacity=\"0.0\"\n" +
+    "     inkscape:pagecheckerboard=\"0\"\n" +
+    "     inkscape:deskcolor=\"#d1d1d1\"\n" +
+    "     inkscape:document-units=\"mm\"\n" +
+    "     showgrid=\"true\"\n" +
+    "     inkscape:zoom=\"9.6402198\"\n" +
+    "     inkscape:cx=\"41.181634\"\n" +
+    "     inkscape:cy=\"33.401728\"\n" +
+    "     inkscape:window-width=\"1920\"\n" +
+    "     inkscape:window-height=\"979\"\n" +
+    "     inkscape:window-x=\"0\"\n" +
+    "     inkscape:window-y=\"0\"\n" +
+    "     inkscape:window-maximized=\"1\"\n" +
+    "     inkscape:current-layer=\"layer1\">\n" +
+    "    <inkscape:grid\n" +
+    "       type=\"xygrid\"\n" +
+    "       id=\"grid930\"\n" +
+    "       empspacing=\"8\" />\n" +
+    "  </sodipodi:namedview>\n" +
+    "  <defs\n" +
+    "     id=\"defs2\" />\n" +
+    "  <g\n" +
+    "     inkscape:label=\"Layer 1\"\n" +
+    "     inkscape:groupmode=\"layer\"\n" +
+    "     id=\"layer1\">\n" +
+    "    <circle\n" +
+    "       style=\"fill:none;fill-opacity:1;stroke:#1976d2;stroke-width:1.5875;stroke-opacity:1;stroke-dasharray:none\"\n" +
+    "       id=\"path989\"\n" +
+    "       cx=\"8.4666662\"\n" +
+    "       cy=\"8.4666662\"\n" +
+    "       r=\"6.3499999\" />\n" +
+    "    <rect\n" +
+    "       style=\"fill:#1976d2;fill-opacity:1;stroke:none;stroke-width:1.5875;stroke-dasharray:none;stroke-opacity:1\"\n" +
+    "       id=\"rect4415\"\n" +
+    "       width=\"4.2333331\"\n" +
+    "       height=\"4.2333331\"\n" +
+    "       x=\"6.3499999\"\n" +
+    "       y=\"6.3499999\" />\n" +
+    "  </g>\n" +
+    "</svg>\n")}`;
 
 // https://stackoverflow.com/questions/1484506/random-color-generator/7419630#7419630
 function generateColors(numColors: number, colorIndex: number) {
@@ -65,13 +179,6 @@ export const FilteredCytoDFM = (props: {
     threshold: number,
     selectedObjectTypes: string[]}) =>
 {
-    // const elements = [
-    //     { data: { id: 'one', label: 'Node 1' }, classes: 'activity' },
-    //     { data: { id: 'two', label: 'Node 2' }, classes: 'activity' },
-    //     { data: { source: 'one', target: 'two', label: 'Edge from Node1 to Node2' }, classes: "bezier" },
-    //     { data: { source: 'one', target: 'two', label: 'Edge 2 from Node1 to Node2', color: "#E53935" }, classes: "bezier" },
-    // ];
-
     const dfm = props.dfm;
     const thresh = props.threshold;
     const selectedObjectTypes = props.selectedObjectTypes;
@@ -141,16 +248,41 @@ export const FilteredCytoDFM = (props: {
     // Filter the nodes by threshold and object type and prepare them for forcegraph.
     const filteredNodes = Array.from(allNodesOfSelectedObjectTypes)
         .filter(i => (thresh >= dfm.nodes[i].threshold))        // Removes nodes that are below our threshold.
-        .map((i: number) => (
-            {
-                data: {
-                    id: `${i}`,
-                    label: `${dfm.nodes[i].label} (${getCountAtThreshold(dfm.nodes[i].counts, thresh)})`,
-                    numberId: i
-                },
-                classes: "activity"
+        .map((i: number) => {
+            if (i === 0) {
+                return {
+                    data: {
+                        id: `${i}`,
+                        label: 'Process start',
+                        numberId: i,
+                        image: startIcon
+                    },
+                    classes: "icon"
+                }
             }
-        ));
+            if (i === 1) {
+                return {
+                    data: {
+                        id: `${i}`,
+                        numberId: i,
+                        image: stopIcon,
+                        label: "Process end"
+                    },
+                    classes: "icon"
+                }
+            }
+
+            return (
+                {
+                    data: {
+                        id: `${i}`,
+                        label: `${dfm.nodes[i].label} (${getCountAtThreshold(dfm.nodes[i].counts, thresh)})`,
+                        numberId: i
+                    },
+                    classes: "activity"
+                }
+            );
+        });
 
     filteredNodes.sort((a, b) =>
         nodeDegrees[a.data.numberId] < nodeDegrees[b.data.numberId] ? -1 : 1);
@@ -174,23 +306,18 @@ export const FilteredCytoDFM = (props: {
         }
     },
     {
-        'selector': '.activity',
-        'style':
-        {
-            'shape': 'rectangle'
+        selector: ".icon",
+        "style": {
+            backgroundColor: "rgba(255, 255, 255, 0)",
+            "color": "black",
+            "background-image": "data(image)",
+            "background-fit": "cover",
+            "width": "3em",
+            "height": "3em",
+            "background-height": "3em",
+            "background-width": "3em",
+            "text-halign": "right",
         }
-    },
-    {
-        'selector': '.object_type',
-        'style': {
-        'shape': 'ellipse'
-    }
-    },
-    {
-        'selector': '.formula',
-        'style': {
-        'shape': 'roundrectangle'
-    }
     },
     {
         "selector": 'edge',  // For all edges
@@ -220,26 +347,44 @@ export const FilteredCytoDFM = (props: {
     }];
 
     const layout = {
-        name: 'breadthfirst',
-        roots: filteredNodes.length > 0 ? [filteredNodes[0].data.id] : undefined,
-        fit: true,
-        nodeDimensionsIncludeLabels: true,
-        spacingFactor: 0.7
+        name: 'elk',
+        // roots: filteredNodes.length > 0 ? [filteredNodes[0].data.id] : undefined,
+        // fit: true,
+        // nodeDimensionsIncludeLabels: true,
+        spacingFactor: 1,
 
-        // elk: {
-        //     'algorithm': 'mrtree',
-        //     'elk.direction': 'DOWN',
-        //     'spacing.portsSurrounding': 20,
-        //     "spacing.nodeNodeBetweenLayers": 100
-        // }
+        elk: {
+            'algorithm': 'layered',
+            'elk.direction': 'DOWN',
+            'spacing.portsSurrounding': 20,
+            "spacing.nodeNodeBetweenLayers": 100
+        }
     }
 
-    return <CytoscapeComponent
+    return (
+        <div className="CytoDFM-container" id="DFM-container">
+            <CytoscapeComponent
                 elements={elements}
                 stylesheet={style}
                 layout={layout}
                 style={ { width: '100%', height: '100%' } }
-                wheelSensitivity={0.2}/>;
+                wheelSensitivity={0.2}/>
+            { legendObjectTypeColors.length > 0 &&
+                <ul className="CytoDFM-Legend">
+                    {
+                        legendObjectTypeColors.map(([type, color]) => (
+                            <li key={type}>
+                                <div className="CytoDFM-Legend-Circle" style={{backgroundColor: color}}>
+                                </div>
+                                {type}
+                            </li>
+                        ))
+                    }
+                </ul>
+            }
+        </div>
+        )
+    ;
 }
 
 function getCountAtThreshold(counts: [number, number][], threshold: number): number {
