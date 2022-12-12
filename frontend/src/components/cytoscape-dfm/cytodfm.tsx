@@ -2,6 +2,8 @@ import CytoscapeComponent from "react-cytoscapejs";
 import {DirectlyFollowsMultigraph} from "../dfm/dfm";
 
 import './cytodfm.css';
+import {useState} from "react";
+import cytoscape, {EventObject} from "cytoscape";
 
 
 const preselectedColors = [
@@ -15,8 +17,6 @@ const preselectedColors = [
     '#D81B60',
     '#795548'
 ]
-
-
 const startIcon = `data:image/svg+xml;utf8,${encodeURIComponent("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>\n" +
     "<!-- Created with Inkscape (http://www.inkscape.org/) -->\n" +
     "\n" +
@@ -156,8 +156,7 @@ function generateColors(numColors: number, colorIndex: number) {
         default: r = 0; g = 0; b = 0; break; // to make typescript happy and avoid r,g,b "possibly" being undefined
     }
 
-    let color = "#" + ("00" + (~ ~(r * 255)).toString(16)).slice(-2) + ("00" + (~ ~(g * 255)).toString(16)).slice(-2) + ("00" + (~ ~(b * 255)).toString(16)).slice(-2);
-    return color;
+    return "#" + ("00" + (~~(r * 255)).toString(16)).slice(-2) + ("00" + (~~(g * 255)).toString(16)).slice(-2) + ("00" + (~~(b * 255)).toString(16)).slice(-2);
 }
 
 // Either choose from preselected set of colors or generate an arbitrary amount of colors if not enough were preselected.
@@ -174,17 +173,41 @@ function getEdgeColor(numberOfColorsNeeded: number, indexOfCurrentColor: number)
     }
 }
 
+
+interface NodeState {
+    x: number | null
+    y: number | null
+    frozen: boolean
+}
+
+interface CytoDFMState {
+    nodeStates: NodeState[],
+    dfmName: string | null
+}
+
 export const FilteredCytoDFM = (props: {
     dfm: DirectlyFollowsMultigraph | null,
     threshold: number,
     selectedObjectTypes: string[]}) =>
 {
+    const [state, setState] = useState<CytoDFMState>({
+        nodeStates: [],
+        dfmName: null
+    });
+
     const dfm = props.dfm;
     const thresh = props.threshold;
     const selectedObjectTypes = props.selectedObjectTypes;
 
     if (!dfm) {
-        return <div style={{height: "100%"}} />;
+        // Reset the state if necessary.
+        if (state.dfmName != null) {
+            setState({
+                nodeStates: [],
+                dfmName: null
+            });
+        }
+        return <div style={{height: "100%", minHeight: "80vh"}} />;
     }
 
 
@@ -211,7 +234,7 @@ export const FilteredCytoDFM = (props: {
                 const count = getCountAtThreshold(edge.counts, thresh);
 
                 let classes = "";
-                if (edge.source == edge.target)
+                if (edge.source === edge.target)
                     classes = "loop";
 
                 links.push(
@@ -279,7 +302,11 @@ export const FilteredCytoDFM = (props: {
                         label: `${dfm.nodes[i].label} (${getCountAtThreshold(dfm.nodes[i].counts, thresh)})`,
                         numberId: i
                     },
-                    classes: "activity"
+                    classes: "activity",
+                    position: {
+                        x: 10,
+                        y: 10
+                    }
                 }
             );
         });
@@ -346,12 +373,47 @@ export const FilteredCytoDFM = (props: {
         }
     }];
 
+    // region Layouting and frozen node positioning
+    let nodePositions: NodeState[];
+    if (state.nodeStates.length === dfm.nodes.length)
+        nodePositions = Array.from(state.nodeStates);
+    else
+        nodePositions = [...Array(dfm.nodes.length).keys()].map(() => ({
+            x: null,
+            y: null,
+            frozen: false
+        }))
+    let nodePositionsChanged = false;
+
+    function updateNodePositionsInState() {
+        if (nodePositionsChanged) {
+            setState((old) => {
+                return Object.assign(old, {nodeStates: nodePositions})
+            });
+            nodePositionsChanged = false;
+        }
+    }
+
     const layout = {
         name: 'elk',
-        // roots: filteredNodes.length > 0 ? [filteredNodes[0].data.id] : undefined,
-        // fit: true,
-        // nodeDimensionsIncludeLabels: true,
         spacingFactor: 1,
+        transform: (node: any, pos: {x: number, y: number}) => {
+            const nodeId = node.data().numberId;
+            const storedPosition = nodePositions[nodeId];
+            // If the node is frozen, return the stored state.
+            if (storedPosition.frozen && storedPosition.x != null && storedPosition.y != null)
+                return {x: storedPosition.x, y: storedPosition.y}
+
+            if (pos.x !== storedPosition.x || pos.y !== storedPosition.y) {
+                storedPosition.x = pos.x;
+                storedPosition.y = pos.y;
+                nodePositionsChanged = true;
+            }
+            return pos;
+        },
+        stop: () => {
+            updateNodePositionsInState();
+        },
 
         elk: {
             'algorithm': 'layered',
@@ -361,6 +423,27 @@ export const FilteredCytoDFM = (props: {
         }
     }
 
+    function registerEvents(cy: cytoscape.Core) {
+        cy.on("dragfreeon", "node", (event: EventObject) => {
+            const item = event.target;
+            console.log("event", event)
+            if (item.isNode()) {
+                console.log("b")
+                const node = item as cytoscape.NodeSingular;
+                const newPos = node.position();
+                const nodeId = node.data().numberId;
+                const oldPosition = nodePositions[nodeId];
+                if (newPos.x !== oldPosition.x || newPos.y !== oldPosition.y) {
+                    oldPosition.x = newPos.x;
+                    oldPosition.y = newPos.y;
+                    nodePositionsChanged = true;
+                    updateNodePositionsInState();
+                }
+            }
+        })
+    }
+    // endregion
+
     return (
         <div className="CytoDFM-container" id="DFM-container">
             <CytoscapeComponent
@@ -369,7 +452,7 @@ export const FilteredCytoDFM = (props: {
                 layout={layout}
                 style={ { width: '100%', height: '100%' } }
                 wheelSensitivity={0.2}
-
+                cy={registerEvents}
             />
             { legendObjectTypeColors.length > 0 &&
                 <ul className="CytoDFM-Legend">
