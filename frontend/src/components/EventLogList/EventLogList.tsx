@@ -6,6 +6,12 @@ import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import DialogContentText from '@mui/material/DialogContentText';
 import DialogTitle from '@mui/material/DialogTitle';
+import Select, { SelectChangeEvent } from '@mui/material/Select';
+import MenuItem from '@mui/material/MenuItem';
+import Checkbox from '@mui/material/Checkbox';
+import FormControl from '@mui/material/FormControl';
+import OutlinedInput from '@mui/material/OutlinedInput';
+import InputLabel from '@mui/material/InputLabel';
 import './EventLogList.css';
 import '../DefaultLayout/DefaultLayout.css';
 import { ExploriNavbar } from "../ExploriNavbar/ExploriNavbar";
@@ -21,14 +27,32 @@ import { Session } from '../Session/Session';
 import { SwitchOcelsCallback } from "../../App";
 import getUuid from "uuid-by-string";
 
+interface columnType {
+    name: string,
+    header: string,
+    defaultWidth: number
+}
+
 export function EventLogList(props: EventLogListProps) {
     const switchOcelsCallback = props.switchOcelsCallback;
 
+    // need filename, object_types, parameters = obj types, activity name, time name, separator
+
     let initialDataSource: TypeDataSource = [];
+    let initialColumns: columnType[] = [];
+    let initialObjectTypes: string[] = [];
     const uri = getURI("/logs/available", {});
     const [selected, setSelected] = useState(null);
     const [dataSource, setDataSource] = useState(initialDataSource);
+    const [columnsCSV, setColumnsCSV] = useState(initialColumns);
+    const [dataCSV, setDataCSV] = useState(initialDataSource);
+    const [csvSelected, setCSVSelected] = useState(false);
     const [open, setOpen] = useState(false);
+
+    const [objectTypes, setObjectTypes] = useState(initialObjectTypes);
+    const [activityName, setActivityName] = useState("");
+    const [timestampName, setTimestampName] = useState("");
+    const [separator, setSeparator] = useState("");
 
     const handleClickOpen = () => {
         setOpen(true);
@@ -38,11 +62,59 @@ export function EventLogList(props: EventLogListProps) {
         setOpen(false);
     };
 
+    const handleObjectTypeChange = (event: SelectChangeEvent<string[]>) => {
+        const {
+            target: { value },
+        } = event;
+        if (typeof value === "string") {
+            setObjectTypes([value])
+        } else {
+            setObjectTypes(value)
+        }
+    };
+
+    const handleActivityNameChange = (event: SelectChangeEvent<string>) => {
+        const {
+            target: { value },
+        } = event;
+        setActivityName(value);
+    };
+
+    const handleTimestampNameChange = (event: SelectChangeEvent<string>) => {
+        const {
+            target: { value },
+        } = event;
+        setTimestampName(value);
+    };
+
+    const handleSeparatorChange = (event: SelectChangeEvent<string>) => {
+        const {
+            target: { value },
+        } = event;
+        setSeparator(value);
+    };
+
+    //TODO: check which separators are supported by OCPA
+    const separators = [
+        ',',
+        ';',
+        '""',
+        'TAB',
+        '/',
+        '{}'
+    ]
 
     // @ts-ignore
     let onSelection = useCallback(({ selected }) => {
         setSelected(selected);
-    }, []);
+        if(String(dataSource[Number(selected)].type) === "csv"){
+            setCSVSelected(true);
+            getCSVData(selected);
+            getColumns(selected);
+        } else {
+            setCSVSelected(false);
+        }
+    }, [dataSource]);
 
     let onSelect = () => {
         if (selected !== null) {
@@ -62,7 +134,7 @@ export function EventLogList(props: EventLogListProps) {
                 .then((response) => response.json())
                 .then((result) => {
                     setSelected(null)
-                    fetchData()
+                    fetchListData()
                 })
                 .catch(err => console.log("Error in deleting ..."));
         }
@@ -100,7 +172,47 @@ export function EventLogList(props: EventLogListProps) {
         return eventLogMetadata
     }
 
-    async function fetchData(){
+    function generateColumns(columnData: string[]){
+        return columnData.map((columnName: string) => {
+            return {
+                name: columnName,
+                header: columnName,
+                defaultWidth: 150
+            }
+        })
+    }
+
+    function getColumns(selectedID: number){
+        const ocel = String(dataSource[Number(selectedID)].full_path)
+        const uri: string = getURI("/logs/csv_columns", {file_path: ocel});
+        fetch(uri)
+            .then(res => res.json())
+            .then(data => {
+                if (data !== undefined || data !== null) {
+                    setColumnsCSV(generateColumns(data))
+                }
+            })
+            .catch(err => {
+                console.log("Error in fetching column data ...")
+            })
+    }
+
+    function getCSVData(selectedID: number){
+        const ocel = String(dataSource[Number(selectedID)].full_path)
+        const uri: string = getURI("/logs/csv_data", {file_path: ocel, n_columns: 10});
+        fetch(uri)
+            .then(res => res.json())
+            .then(data => {
+                if (data !== undefined || data !== null) {
+                    setDataCSV(Object.values(JSON.parse(data)))
+                }
+            })
+            .catch(err => {
+                console.log("Error in fetching csv data ...")
+            })
+    }
+
+    function fetchListData(){
         fetch(uri)
             .then(res => res.json())
             .then(data => {
@@ -129,7 +241,8 @@ export function EventLogList(props: EventLogListProps) {
     }
 
     useEffect(() => {
-        fetchData()
+        fetchListData()
+        //getColumns()
     }, [])
 
     return (
@@ -197,6 +310,123 @@ export function EventLogList(props: EventLogListProps) {
                         Select
                     </Button>
                 </Stack>
+                {
+                    // TODO: put these 4 select elements into function which returns correct format, duplicated code
+                    // TODO: add default values for activity, timestamp and objects
+                    // TODO: propagate selections to correct position
+                    // TODO: save settings for event log? if yes, also delete it when deleting log
+                    // TODO: BUG: select one csv, select some objects, select new csv, objects remain
+                    csvSelected && (
+                        <React.Fragment>
+                            <div style={{'marginTop': '20px'}}>
+                                <ReactDataGrid
+                                    idProperty={"id"}
+                                    theme={"blue-light"}
+                                    columns={columnsCSV}
+                                    dataSource={dataCSV}
+                                    style={gridStyle}
+                                    selected={selected}
+                                    //enableSelection={true}
+                                    onSelectionChange={onSelection}
+                                ></ReactDataGrid>
+                            </div>
+                            <Stack justifyContent="center" sx={{width: 800}}>
+                                <FormControl size="small" sx={{ m: 1, width: 800 }}>
+                                    <InputLabel id="demo-multiple-name-label">Objects</InputLabel>
+                                    <Select
+                                        labelId="demo-multiple-name-label"
+                                        id="demo-multiple-name"
+                                        multiple
+                                        value={objectTypes}
+                                        onChange={handleObjectTypeChange}
+                                        input={<OutlinedInput label="Objects" />}
+                                        renderValue={(selected) => selected.join(', ')}
+                                        //MenuProps={MenuProps}
+                                    >
+                                        {columnsCSV.map((column) => (
+                                            <MenuItem
+                                                key={column.name}
+                                                value={column.name}
+                                                //style={getStyles(name, personName, theme)}
+                                            >
+                                                <Checkbox checked={objectTypes.indexOf(column.name) > -1} />
+                                                {column.name}
+                                            </MenuItem>
+                                        ))}
+                                    </Select>
+                                </FormControl>
+                                <FormControl size="small" sx={{ m: 1, width: 800 }}>
+                                    <InputLabel id="demo-multiple-name-label">Activity</InputLabel>
+                                    <Select
+                                        labelId="demo-multiple-name-label"
+                                        id="demo-multiple-name"
+                                        value={activityName}
+                                        onChange={handleActivityNameChange}
+                                        input={<OutlinedInput label="Activity" />}
+                                        //renderValue={(selected) => selected.join(', ')}
+                                        //MenuProps={MenuProps}
+                                    >
+                                        {columnsCSV.map((column) => (
+                                            <MenuItem
+                                                key={column.name}
+                                                value={column.name}
+                                                //style={getStyles(name, personName, theme)}
+                                            >
+                                                {column.name}
+                                            </MenuItem>
+                                        ))}
+                                    </Select>
+                                </FormControl>
+                                <FormControl size="small" sx={{ m: 1, width: 800 }}>
+                                    <InputLabel id="demo-multiple-name-label">Timestamp</InputLabel>
+                                    <Select
+                                        labelId="demo-multiple-name-label"
+                                        id="demo-multiple-name"
+                                        value={timestampName}
+                                        onChange={handleTimestampNameChange}
+                                        input={<OutlinedInput label="Timestamp" />}
+                                        //renderValue={(selected) => selected.join(', ')}
+                                        //MenuProps={MenuProps}
+                                    >
+                                        {columnsCSV.map((column) => (
+                                            <MenuItem
+                                                key={column.name}
+                                                value={column.name}
+                                                //style={getStyles(name, personName, theme)}
+                                            >
+                                                {column.name}
+                                            </MenuItem>
+                                        ))}
+                                    </Select>
+                                </FormControl>
+                                <FormControl size="small" sx={{ m: 1, width: 800 }}>
+                                    <InputLabel id="demo-multiple-name-label">Separator</InputLabel>
+                                    <Select
+                                        labelId="demo-multiple-name-label"
+                                        id="demo-multiple-name"
+                                        value={separator}
+                                        onChange={handleSeparatorChange}
+                                        input={<OutlinedInput label="Separator" />}
+                                        //renderValue={(selected) => selected.join(', ')}
+                                        //MenuProps={MenuProps}
+                                    >
+                                        {separators.map((separate) => (
+                                            <MenuItem
+                                                key={separate}
+                                                value={separate}
+                                                //style={getStyles(name, personName, theme)}
+                                            >
+                                                {separate}
+                                            </MenuItem>
+                                        ))}
+                                    </Select>
+                                </FormControl>
+                            </Stack>
+                        </React.Fragment>
+                    )
+                }
+
+
             </div>
         </div>
     );

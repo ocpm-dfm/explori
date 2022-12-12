@@ -1,5 +1,6 @@
 import os
 import shutil
+import pandas as pd
 from typing import List
 
 from fastapi import APIRouter, File, UploadFile, HTTPException
@@ -24,6 +25,17 @@ class AvailableLogsResponseModel(BaseModel):
             ]
         }
 
+class ColumnListResponseModel(BaseModel):
+    __root__: List[str]
+    class Config:
+        schema_extra = {
+            "example": [
+                "ORDER",
+                "CONTAINER",
+                "REQ"
+            ]
+        }
+
 @router.get('/available', response_model=AvailableLogsResponseModel)
 def list_available_logs() -> TaskStatus:
     """
@@ -34,7 +46,7 @@ def list_available_logs() -> TaskStatus:
         result = []
         for node in os.listdir(folder):
             complete_path = os.path.join(folder, node)
-            if os.path.isfile(complete_path) and (node.endswith(".jsonocel") or node.endswith(".xmlocel")):
+            if os.path.isfile(complete_path) and (node.endswith(".jsonocel") or node.endswith(".xmlocel") or node.endswith(".csv")):
                 result.append(os.path.join(folder, node))
             elif os.path.isdir(complete_path):
                 result.extend(find_available_logs(complete_path))
@@ -101,3 +113,28 @@ def delete_event_log(file_path: str, uuid: str):
     return {
         "status": "successful"
     }
+
+@router.get('/csv_columns', response_model=ColumnListResponseModel)
+def get_csv_columns(file_path: str):
+    file_path_extended = "data/" + file_path
+
+    if not os.path.isfile(file_path_extended):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not a file.")
+
+    #with open(file_path_extended, 'r') as f:
+    dataframe = pd.read_csv(file_path_extended, sep=',')
+    return list(dataframe.columns.values)
+
+@router.get('/csv_data')
+def get_csv_columns(file_path: str, n_columns: int):
+    file_path_extended = "data/" + file_path
+
+    if not os.path.isfile(file_path_extended):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not a file.")
+
+    #with open(file_path_extended, 'r') as f:
+    dataframe = pd.read_csv(file_path_extended, sep=',')
+    return dataframe.head(n_columns).to_json(orient="index")
+
+
+

@@ -88,7 +88,7 @@ export function Session(_props: any) {
                     <input
                         type="file"
                         hidden
-                        accept=".jsonocel, .xmlocel"
+                        accept=".jsonocel, .xmlocel, .csv"
                         name="uploadEventLog"
                         onChange={handleFileSelection}
                     >
