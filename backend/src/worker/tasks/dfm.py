@@ -64,7 +64,7 @@ def prepare_dfg_computation(traces: List[Trace]) -> (
 
     for (variant, count_of_cases) in traces:
         # Wrap the trace by a start and a stop token so traces of length 1 are handled correctly.
-        variant = [START_TOKEN] + variant + [STOP_TOKEN]
+        variant = [START_TOKEN] + list(variant) + [STOP_TOKEN]
         total_objects += count_of_cases
         trace_tuple = Trace(variant, count_of_cases)
 

@@ -368,7 +368,9 @@ export const FilteredCytoDFM = (props: {
                 stylesheet={style}
                 layout={layout}
                 style={ { width: '100%', height: '100%' } }
-                wheelSensitivity={0.2}/>
+                wheelSensitivity={0.2}
+
+            />
             { legendObjectTypeColors.length > 0 &&
                 <ul className="CytoDFM-Legend">
                     {
