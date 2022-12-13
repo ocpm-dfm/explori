@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
 import Dialog from '@mui/material/Dialog';
@@ -175,7 +175,7 @@ export function EventLogList(props: EventLogListProps) {
     ]
 
     const formatEventLogMetadata = (data: any) => {
-        const eventLogMetadata = {
+        return {
             full_path: data[0],
             name: data[0].split("/").pop().split(".").slice(0, -1),
             size: data[1] + " KB",
@@ -183,8 +183,6 @@ export function EventLogList(props: EventLogListProps) {
             extra: data[0].split("/")[0] === "uploaded" ? <FontAwesomeIcon icon={faCheck} /> : <FontAwesomeIcon icon={faMultiply} />,
             type: data[0].split(".").pop(),
         }
-
-        return eventLogMetadata
     }
 
     function generateColumns(columnData: string[]){
@@ -199,7 +197,7 @@ export function EventLogList(props: EventLogListProps) {
 
     function findDefaultValue(columnData: columnType[], value: string, isMultiple: boolean){
         let matches: string[] = [];
-        columnData.map((column: columnType) => {
+        columnData.forEach((column: columnType) => {
             if(column.name.search(value) !== -1){
                 matches.push(column.name)
             }
@@ -274,7 +272,7 @@ export function EventLogList(props: EventLogListProps) {
         fetch(uri)
             .then(res => res.json())
             .then(data => {
-                if (data !== undefined || data !== null) {
+                if (data !== undefined) {
                     setColumnsCSV(generateColumns(data))
                 }
             })
@@ -289,7 +287,7 @@ export function EventLogList(props: EventLogListProps) {
         fetch(uri)
             .then(res => res.json())
             .then(data => {
-                if (data !== undefined || data !== null) {
+                if (data !== undefined) {
                     setDataCSV(Object.values(JSON.parse(data)))
                 }
             })
@@ -302,7 +300,7 @@ export function EventLogList(props: EventLogListProps) {
         fetch(uri)
             .then(res => res.json())
             .then(data => {
-                if (data !== undefined || data !== null) {
+                if (data !== undefined) {
                     const formattedData = data.map((eventLog: any, index: number) => {
                         const eventLogMetadata = formatEventLogMetadata(eventLog)
                         return {
