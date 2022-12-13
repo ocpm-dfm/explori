@@ -121,7 +121,6 @@ def get_csv_columns(file_path: str):
     if not os.path.isfile(file_path_extended):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not a file.")
 
-    #with open(file_path_extended, 'r') as f:
     dataframe = pd.read_csv(file_path_extended, sep=',')
     return list(dataframe.columns.values)
 
@@ -132,7 +131,6 @@ def get_csv_columns(file_path: str, n_columns: int):
     if not os.path.isfile(file_path_extended):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not a file.")
 
-    #with open(file_path_extended, 'r') as f:
     dataframe = pd.read_csv(file_path_extended, sep=',')
     return dataframe.head(n_columns).to_json(orient="index")
 

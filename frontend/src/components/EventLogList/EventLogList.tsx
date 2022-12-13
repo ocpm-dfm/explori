@@ -150,7 +150,7 @@ export function EventLogList(props: EventLogListProps) {
         return 0;
     }
 
-    const gridStyle = { maxHeight: "70vh", maxWidth: "70vw" }
+    const gridStyle = { maxHeight: "70vh", maxWidth: "85vw" }
 
     const columns = [
         { name: 'name', header: 'File name', defaultFlex: 8 },
@@ -180,6 +180,44 @@ export function EventLogList(props: EventLogListProps) {
                 defaultWidth: 150
             }
         })
+    }
+
+    function generateSelect(
+        label: string,
+        changeValue: any,
+        values: any[],
+        handleChange: ((event: SelectChangeEvent<any[] | any>, child: React.ReactNode) => void) | undefined,
+        isMultiple: boolean,
+    ){
+        return (
+            <FormControl size="small" sx={{ m: 1, width: '80vw' }}>
+                <InputLabel id={label + "_InputLabel"}>{label}</InputLabel>
+                <Select
+                    labelId={label}
+                    id={label}
+                    multiple={isMultiple}
+                    value={changeValue}
+                    onChange={handleChange}
+                    input={<OutlinedInput label={label} />}
+                    renderValue={
+                        isMultiple? (selected) => selected.join(', ') : (selected) => {return selected}
+                    }
+                    //MenuProps={MenuProps}
+                >
+                    {values.map((column) => (
+                        <MenuItem
+                            key={column.name}
+                            value={column.name}
+                        >
+                            {isMultiple && (
+                                <Checkbox checked={changeValue.indexOf(column.name) > -1} />
+                            )}
+                            {column.name}
+                        </MenuItem>
+                    ))}
+                </Select>
+            </FormControl>
+        );
     }
 
     function getColumns(selectedID: number){
@@ -311,7 +349,6 @@ export function EventLogList(props: EventLogListProps) {
                     </Button>
                 </Stack>
                 {
-                    // TODO: put these 4 select elements into function which returns correct format, duplicated code
                     // TODO: add default values for activity, timestamp and objects
                     // TODO: propagate selections to correct position
                     // TODO: save settings for event log? if yes, also delete it when deleting log
@@ -330,84 +367,18 @@ export function EventLogList(props: EventLogListProps) {
                                     onSelectionChange={onSelection}
                                 ></ReactDataGrid>
                             </div>
-                            <Stack justifyContent="center" sx={{width: 800}}>
-                                <FormControl size="small" sx={{ m: 1, width: 800 }}>
-                                    <InputLabel id="demo-multiple-name-label">Objects</InputLabel>
+                            <Stack justifyContent="center" sx={{width: '85vw'}}>
+                                {generateSelect("Objects", objectTypes, columnsCSV, handleObjectTypeChange, true )}
+                                {generateSelect("Activity", activityName, columnsCSV, handleActivityNameChange, false )}
+                                {generateSelect("Timestamp", timestampName, columnsCSV, handleTimestampNameChange, false )}
+                                <FormControl size="small" sx={{ m: 1, width: '80vw' }}>
+                                    <InputLabel id="Separator_InputLabel">Separator</InputLabel>
                                     <Select
-                                        labelId="demo-multiple-name-label"
-                                        id="demo-multiple-name"
-                                        multiple
-                                        value={objectTypes}
-                                        onChange={handleObjectTypeChange}
-                                        input={<OutlinedInput label="Objects" />}
-                                        renderValue={(selected) => selected.join(', ')}
-                                        //MenuProps={MenuProps}
-                                    >
-                                        {columnsCSV.map((column) => (
-                                            <MenuItem
-                                                key={column.name}
-                                                value={column.name}
-                                                //style={getStyles(name, personName, theme)}
-                                            >
-                                                <Checkbox checked={objectTypes.indexOf(column.name) > -1} />
-                                                {column.name}
-                                            </MenuItem>
-                                        ))}
-                                    </Select>
-                                </FormControl>
-                                <FormControl size="small" sx={{ m: 1, width: 800 }}>
-                                    <InputLabel id="demo-multiple-name-label">Activity</InputLabel>
-                                    <Select
-                                        labelId="demo-multiple-name-label"
-                                        id="demo-multiple-name"
-                                        value={activityName}
-                                        onChange={handleActivityNameChange}
-                                        input={<OutlinedInput label="Activity" />}
-                                        //renderValue={(selected) => selected.join(', ')}
-                                        //MenuProps={MenuProps}
-                                    >
-                                        {columnsCSV.map((column) => (
-                                            <MenuItem
-                                                key={column.name}
-                                                value={column.name}
-                                                //style={getStyles(name, personName, theme)}
-                                            >
-                                                {column.name}
-                                            </MenuItem>
-                                        ))}
-                                    </Select>
-                                </FormControl>
-                                <FormControl size="small" sx={{ m: 1, width: 800 }}>
-                                    <InputLabel id="demo-multiple-name-label">Timestamp</InputLabel>
-                                    <Select
-                                        labelId="demo-multiple-name-label"
-                                        id="demo-multiple-name"
-                                        value={timestampName}
-                                        onChange={handleTimestampNameChange}
-                                        input={<OutlinedInput label="Timestamp" />}
-                                        //renderValue={(selected) => selected.join(', ')}
-                                        //MenuProps={MenuProps}
-                                    >
-                                        {columnsCSV.map((column) => (
-                                            <MenuItem
-                                                key={column.name}
-                                                value={column.name}
-                                                //style={getStyles(name, personName, theme)}
-                                            >
-                                                {column.name}
-                                            </MenuItem>
-                                        ))}
-                                    </Select>
-                                </FormControl>
-                                <FormControl size="small" sx={{ m: 1, width: 800 }}>
-                                    <InputLabel id="demo-multiple-name-label">Separator</InputLabel>
-                                    <Select
-                                        labelId="demo-multiple-name-label"
-                                        id="demo-multiple-name"
+                                        labelId="Separator"
+                                        id="Separator"
                                         value={separator}
                                         onChange={handleSeparatorChange}
                                         input={<OutlinedInput label="Separator" />}
-                                        //renderValue={(selected) => selected.join(', ')}
                                         //MenuProps={MenuProps}
                                     >
                                         {separators.map((separate) => (
