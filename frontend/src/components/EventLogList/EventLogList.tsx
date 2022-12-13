@@ -121,10 +121,7 @@ export function EventLogList(props: EventLogListProps) {
             // To clear the input when we click on another csv, but not if we click on the same one again,
             // we remember which csv event log was last clicked and clear variables if it is a new one
             let csvLog = String(dataSource[Number(selected)].name);
-            //console.log(csvLog)
-            //console.log(selectedCSVLog)
             if(selectedCSVLog !== csvLog){
-                //console.log("reached")
                 setSelectedCSVLog(csvLog);
                 clearSelectData();
             }
@@ -235,7 +232,6 @@ export function EventLogList(props: EventLogListProps) {
                 )
             )
         ){
-            console.log("computed default")
             const defaultValues = findDefaultValue(values, defaultString, isMultiple)
             if((Array.isArray(defaultValues) && defaultValues.length !== 0) || !Array.isArray(defaultValues)){
                 setDefaultValue(defaultValues);
@@ -384,10 +380,7 @@ export function EventLogList(props: EventLogListProps) {
                     style={gridStyle}
                     selected={selected}
                     //enableSelection={true}
-                    onSelectionChange={(selected) => {
-                        onSelection(selected);
-                        onSelection(selected);
-                    }}
+                    onSelectionChange={onSelection}
                 ></ReactDataGrid>
                 <Stack spacing={1} direction="row" justifyContent="flex-end">
                     <Session
