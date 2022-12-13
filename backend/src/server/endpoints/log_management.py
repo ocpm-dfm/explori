@@ -1,5 +1,8 @@
 import os
+import json
 import shutil
+from pathlib import PureWindowsPath
+
 import pandas as pd
 from typing import List
 
@@ -12,6 +15,31 @@ from cache import get_long_term_cache
 
 router = APIRouter(prefix='/logs',
                    tags=['Log management'])
+
+CSV_FOLDER = os.path.join("cache", "csv_columns")
+os.makedirs(CSV_FOLDER, exist_ok=True)
+
+class CSV(BaseModel):
+    objects: List[str]
+    activity: str
+    timestamp: str
+    separator: str
+
+    class Config:
+        schema_extra = {
+            "example": {
+                "objects": [
+                    "PURCHORD",
+                    "PURCHREQ"
+                ],
+                "activity": "ocel:activity",
+                "timestamp": "ocel:timestamp",
+                "separator": ","
+            }
+        }
+class StoreCSVPayload(BaseModel):
+    name: str
+    csv: CSV
 
 
 # region /available
@@ -133,6 +161,33 @@ def get_csv_columns(file_path: str, n_columns: int):
 
     dataframe = pd.read_csv(file_path_extended, sep=',')
     return dataframe.head(n_columns).to_json(orient="index")
+
+@router.put('/save_csv')
+def save_csv_columns(payload: StoreCSVPayload):
+    file_path_extended = "data/" + payload.name
+
+    cache = get_long_term_cache()
+    folder = cache.get_folder(file_path_extended)
+
+    csv_file = get_csv_file(folder.split("/")[1])
+    with open(csv_file, 'w') as f:
+        json.dump(payload.csv.dict(), f)
+
+    return {'status': 'successful'}
+
+def get_csv_file(ocel_name: str):
+    """Determines the file to store the csv data to. Prevents path traversals."""
+
+    csv_file_unvalidated = os.path.join(CSV_FOLDER, ocel_name + ".json")
+
+    # The backend might run on windows which results in a mixture of windows and posix paths (as we simply use strings as path representations for now)
+    # If the path is a posix path, then the following transformation has no effect. If the path is a windows path, then afterwards it will be a posix path
+    csv_file_unvalidated = PureWindowsPath(csv_file_unvalidated).as_posix()
+    csv_file = PureWindowsPath(os.path.abspath(csv_file_unvalidated)).as_posix()
+
+    if csv_file[-len(csv_file_unvalidated):] != csv_file_unvalidated:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Path traversals are not allowed!")
+    return csv_file
 
 
 

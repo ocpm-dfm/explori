@@ -26,11 +26,19 @@ import { TypeDataSource } from '@inovua/reactdatagrid-community/types';
 import { Session } from '../Session/Session';
 import { SwitchOcelsCallback } from "../../App";
 import getUuid from "uuid-by-string";
+import {UserSessionState} from "../UserSession/UserSession";
 
 interface columnType {
     name: string,
     header: string,
     defaultWidth: number
+}
+
+export type CSVState = {
+    objects: string[],
+    activity: string,
+    timestamp: string,
+    separator: string,
 }
 
 export function EventLogList(props: EventLogListProps) {
@@ -134,7 +142,17 @@ export function EventLogList(props: EventLogListProps) {
     let onSelect = () => {
         if (selected !== null) {
             const selectedData = dataSource[selected]
-            switchOcelsCallback(String(dataSource[Number(selected)].full_path));
+
+            if(selectedData.type === "csv"){
+                storeCSV(
+                    selectedData.full_path,
+                    {objects: objectTypes,
+                        activity: activityName,
+                        timestamp: timestampName,
+                        separator: separator})
+            }
+
+            switchOcelsCallback(selectedData.full_path);
 
             // @ts-ignore
             console.log(selectedData.full_path);
@@ -294,6 +312,28 @@ export function EventLogList(props: EventLogListProps) {
             .catch(err => {
                 console.log("Error in fetching csv data ...")
             })
+    }
+
+    async function storeCSV(name: string, csv: CSVState) {
+        const uri = getURI("/logs/save_csv", {});
+
+        await fetch(uri, {
+            method: 'PUT',
+            headers: {
+                "Content-type": "application/json"
+            },
+            body: JSON.stringify({
+                name: name,
+                csv: csv,
+            })
+        })
+            .then((response) => response.json())
+            .then((result) => {
+                if (result.status === "successful") {
+                    console.log("Storing of csv " + name + " successful!");
+                }
+            })
+            .catch(err => console.log("Error in uploading ..."));
     }
 
     function fetchListData(){
