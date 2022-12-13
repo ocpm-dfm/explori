@@ -26,6 +26,8 @@ import { TypeDataSource } from '@inovua/reactdatagrid-community/types';
 import { Session } from '../Session/Session';
 import { SwitchOcelsCallback } from "../../App";
 import getUuid from "uuid-by-string";
+import {Simulate} from "react-dom/test-utils";
+import change = Simulate.change;
 
 interface columnType {
     name: string,
@@ -52,7 +54,7 @@ export function EventLogList(props: EventLogListProps) {
     const [objectTypes, setObjectTypes] = useState(initialObjectTypes);
     const [activityName, setActivityName] = useState("");
     const [timestampName, setTimestampName] = useState("");
-    const [separator, setSeparator] = useState("");
+    const [separator, setSeparator] = useState(",");
 
     const handleClickOpen = () => {
         setOpen(true);
@@ -182,13 +184,36 @@ export function EventLogList(props: EventLogListProps) {
         })
     }
 
+    function findDefaultValue(columnData: columnType[], value: string, isMultiple: boolean){
+        let matches: string[] = [];
+        columnData.map((column: columnType) => {
+            if(column.name.search(value) !== -1){
+                matches.push(column.name)
+            }
+        })
+        if(matches.length !== 0) {
+            if (!isMultiple) {
+                return matches[0]
+            }
+        }
+        return matches
+    }
+
     function generateSelect(
         label: string,
         changeValue: any,
         values: any[],
         handleChange: ((event: SelectChangeEvent<any[] | any>, child: React.ReactNode) => void) | undefined,
         isMultiple: boolean,
+        setDefaultValue: any,
+        defaultString: string,
     ){
+        if(changeValue !== undefined && (changeValue === "" || (Array.isArray(changeValue) && changeValue.length === 0))){
+            const defaultValues = findDefaultValue(values, defaultString, isMultiple)
+            if((Array.isArray(defaultValues) && defaultValues.length !== 0) || !Array.isArray(defaultValues)){
+                setDefaultValue(defaultValues);
+            }
+        }
         return (
             <FormControl size="small" sx={{ m: 1, width: '80vw' }}>
                 <InputLabel id={label + "_InputLabel"}>{label}</InputLabel>
@@ -349,7 +374,6 @@ export function EventLogList(props: EventLogListProps) {
                     </Button>
                 </Stack>
                 {
-                    // TODO: add default values for activity, timestamp and objects
                     // TODO: propagate selections to correct position
                     // TODO: save settings for event log? if yes, also delete it when deleting log
                     // TODO: BUG: select one csv, select some objects, select new csv, objects remain
@@ -368,9 +392,9 @@ export function EventLogList(props: EventLogListProps) {
                                 ></ReactDataGrid>
                             </div>
                             <Stack justifyContent="center" sx={{width: '85vw'}}>
-                                {generateSelect("Objects", objectTypes, columnsCSV, handleObjectTypeChange, true )}
-                                {generateSelect("Activity", activityName, columnsCSV, handleActivityNameChange, false )}
-                                {generateSelect("Timestamp", timestampName, columnsCSV, handleTimestampNameChange, false )}
+                                {generateSelect("Objects", objectTypes, columnsCSV, handleObjectTypeChange, true, setObjectTypes, "type:" )}
+                                {generateSelect("Activity", activityName, columnsCSV, handleActivityNameChange, false, setActivityName, "activity" )}
+                                {generateSelect("Timestamp", timestampName, columnsCSV, handleTimestampNameChange, false, setTimestampName, "timestamp" )}
                                 <FormControl size="small" sx={{ m: 1, width: '80vw' }}>
                                     <InputLabel id="Separator_InputLabel">Separator</InputLabel>
                                     <Select
