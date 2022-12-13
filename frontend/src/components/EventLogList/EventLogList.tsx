@@ -26,8 +26,6 @@ import { TypeDataSource } from '@inovua/reactdatagrid-community/types';
 import { Session } from '../Session/Session';
 import { SwitchOcelsCallback } from "../../App";
 import getUuid from "uuid-by-string";
-import {Simulate} from "react-dom/test-utils";
-import change = Simulate.change;
 
 interface columnType {
     name: string,
@@ -38,8 +36,6 @@ interface columnType {
 export function EventLogList(props: EventLogListProps) {
     const switchOcelsCallback = props.switchOcelsCallback;
 
-    // need filename, object_types, parameters = obj types, activity name, time name, separator
-
     let initialDataSource: TypeDataSource = [];
     let initialColumns: columnType[] = [];
     let initialObjectTypes: string[] = [];
@@ -49,6 +45,7 @@ export function EventLogList(props: EventLogListProps) {
     const [columnsCSV, setColumnsCSV] = useState(initialColumns);
     const [dataCSV, setDataCSV] = useState(initialDataSource);
     const [csvSelected, setCSVSelected] = useState(false);
+    const [selectedCSVLog, setSelectedCSVLog] = useState("");
     const [open, setOpen] = useState(false);
 
     const [objectTypes, setObjectTypes] = useState(initialObjectTypes);
@@ -106,17 +103,36 @@ export function EventLogList(props: EventLogListProps) {
         '{}'
     ]
 
+    let clearSelectData = () => {
+        // Reset to default values
+        setObjectTypes([]);
+        setActivityName("");
+        setTimestampName("");
+        setSeparator(",");
+    }
+
     // @ts-ignore
-    let onSelection = useCallback(({ selected }) => {
-        setSelected(selected);
+    let onSelection = ({ selected }) => {
         if(String(dataSource[Number(selected)].type) === "csv"){
+            // We set the flag to render the Select components and fetch needed data
             setCSVSelected(true);
             getCSVData(selected);
             getColumns(selected);
+            // To clear the input when we click on another csv, but not if we click on the same one again,
+            // we remember which csv event log was last clicked and clear variables if it is a new one
+            let csvLog = String(dataSource[Number(selected)].name);
+            //console.log(csvLog)
+            //console.log(selectedCSVLog)
+            if(selectedCSVLog !== csvLog){
+                //console.log("reached")
+                setSelectedCSVLog(csvLog);
+                clearSelectData();
+            }
         } else {
             setCSVSelected(false);
         }
-    }, [dataSource]);
+        setSelected(selected);
+    };
 
     let onSelect = () => {
         if (selected !== null) {
@@ -208,7 +224,18 @@ export function EventLogList(props: EventLogListProps) {
         setDefaultValue: any,
         defaultString: string,
     ){
-        if(changeValue !== undefined && (changeValue === "" || (Array.isArray(changeValue) && changeValue.length === 0))){
+        if(
+            changeValue !== undefined &&
+            (
+                // Either, we never rendered a csv selection component
+                (changeValue === "" || (Array.isArray(changeValue) && changeValue.length === 0)) ||
+                // Or, we already did, but use a new csv file now
+                !( (!Array.isArray(changeValue) && values.map((value) => {return value.name}).includes(changeValue)) ||
+                    (Array.isArray(changeValue) && changeValue.every(v => values.map((value) => {return value.name}).includes(v)))
+                )
+            )
+        ){
+            console.log("computed default")
             const defaultValues = findDefaultValue(values, defaultString, isMultiple)
             if((Array.isArray(defaultValues) && defaultValues.length !== 0) || !Array.isArray(defaultValues)){
                 setDefaultValue(defaultValues);
@@ -357,7 +384,10 @@ export function EventLogList(props: EventLogListProps) {
                     style={gridStyle}
                     selected={selected}
                     //enableSelection={true}
-                    onSelectionChange={onSelection}
+                    onSelectionChange={(selected) => {
+                        onSelection(selected);
+                        onSelection(selected);
+                    }}
                 ></ReactDataGrid>
                 <Stack spacing={1} direction="row" justifyContent="flex-end">
                     <Session
@@ -376,7 +406,6 @@ export function EventLogList(props: EventLogListProps) {
                 {
                     // TODO: propagate selections to correct position
                     // TODO: save settings for event log? if yes, also delete it when deleting log
-                    // TODO: BUG: select one csv, select some objects, select new csv, objects remain
                     csvSelected && (
                         <React.Fragment>
                             <div style={{'marginTop': '20px'}}>
