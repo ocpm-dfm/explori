@@ -1,10 +1,10 @@
-import React, {useEffect, useState} from 'react';
+import React, { useEffect, useState } from 'react';
 import './App.css';
 import { Home } from "./components/Home/Home";
 import { EventLogList } from "./components/EventLogList/EventLogList";
 import { Routes, Route } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from 'react-query';
-import {UserSession, UserSessionState, storeSession, restoreSession} from "./components/UserSession/UserSession";
+import { UserSession, UserSessionState, storeSession, restoreSession } from "./components/UserSession/UserSession";
 import getUuid from "uuid-by-string";
 
 export type StateChangeCallback = (update: any) => void;
@@ -31,7 +31,7 @@ function App() {
 
     function restoreAutoSessionOrCreateNew(ocel: string) {
         restoreSession("autosave-" + getUuid(ocel), (session: UserSessionState) => {
-            if(session.ocel !== undefined) {
+            if (session.ocel !== undefined) {
                 stateChangeCallback(session);
             } else {
                 stateChangeCallback({
@@ -49,7 +49,7 @@ function App() {
     };
 
     const stateChangeCallback: StateChangeCallback = (update: any) => {
-        let validUpdates: {[key: string]: any} = {};
+        let validUpdates: { [key: string]: any } = {};
         for (const key of Object.keys(update)) {
             if (key in sessionState) {
                 validUpdates[key] = update[key];
@@ -60,13 +60,16 @@ function App() {
 
         setSessionState((old) => Object.assign({}, old, validUpdates));
 
-        if("ocel" in validUpdates) {
+        if ("ocel" in validUpdates) {
             localStorage.setItem("explori-currentOcel", validUpdates["ocel"]);
         }
     };
 
     // restore session once after mounting app component and allow autosaving session afterwards
     useEffect(() => {
+        //TODO: call restoreSessionReducer from here
+        // 
+
         restoreAutoSessionOrCreateNew(sessionState.ocel);
         setAppState((old) => Object.assign({}, old, {
             startAutosaving: true,
@@ -75,7 +78,7 @@ function App() {
 
     // store session everytime it changes
     useEffect(() => {
-        if(appState.startAutosaving){
+        if (appState.startAutosaving) {
             storeSession("autosave-" + getUuid(sessionState.ocel), sessionState);
         }
     }, [sessionState]);
