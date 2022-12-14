@@ -1,13 +1,12 @@
 import React, {useState} from 'react';
 import '../../App.css';
-import {DirectlyFollowsMultigraph, FilteredDFM} from "../dfm/dfm";
 import { ObjectSelection } from "../ObjectSelection/ObjectSelection";
 import {ExploriNavbar} from "../ExploriNavbar/ExploriNavbar";
 
 import "./Home.css";
 import {useAsyncAPI} from "../../api";
 import {UserSessionState} from "../UserSession/UserSession";
-import { FilteredCytoDFM } from '../cytoscape-dfm/cytodfm';
+import {DirectlyFollowsMultigraph, FilteredCytoDFM} from '../cytoscape-dfm/cytodfm';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {faSnowflake} from "@fortawesome/free-regular-svg-icons";
 

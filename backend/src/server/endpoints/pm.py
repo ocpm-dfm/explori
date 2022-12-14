@@ -44,5 +44,5 @@ def calculate_dfm_with_thresholds(ocel: str = Depends(ocel_filename_from_query),
     """
     return task_manager.cached_task(ocel, dfm_task, [ocel], None,
                                     TaskName.CREATE_DFM, dfm(),
-                                    ignore_cache=False)
+                                    ignore_cache=True, version="3")
 # endregion

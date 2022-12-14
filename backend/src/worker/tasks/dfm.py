@@ -28,24 +28,20 @@ def dfm(ocel_filename: str):
                                                                                         build_if_non_existent=True)
 
     edge_counts: Dict[ObjectType, Dict[Edge, List[CountSeperator]]] = {}
-    node_counts_by_object_type: Dict[ObjectType, Dict[Node, List[CountSeperator]]] = {}
+    object_type_to_node_counts: Dict[ObjectType, Dict[Node, List[CountSeperator]]] = {}
     edge_thresholds: Dict[ObjectType, Dict[Edge, float]] = {}
 
     for object_type in projected_traces:
         edge_totals, node_totals, edge_traces, total_objects = prepare_dfg_computation(projected_traces[object_type])
 
-        type_edge_counts, type_node_counts = \
+        type_edge_counts, type_node_counts, type_trace_thresholds = \
             calculate_threshold_counts_on_dfg(edge_totals, node_totals, edge_traces, total_objects)
 
         edge_counts[object_type] = type_edge_counts
-        node_counts_by_object_type[object_type] = type_node_counts
+        object_type_to_node_counts[object_type] = type_node_counts
         edge_thresholds[object_type] = {edge: type_edge_counts[edge][0].upper_bound for edge in type_edge_counts}
 
-    node_counts = combine_node_counts(node_counts_by_object_type)
-    node_thresholds = {node: node_counts[node][0].upper_bound for node in node_counts}
-
-    return convert_to_frontend_friendly_graph_notation(edge_thresholds, node_thresholds,
-                                                       edge_counts, node_counts)
+    return convert_to_frontend_friendly_graph_notation(edge_thresholds, edge_counts, object_type_to_node_counts)
 
 
 def prepare_dfg_computation(traces: List[Trace]) -> (
@@ -97,10 +93,12 @@ def calculate_threshold_counts_on_dfg(edge_totals: Dict[Edge, int], node_totals:
     current_objects = total_objects
     edge_counts: Dict[Edge, List[CountSeperator]] = { edge: [CountSeperator(1.01, edge_totals[edge])] for edge in edges }
     node_counts: Dict[Node, List[CountSeperator]] = { node: [CountSeperator(1.01, node_totals[node])] for node in node_totals }
+    trace_thresholds: Dict[Tuple[Node], Tuple[int, float]] = {}
 
     for edge in edges:
         updated_edge_counts: Dict[Edge, int] = {}
         updated_node_counts: Dict[Node, int] = {}
+        removed_traces: List[Trace] = []
 
         for trace in edge_traces[edge]:
             actions: List[Node] = trace.actions
@@ -125,48 +123,17 @@ def calculate_threshold_counts_on_dfg(edge_totals: Dict[Edge, int], node_totals:
                 updated_node_counts[node] -= count
 
             current_objects -= count
+            removed_traces.append(trace)
 
         threshold = current_objects / total_objects
         for other_edge in updated_edge_counts:
             edge_counts[other_edge].insert(0, CountSeperator(threshold, updated_edge_counts[other_edge]))
         for node in updated_node_counts:
             node_counts[node].insert(0, CountSeperator(threshold, updated_node_counts[node]))
+        for trace in removed_traces:
+            trace_thresholds[tuple(trace.actions)] = (trace.trace_count, threshold)
 
-    return edge_counts, node_counts
-
-def combine_node_counts(object_type_node_counts: Dict[ObjectType, Dict[Node, List[CountSeperator]]]) -> Dict[Node, List[CountSeperator]]:
-    result: Dict[Node, List[CountSeperator]] = {}
-    for type_counts in object_type_node_counts.values():
-        for node, node_counts in type_counts.items():
-            result.setdefault(node, [])
-            result_counts = result[node]
-
-            last_added_count = 0
-            for seperator_to_insert in node_counts:
-                for i in range(len(result_counts)):
-                    if result_counts[i].upper_bound < seperator_to_insert.upper_bound:
-                        continue
-
-                    count_increase = seperator_to_insert.instance_count - last_added_count
-                    last_added_count = seperator_to_insert.instance_count
-
-                    if result_counts[i].upper_bound == seperator_to_insert.upper_bound:
-                        for j in range(i, len(result_counts)):
-                            result_counts[j] = increase_count(result_counts[j], count_increase)
-                        break
-
-                    for j in range(i, len(result_counts)):
-                        result_counts[j] = increase_count(result_counts[j], count_increase)
-                    if i == 0:
-                        result_counts.insert(i, seperator_to_insert)
-                    else:
-                        result_counts.insert(i, CountSeperator(seperator_to_insert.upper_bound,
-                                                               result_counts[i - 1].instance_count + count_increase))
-                    break
-                else:
-                    result_counts.append(seperator_to_insert)
-
-    return result
+    return edge_counts, node_counts, trace_thresholds
 
 
 def compute_node_thresholds(node_counts: Dict[ObjectType, Dict[Node, List[CountSeperator]]]) -> Dict[Node, float]:
@@ -183,22 +150,28 @@ def compute_node_thresholds(node_counts: Dict[ObjectType, Dict[Node, List[CountS
 
 
 def convert_to_frontend_friendly_graph_notation(edge_thresholds: Dict[ObjectType, Dict[Edge, float]],
-                                                node_thresholds: Dict[Node, float],
                                                 edge_counts: Dict[str, Dict[Edge, List[CountSeperator]]],
-                                                node_counts: Dict[Node, List[CountSeperator]]):
+                                                node_counts: Dict[ObjectType, Dict[Node, List[CountSeperator]]]):
     # Step 4: Generate frontend-friendly output
     node_indices: Dict[str, int] = {
         START_TOKEN: 0,
         STOP_TOKEN: 1
     }
-    for node in node_thresholds.keys():
+
+    nodes = set(sum([list(node_counts[object_type].keys()) for object_type in node_counts], start=[]))
+    for node in nodes:
         node_indices.setdefault(node, len(node_indices))
     frontend_nodes = [{} for _ in range(len(node_indices))]
-    for node in node_thresholds.keys():
+    for node in nodes:
+        counts: Dict[ObjectType, List[CountSeperator]] = {
+            object_type: node_counts[object_type][node]
+            for object_type in node_counts
+            if node in node_counts[object_type]
+        }
+
         frontend_nodes[node_indices[node]] = {
             'label': node,
-            'threshold': node_thresholds[node],
-            'counts': node_counts[node]
+            'counts': counts
         }
 
     frontend_subgraphs: Dict[str, List[Dict[str, float]]] = \

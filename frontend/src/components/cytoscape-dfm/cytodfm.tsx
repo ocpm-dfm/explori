@@ -1,9 +1,23 @@
 import CytoscapeComponent from "react-cytoscapejs";
-import {DirectlyFollowsMultigraph} from "../dfm/dfm";
 
 import './cytodfm.css';
 import {useState} from "react";
 import cytoscape, {EventObject} from "cytoscape";
+
+
+export type DirectlyFollowsMultigraph = {
+    nodes: {
+        label: string,
+        counts: {[key:string]: [number, number][]}
+    }[],
+    subgraphs: {[key:string]: {
+            source: number,
+            target: number,
+            threshold: number
+            counts: [number, number][]
+        }[]}
+}
+
 
 
 const preselectedColors = [
@@ -235,8 +249,10 @@ export const FilteredCytoDFM = (props: {
                 const count = getCountAtThreshold(edge.counts, thresh);
 
                 let classes = "";
-                if (edge.source === edge.target)
+                if (edge.source === edge.target) {
                     classes = "loop";
+                    console.log("Has got loop at " + dfm.nodes[edge.source].label)
+                }
 
                 links.push(
                     {
@@ -271,8 +287,16 @@ export const FilteredCytoDFM = (props: {
 
     // Filter the nodes by threshold and object type and prepare them for forcegraph.
     const filteredNodes = Array.from(allNodesOfSelectedObjectTypes)
-        .filter(i => (thresh >= dfm.nodes[i].threshold))        // Removes nodes that are below our threshold.
         .map((i: number) => {
+            const node = dfm.nodes[i];
+            let count = Object.keys(node.counts)
+                .filter((objectType) => selectedObjectTypes.includes(objectType))
+                .map((objectType) => getCountAtThreshold(node.counts[objectType], thresh))
+                .reduce((a, b) => a + b);
+
+            if (count === 0)
+                return null;
+
             if (i === 0) {
                 return {
                     data: {
@@ -300,7 +324,7 @@ export const FilteredCytoDFM = (props: {
                 {
                     data: {
                         id: `${i}`,
-                        label: `${dfm.nodes[i].label} (${getCountAtThreshold(dfm.nodes[i].counts, thresh)})`,
+                        label: `${node.label} (${count})`,
                         numberId: i
                     },
                     classes: "activity",
@@ -310,7 +334,9 @@ export const FilteredCytoDFM = (props: {
                     }
                 }
             );
-        });
+        })
+        // Filter out all nodes that are below the threshold. The cast is needed to tell TypeScript that all "null" nodes are removed.
+        .filter((x) => x !== null) as cytoscape.ElementDefinition[];
 
     filteredNodes.sort((a, b) =>
         nodeDegrees[a.data.numberId] < nodeDegrees[b.data.numberId] ? -1 : 1);
@@ -366,8 +392,12 @@ export const FilteredCytoDFM = (props: {
         "selector": '.loop',
         "style":
         {
-            'loop-direction': '-90deg',
-            'loop-sweep': '-25deg',
+            'loop-direction': '180deg',
+            'loop-sweep': '45deg',
+            'target-endpoint': 'outside-to-line',
+            'source-endpoint': 'outside-to-line'
+            // 'loop-direction': '-90deg',
+            // 'loop-sweep': '-25deg',
             // 'control-point-step-size': '100'
             // 'target-endpoint': 'outside-to-line',
             // 'source-endpoint': 'outside-to-line',
