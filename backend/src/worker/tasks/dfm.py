@@ -1,5 +1,5 @@
 from collections import namedtuple
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, Generator
 from pathlib import PureWindowsPath
 
 from worker.main import app
@@ -28,8 +28,8 @@ def dfm(ocel_filename: str):
                                                                                         build_if_non_existent=True)
 
     edge_counts: Dict[ObjectType, Dict[Edge, List[CountSeperator]]] = {}
-    object_type_to_node_counts: Dict[ObjectType, Dict[Node, List[CountSeperator]]] = {}
-    edge_thresholds: Dict[ObjectType, Dict[Edge, float]] = {}
+    node_counts: Dict[ObjectType, Dict[Node, List[CountSeperator]]] = {}
+    trace_thresholds: Dict[ObjectType, Dict[Tuple[Node], Tuple[int, float]]] = {}
 
     for object_type in projected_traces:
         edge_totals, node_totals, edge_traces, total_objects = prepare_dfg_computation(projected_traces[object_type])
@@ -38,10 +38,10 @@ def dfm(ocel_filename: str):
             calculate_threshold_counts_on_dfg(edge_totals, node_totals, edge_traces, total_objects)
 
         edge_counts[object_type] = type_edge_counts
-        object_type_to_node_counts[object_type] = type_node_counts
-        edge_thresholds[object_type] = {edge: type_edge_counts[edge][0].upper_bound for edge in type_edge_counts}
+        node_counts[object_type] = type_node_counts
+        trace_thresholds[object_type] = type_trace_thresholds
 
-    return convert_to_frontend_friendly_graph_notation(edge_thresholds, edge_counts, object_type_to_node_counts)
+    return convert_to_frontend_friendly_graph_notation(edge_counts, node_counts, trace_thresholds)
 
 
 def prepare_dfg_computation(traces: List[Trace]) -> (
@@ -136,31 +136,54 @@ def calculate_threshold_counts_on_dfg(edge_totals: Dict[Edge, int], node_totals:
     return edge_counts, node_counts, trace_thresholds
 
 
-def compute_node_thresholds(node_counts: Dict[ObjectType, Dict[Node, List[CountSeperator]]]) -> Dict[Node, float]:
-    # Step 3: Calculate node thresholds
-    node_thresholds: Dict[str, float] = {}
-
-    for counts in node_counts.values():
-        for node, c in counts.items():
-            ot_thresh = c[0].upper_bound
-            node_thresholds.setdefault(node, ot_thresh)
-            if node_thresholds[node] > ot_thresh:
-                node_thresholds[node] = ot_thresh
-    return node_thresholds
-
-
-def convert_to_frontend_friendly_graph_notation(edge_thresholds: Dict[ObjectType, Dict[Edge, float]],
-                                                edge_counts: Dict[str, Dict[Edge, List[CountSeperator]]],
-                                                node_counts: Dict[ObjectType, Dict[Node, List[CountSeperator]]]):
-    # Step 4: Generate frontend-friendly output
+def convert_to_frontend_friendly_graph_notation(edge_counts: Dict[ObjectType, Dict[Edge, List[CountSeperator]]],
+                                                node_counts: Dict[ObjectType, Dict[Node, List[CountSeperator]]],
+                                                trace_thresholds: Dict[ObjectType, Dict[Tuple[Node], Tuple[int, float]]]):
+    # Step 1: Build node indices.
     node_indices: Dict[str, int] = {
         START_TOKEN: 0,
         STOP_TOKEN: 1
     }
-
     nodes = set(sum([list(node_counts[object_type].keys()) for object_type in node_counts], start=[]))
     for node in nodes:
         node_indices.setdefault(node, len(node_indices))
+
+    # Step 2: Build frontend traces, store trace indices for edges and nodes.
+    seen_traces = set()
+    frontend_traces = []
+    node_traces: Dict[Node, List[int]] = {}
+    edge_traces: Dict[Tuple[ObjectType, Node, Node], List[int]] = {}
+
+    for traces in trace_thresholds.values():
+        for trace in traces:
+            if trace in seen_traces:
+                continue
+            seen_traces.add(trace)
+
+            trace_index = len(frontend_traces)
+
+            trace_object_types = {
+                object_type for object_type in trace_thresholds if trace in trace_thresholds[object_type]
+            }
+
+            frontend_traces.append({
+                "actions": [node_indices[node] for node in trace],
+                "thresholds": {
+                    object_type: {
+                        "count": trace_thresholds[object_type][trace][0],
+                        "threshold": trace_thresholds[object_type][trace][1]
+                    }
+                    for object_type in trace_object_types
+                }
+            })
+
+            for node in trace:
+                node_traces.setdefault(node, []).append(trace_index)
+            for (source, target) in steps(trace):
+                for object_type in trace_object_types:
+                    edge_traces.setdefault((object_type, source, target), []).append(trace_index)
+
+    # Step 3: Build frontend nodes.
     frontend_nodes = [{} for _ in range(len(node_indices))]
     for node in nodes:
         counts: Dict[ObjectType, List[CountSeperator]] = {
@@ -171,9 +194,11 @@ def convert_to_frontend_friendly_graph_notation(edge_thresholds: Dict[ObjectType
 
         frontend_nodes[node_indices[node]] = {
             'label': node,
-            'counts': counts
+            'counts': counts,
+            'traces': node_traces[node]
         }
 
+    # Step 4: Build frontend edges, seperated by object type.
     frontend_subgraphs: Dict[str, List[Dict[str, float]]] = \
     {
         object_type:
@@ -181,15 +206,16 @@ def convert_to_frontend_friendly_graph_notation(edge_thresholds: Dict[ObjectType
             {
                 'source': node_indices[edge.source],
                 'target': node_indices[edge.target],
-                'threshold': edge_thresholds[object_type][edge],
-                'counts': edge_counts[object_type][edge]
+                'counts': edge_counts[object_type][edge],
+                'traces': edge_traces[object_type, edge.source, edge.target]
             }
-            for edge in edge_thresholds[object_type]
+            for edge in edge_counts[object_type]
         ]
-        for object_type in edge_thresholds
+        for object_type in edge_counts
     }
 
     return {
+        'traces': frontend_traces,
         'nodes': frontend_nodes,
         'subgraphs': frontend_subgraphs
     }
@@ -197,3 +223,8 @@ def convert_to_frontend_friendly_graph_notation(edge_thresholds: Dict[ObjectType
 
 def increase_count(seperator: CountSeperator, count: int):
     return CountSeperator(seperator.upper_bound, seperator.instance_count + count)
+
+
+def steps(trace: List[Node] | Tuple[Node]) -> Generator[Tuple[Node, Node], None, None]:
+    for i in range(len(trace) - 1):
+        yield (trace[i], trace[i + 1])

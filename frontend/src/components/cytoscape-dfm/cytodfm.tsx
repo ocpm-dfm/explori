@@ -13,7 +13,6 @@ export type DirectlyFollowsMultigraph = {
     subgraphs: {[key:string]: {
             source: number,
             target: number,
-            threshold: number
             counts: [number, number][]
         }[]}
 }
@@ -231,7 +230,6 @@ export const FilteredCytoDFM = (props: {
 
     let allNodesOfSelectedObjectTypes = new Set<number>();
     const numberOfColorsNeeded = Object.keys(dfm.subgraphs).length;
-    const nodeDegrees: {[key:number]:number} = {}
 
     Object.keys(dfm.subgraphs).forEach((objectType, i) => {
         if (selectedObjectTypes.includes(objectType)) {
@@ -240,18 +238,18 @@ export const FilteredCytoDFM = (props: {
             const edges = dfm.subgraphs[objectType];
             let hasDisplayedEdge = false;
 
-            for (const edge of edges) {
-                // Ignore edges below the threshold
-                if (thresh < edge.threshold)
-                    continue;
-                hasDisplayedEdge = true;
-
+            for (const edge of edges)
+            {
                 const count = getCountAtThreshold(edge.counts, thresh);
+                // Ignore edges below the threshold.
+                if (count === 0)
+                    continue
+
+                hasDisplayedEdge = true;
 
                 let classes = "";
                 if (edge.source === edge.target) {
                     classes = "loop";
-                    console.log("Has got loop at " + dfm.nodes[edge.source].label)
                 }
 
                 links.push(
@@ -266,14 +264,6 @@ export const FilteredCytoDFM = (props: {
                         classes
                     });
 
-                if (nodeDegrees[edge.source])
-                    nodeDegrees[edge.source] -= count;
-                else
-                    nodeDegrees[edge.source] = -count;
-                if (nodeDegrees[edge.target])
-                    nodeDegrees[edge.target] += count;
-                else
-                    nodeDegrees[edge.target] = count;
                 allNodesOfSelectedObjectTypes.add(edge.source);
                 allNodesOfSelectedObjectTypes.add(edge.target);
             }
@@ -337,9 +327,6 @@ export const FilteredCytoDFM = (props: {
         })
         // Filter out all nodes that are below the threshold. The cast is needed to tell TypeScript that all "null" nodes are removed.
         .filter((x) => x !== null) as cytoscape.ElementDefinition[];
-
-    filteredNodes.sort((a, b) =>
-        nodeDegrees[a.data.numberId] < nodeDegrees[b.data.numberId] ? -1 : 1);
 
     const elements: cytoscape.ElementDefinition[] = filteredNodes.concat(links);
 
