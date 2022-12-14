@@ -177,11 +177,19 @@ def convert_to_frontend_friendly_graph_notation(edge_counts: Dict[ObjectType, Di
                 }
             })
 
+            seen_nodes = set()
             for node in trace:
-                node_traces.setdefault(node, []).append(trace_index)
+                if node not in seen_nodes:
+                    node_traces.setdefault(node, []).append(trace_index)
+                    seen_nodes.add(node)
+
+            seen_edges = set()
             for (source, target) in steps(trace):
                 for object_type in trace_object_types:
-                    edge_traces.setdefault((object_type, source, target), []).append(trace_index)
+                    edge = (object_type, source, target)
+                    if edge not in seen_edges:
+                        edge_traces.setdefault(edge, []).append(trace_index)
+                        seen_edges.add(edge)
 
     # Step 3: Build frontend nodes.
     frontend_nodes = [{} for _ in range(len(node_indices))]
