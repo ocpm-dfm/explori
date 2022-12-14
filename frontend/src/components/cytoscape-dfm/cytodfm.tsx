@@ -188,7 +188,8 @@ interface CytoDFMState {
 export const FilteredCytoDFM = (props: {
     dfm: DirectlyFollowsMultigraph | null,
     threshold: number,
-    selectedObjectTypes: string[]}) =>
+    selectedObjectTypes: string[],
+    positionsFrozen: boolean}) =>
 {
     const [state, setState] = useState<CytoDFMState>({
         nodeStates: [],
@@ -401,7 +402,7 @@ export const FilteredCytoDFM = (props: {
             const nodeId = node.data().numberId;
             const storedPosition = nodePositions[nodeId];
             // If the node is frozen, return the stored state.
-            if (storedPosition.frozen && storedPosition.x != null && storedPosition.y != null)
+            if ((props.positionsFrozen || storedPosition.frozen) && storedPosition.x != null && storedPosition.y != null)
                 return {x: storedPosition.x, y: storedPosition.y}
 
             if (pos.x !== storedPosition.x || pos.y !== storedPosition.y) {

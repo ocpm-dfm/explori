@@ -23,3 +23,34 @@
     flex-grow: 1;
     margin: auto 0;
 }
+
+.Home-toggleButton {
+    --border-color: #BDBDBD;
+
+    background-color: rgba(0, 0, 0, 0);
+    box-shadow: none;
+    border-style: solid;
+    border-width: 1px;
+    border-color: var(--border-color);
+    border-radius: 4px;
+
+    height: calc(100% - 2*0.5rem);
+    aspect-ratio: 1/1;
+
+    display: grid;
+    justify-content: center;
+    align-content: center;
+}
+
+.Home-toggleButton>svg {
+    width: 1.5rem;
+    height: 1.5rem;
+}
+
+.Home-toggleButton:hover {
+    border-color: black;
+}
+
+.Home-toggleButton--active {
+    background-color: var(--border-color);
+}
