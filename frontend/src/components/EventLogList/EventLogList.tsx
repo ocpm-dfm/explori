@@ -64,7 +64,7 @@ export function EventLogList(props: EventLogListProps) {
     const [dataCSV, setDataCSV] = useState(initialDataSource);
     const [csvSelected, setCSVSelected] = useState(false);
     const [selectedCSVLog, setSelectedCSVLog] = useState("");
-    const [savedCSVData, setSavedCSVData] = useState(initialCSVState);
+    const [wasUnselected, setWasUnselected] = useState(false);
     const [open, setOpen] = useState(false);
 
     const [objectTypes, setObjectTypes] = useState(initialObjectTypes);
@@ -82,6 +82,7 @@ export function EventLogList(props: EventLogListProps) {
     };
 
     const handleObjectTypeChange = (event: SelectChangeEvent<string[]>) => {
+        setWasUnselected(true);
         const {
             target: { value },
         } = event;
@@ -93,6 +94,7 @@ export function EventLogList(props: EventLogListProps) {
     };
 
     const handleActivityNameChange = (event: SelectChangeEvent<string>) => {
+        setWasUnselected(true);
         const {
             target: { value },
         } = event;
@@ -100,6 +102,7 @@ export function EventLogList(props: EventLogListProps) {
     };
 
     const handleTimestampNameChange = (event: SelectChangeEvent<string>) => {
+        setWasUnselected(true);
         const {
             target: { value },
         } = event;
@@ -107,6 +110,7 @@ export function EventLogList(props: EventLogListProps) {
     };
 
     const handleIDNameChange = (event: SelectChangeEvent<string>) => {
+        setWasUnselected(true);
         const {
             target: { value },
         } = event;
@@ -114,6 +118,7 @@ export function EventLogList(props: EventLogListProps) {
     };
 
     const handleSeparatorChange = (event: SelectChangeEvent<string>) => {
+        setWasUnselected(true);
         const {
             target: { value },
         } = event;
@@ -151,6 +156,7 @@ export function EventLogList(props: EventLogListProps) {
             let csvLog = String(dataSource[Number(selected)].name);
             if(selectedCSVLog !== csvLog){
                 setSelectedCSVLog(csvLog);
+                setWasUnselected(false);
                 clearSelectData();
             }
         } else {
@@ -249,21 +255,6 @@ export function EventLogList(props: EventLogListProps) {
         return matches
     }
 
-    async function fetchCSVColumns(){
-        const full_path = String(dataSource[Number(selected)].full_path)
-
-        const uri = getURI("/logs/restore", {name: full_path});
-
-        await fetch(uri)
-            .then((response) => response.json())
-            .then((result: CSVState) => {
-                setSavedCSVData(result);
-            })
-            .catch(err => {
-                console.log("Error in fetching column data ...")
-            });
-    }
-
     function generateSelect(
         label: string,
         changeValue: any,
@@ -273,53 +264,58 @@ export function EventLogList(props: EventLogListProps) {
         setDefaultValue: any,
         defaultString: string,
     ){
-        if(
-            changeValue !== undefined &&
-            (
-                // Either, we never rendered a csv selection component
-                (changeValue === "" || (Array.isArray(changeValue) && changeValue.length === 0)) ||
-                // Or, we already did, but use a new csv file now
-                !( (!Array.isArray(changeValue) && values.map((value) => {return value.name}).includes(changeValue)) ||
-                    (Array.isArray(changeValue) && changeValue.every(v => values.map((value) => {return value.name}).includes(v)))
+        // Only load values if we did not deselect an item per hand)
+        if ( wasUnselected && label === "Objects" ){
+
+        } else {
+            if(
+                changeValue !== undefined &&
+                (
+                    // Either, we never rendered a csv selection component
+                    (changeValue === "" || (Array.isArray(changeValue) && changeValue.length === 0)) ||
+                    // Or, we already did, but use a new csv file now
+                    !( (!Array.isArray(changeValue) && values.map((value) => {return value.name}).includes(changeValue)) ||
+                        (Array.isArray(changeValue) && changeValue.every(v => values.map((value) => {return value.name}).includes(v)))
+                    )
                 )
-            )
-        ){
-            const full_path = String(dataSource[Number(selected)].full_path)
+            ){
+                const full_path = String(dataSource[Number(selected)].full_path)
 
-            const uri = getURI("/logs/restore", {name: full_path});
+                const uri = getURI("/logs/restore", {name: full_path});
 
-            fetch(uri)
-                .then((response) => response.json())
-                .then((result: CSVState) => {
+                fetch(uri)
+                    .then((response) => response.json())
+                    .then((result: CSVState) => {
 
-                    if (result !== initialCSVState){
-                        let value: string | string[] = "";
-                        switch(label) {
-                            case "Objects":
-                                value = result.objects;
-                                break;
-                            case "Activity":
-                                value = result.activity
-                                break;
-                            case "Timestamp":
-                                value = result.timestamp
-                                break;
-                            case "ID":
-                                value = result.id
-                                break;
+                        if (result !== initialCSVState){
+                            let value: string | string[] = "";
+                            switch(label) {
+                                case "Objects":
+                                    value = result.objects;
+                                    break;
+                                case "Activity":
+                                    value = result.activity
+                                    break;
+                                case "Timestamp":
+                                    value = result.timestamp
+                                    break;
+                                case "ID":
+                                    value = result.id
+                                    break;
+                            }
+                            if (value !== undefined && changeValue !== value){
+                                setDefaultValue(value);
+                            }
                         }
-                        if (value !== undefined && changeValue !== value){
-                            setDefaultValue(value);
-                        }
-                    }
 
-                })
-                .catch(err => {
-                    console.log("Error in fetching column data ...")
-                });
-            const defaultValues = findDefaultValue(values, defaultString, isMultiple)
-            if((Array.isArray(defaultValues) && defaultValues.length !== 0) || !Array.isArray(defaultValues)){
-                setDefaultValue(defaultValues);
+                    })
+                    .catch(err => {
+                        console.log("Error in fetching column data ...")
+                    });
+                const defaultValues = findDefaultValue(values, defaultString, isMultiple)
+                if((Array.isArray(defaultValues) && defaultValues.length !== 0) || !Array.isArray(defaultValues)){
+                    setDefaultValue(defaultValues);
+                }
             }
         }
         return (
@@ -504,8 +500,6 @@ export function EventLogList(props: EventLogListProps) {
                     </Button>
                 </Stack>
                 {
-                    // TODO: correct pathing in backend, currently hardcoded for unix, need os.path
-                    // TODO: deselecting all object types renders default again
                     // TODO: on deletion of event log also unrender csv selection component
                     // TODO: on upload of event log, render csv selection component
                     // TODO: get rid of error messages on restoring csv column data
