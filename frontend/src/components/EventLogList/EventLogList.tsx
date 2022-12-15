@@ -188,13 +188,15 @@ export function EventLogList(props: EventLogListProps) {
 
     async function onDelete() {
         if (selected !== null) {
-            const ocel = String(dataSource[Number(selected)].full_path)
+            const ocel = String(dataSource[Number(selected)].full_path);
             const uri = getURI("/logs/delete", {file_path: ocel, uuid: getUuid(ocel)});
             await fetch(uri)
                 .then((response) => response.json())
                 .then((result) => {
-                    setSelected(null)
-                    fetchListData()
+                    setSelected(null);
+                    fetchListData();
+                    setCSVSelected(false);
+                    clearSelectData();
                 })
                 .catch(err => console.log("Error in deleting ..."));
         }
@@ -500,7 +502,6 @@ export function EventLogList(props: EventLogListProps) {
                     </Button>
                 </Stack>
                 {
-                    // TODO: on deletion of event log also unrender csv selection component
                     // TODO: on upload of event log, render csv selection component
                     // TODO: get rid of error messages on restoring csv column data
                     csvSelected && (
