@@ -6,7 +6,10 @@ from pathlib import PureWindowsPath
 import pandas as pd
 from typing import List
 
-from ocpa.objects.log.importer.csv import factory as ocel_import_factory
+import json
+import copy
+from lxml import etree, objectify
+from pandas.api.types import is_integer_dtype
 
 from fastapi import APIRouter, File, UploadFile, HTTPException
 from pydantic import BaseModel
@@ -110,6 +113,48 @@ async def upload_event_logs(file: UploadFile):
     with open(file_location, "wb") as f:
         f.write(file_content)
 
+    if file.filename.split(".")[-1] == "jsonocel":
+
+        with open(file_location) as f:
+            data = json.load(f)
+            new_data = copy.deepcopy(data)
+            has_string_value = False
+            for item in data['ocel:events']:
+                try:
+                    int(item)
+                except ValueError:
+                    has_string_value = True
+                    break
+
+            if has_string_value:
+                for i, item in enumerate(data['ocel:events']):
+                    new_data['ocel:events'][i] = new_data['ocel:events'].pop(item)
+
+                with open(file_location, "w") as new_f:
+                    json.dump(new_data, new_f, indent=4)
+
+    elif file.filename.split(".")[-1] == "xmlocel":
+        parser = etree.XMLParser(remove_comments=True)
+        tree = objectify.parse(file_location, parser=parser)
+        root = tree.getroot()
+        i = 0
+        for child in root:
+            if child.tag.lower().endswith("events"):
+                for event in child:
+                    for child2 in event:
+                        if child2.get("key") == "id":
+                            try:
+                                int(child2.get("value"))
+                            except ValueError:
+                                child2.attrib['value'] = str(i)
+                                i += 1
+
+        et = etree.ElementTree(root)
+        et.write(file_location, pretty_print=True)
+
+    # Since we do not know which column is used as id in csv files and we do not want to assume that,
+    # changing type of the id column is done when we select the csv file and chose the id column
+
     return {
         "status": "successful",
         "data": [
@@ -181,6 +226,9 @@ def save_csv_columns(payload: StoreCSVPayload):
     # Right now, we manually change the id column to "id"
     df = pd.read_csv(file_path_extended)
     df.rename(columns={payload.csv.id: "id"}, inplace=True)
+    # When id column does not have needed numeric format, we change it (random order)
+    if not is_integer_dtype(df["id"]):
+        df['id'] = df.id.astype('category').cat.rename_categories(range(0, df.shape[0]))
     df.to_csv(file_path_extended, index=None)
 
     csv_file = get_csv_file(folder.split(os.sep)[1])
