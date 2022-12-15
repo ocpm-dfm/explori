@@ -73,6 +73,10 @@ export function EventLogList(props: EventLogListProps) {
     const [ocelID, setOcelID] = useState("");
     const [separator, setSeparator] = useState(",");
 
+    useEffect(() => {
+        onNewSelection();
+    }, [selected])
+
     const handleClickOpen = () => {
         setOpen(true);
     };
@@ -144,9 +148,8 @@ export function EventLogList(props: EventLogListProps) {
         setSeparator(",");
     }
 
-    // @ts-ignore
-    let onSelection = ({ selected }) => {
-        if(String(dataSource[Number(selected)].type) === "csv"){
+    function onNewSelection(){
+        if(selected !== null && String(dataSource[Number(selected)].type) === "csv"){
             // We set the flag to render the Select components and fetch needed data
             setCSVSelected(true);
             getCSVData(selected);
@@ -162,6 +165,11 @@ export function EventLogList(props: EventLogListProps) {
         } else {
             setCSVSelected(false);
         }
+    }
+
+    // @ts-ignore
+    let onSelection = ({ selected }) => {
+        onNewSelection();
         setSelected(selected);
     };
 
@@ -502,7 +510,6 @@ export function EventLogList(props: EventLogListProps) {
                     </Button>
                 </Stack>
                 {
-                    // TODO: on upload of event log, render csv selection component
                     // TODO: get rid of error messages on restoring csv column data
                     csvSelected && (
                         <React.Fragment>

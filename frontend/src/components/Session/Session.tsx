@@ -49,20 +49,20 @@ export function Session(_props: any) {
             .then((response) => response.json())
             .then((result) => {
                 if (result.status === "successful") {
-                    const eventLogMetadata = formatEventLogMetadata(result.data)
-                    eventLogMetadata.id = dataSource.length + 1
+                    const eventLogMetadata = formatEventLogMetadata(result.data);
+                    eventLogMetadata.id = dataSource.length + 1;
                     let newDataSource = [
                         ...dataSource,
                         eventLogMetadata
                     ]
-                    newDataSource = newDataSource.sort(compare)
+                    newDataSource = newDataSource.sort(compare);
 
                     for (let i = 0; i < newDataSource.length; i++){
                         newDataSource[i].id = i;
                     }
 
-                    setDataSource(newDataSource)
-                    setSelected(eventLogMetadata.id)
+                    setDataSource(newDataSource);
+                    setSelected(eventLogMetadata.id);
                 }
             })
             .catch(err => console.log("Error in uploading ..."))
