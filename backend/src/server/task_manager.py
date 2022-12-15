@@ -28,12 +28,13 @@ class TaskManager:
         self.__long_term_cache = long_term_cache
 
     def cached_task(self, ocel: str, task, args: List[Any], kwargs: Dict[str, Any] | None,
-                    task_name: TaskName | str, long_term_cache_key: str) -> TaskStatus:
+                    task_name: TaskName | str, long_term_cache_key: str,
+                    ignore_cache: bool = False) -> TaskStatus:
         if kwargs is None:
             kwargs = {}
 
         # Easiest case: Task has run before, we can just fetch the result from the cache.
-        if self.__long_term_cache.has(ocel, long_term_cache_key):
+        if not ignore_cache and self.__long_term_cache.has(ocel, long_term_cache_key):
             return TaskStatus(status="done", result=self.__long_term_cache.get(ocel, long_term_cache_key))
 
         # Check if the task is currently running.

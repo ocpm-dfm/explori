@@ -1,8 +1,18 @@
+from collections import namedtuple
 from typing import Dict, List, Tuple
 from pathlib import PureWindowsPath
 
 from worker.main import app
 from worker.utils import get_all_projected_traces
+
+Edge = namedtuple('Edge', ['source', 'target'])
+Node = str
+ObjectType = str
+Trace = namedtuple("Trace", ['actions', 'trace_count'])
+CountSeperator = namedtuple("CountSeperator", ["upper_bound", "instance_count"])
+
+START_TOKEN = "|EXPLORI_START|"
+STOP_TOKEN = "|EXPLORI_END|"
 
 
 @app.task()
@@ -14,163 +24,203 @@ def dfm(ocel_filename: str):
     # The following transformation has no effect if `ocel_filename` is already a POSIX path.
     ocel_filename = PureWindowsPath(ocel_filename).as_posix()
 
-    projected_traces: Dict[str, List[Tuple[List[str], int]]] = get_all_projected_traces(ocel_filename,
+    projected_traces: Dict[ObjectType, List[Tuple[List[str], int]]] = get_all_projected_traces(ocel_filename,
                                                                                         build_if_non_existent=True)
 
-    edge_counts, node_counts, edge_traces, total_objects = prepare_threshold_computation(projected_traces)
+    edge_counts: Dict[ObjectType, Dict[Edge, List[CountSeperator]]] = {}
+    node_counts_by_object_type: Dict[ObjectType, Dict[Node, List[CountSeperator]]] = {}
+    edge_thresholds: Dict[ObjectType, Dict[Edge, float]] = {}
 
-    edge_thresholds, edge_counts_by_threshold, node_counts_by_threshold = \
-        compute_edge_thresholds_and_counts(edge_counts, node_counts, edge_traces, total_objects)
+    for object_type in projected_traces:
+        edge_totals, node_totals, edge_traces, total_objects = prepare_dfg_computation(projected_traces[object_type])
 
-    node_thresholds = compute_node_thresholds(edge_thresholds)
+        type_edge_counts, type_node_counts = \
+            calculate_threshold_counts_on_dfg(edge_totals, node_totals, edge_traces, total_objects)
+
+        edge_counts[object_type] = type_edge_counts
+        node_counts_by_object_type[object_type] = type_node_counts
+        edge_thresholds[object_type] = {edge: type_edge_counts[edge][0].upper_bound for edge in type_edge_counts}
+
+    node_counts = combine_node_counts(node_counts_by_object_type)
+    node_thresholds = {node: node_counts[node][0].upper_bound for node in node_counts}
 
     return convert_to_frontend_friendly_graph_notation(edge_thresholds, node_thresholds,
-                                                       edge_counts_by_threshold, node_counts_by_threshold)
+                                                       edge_counts, node_counts)
 
 
-def prepare_threshold_computation(projected_traces: Dict[str, List[Tuple[List[str], int]]]) -> (
-        Dict[Tuple[str, str, str], int],
-        Dict[str, int],
-        Dict[Tuple[str, str, str], List[Tuple[List[str], int]]],
+def prepare_dfg_computation(traces: List[Trace]) -> (
+        Dict[Edge, int],
+        Dict[Node, int], Dict[Edge, List[Trace]],
         int):
-    # The DFM data structure we will use for filtering.
-    # edge := (sourceNode: str, targetNode: str, objectType: str)
+    #edge := (sourceNode: str, targetNode: str)
     # edge_counts := edge -> <nr of objects passing through that edge>: int
     # node_counts := node -> <nr of objects passing through that node>: int
     # edge_traces := edge -> [(trace: [nodes: str], <frequency of the trace>: int)]
     # total_objects := <the total number of objects>: int
-    edge_counts: Dict[Tuple[str, str, str], int] = {}
-    node_counts: Dict[str, int] = {}
-    # edge -> [(trace, trace_count)]
-    edge_traces: Dict[Tuple[str, str, str], List[Tuple[List[str], int]]] = {}
+    edge_counts: Dict[Edge, int] = {}
+    node_counts: Dict[Node, int] = {}
+    edge_traces: Dict[Edge, List[Trace]] = {}
     total_objects = 0
 
-    # Step 1: Build DFM.
-    for object_type in projected_traces.keys():
+    for (variant, count_of_cases) in traces:
+        # Wrap the trace by a start and a stop token so traces of length 1 are handled correctly.
+        variant = [START_TOKEN] + list(variant) + [STOP_TOKEN]
+        total_objects += count_of_cases
+        trace_tuple = Trace(variant, count_of_cases)
 
-        for (variant, count_of_cases) in projected_traces[object_type]:
+        seen_edges = set()
 
-            total_objects += count_of_cases
-            trace_tuple = (variant, count_of_cases)
+        for i in range(len(variant) - 1):
+            edge = Edge(variant[i], variant[i + 1])
 
-            for i in range(len(variant) - 1):
-                edge = (variant[i], variant[i + 1], object_type)
+            edge_counts.setdefault(edge, 0)
+            edge_counts[edge] += count_of_cases
 
-                edge_counts.setdefault(edge, 0)
-                edge_counts[edge] += count_of_cases
+            # An edge might repeat itself within a trace. We don't want the trace to be added twice.
+            if edge not in seen_edges:
                 edge_traces.setdefault(edge, []).append(trace_tuple)
+                seen_edges.add(edge)
 
-            for node in variant:
-                node_counts.setdefault(node, 0)
-                node_counts[node] += count_of_cases
+        for node in variant:
+            node_counts.setdefault(node, 0)
+            node_counts[node] += count_of_cases
+
     return edge_counts, node_counts, edge_traces, total_objects
 
 
-def compute_edge_thresholds_and_counts(edge_counts: Dict[Tuple[str, str, str], int],
-                                       node_counts: Dict[str, int],
-                                       edge_traces: Dict[Tuple[str, str, str], List[Tuple[List[str], int]]],
-                                       total_objects: int) -> (Dict[Tuple[str, str, str], float],
-                                                               Dict[Tuple[str, str, str], List[Tuple[float, int]]],
-                                                               Dict[str, List[Tuple[float, int]]]):
-    # Step 2: Determine thresholds for every edge and the amount that each edge / node occurs.
-    # Sort edges from least frequent to most frequent
-    edges = sorted(list(edge_counts.keys()), key=lambda edge: edge_counts[edge])
+def calculate_threshold_counts_on_dfg(edge_totals: Dict[Edge, int], node_totals: Dict[Node, int],
+                                      edge_traces: Dict[Edge, List[Trace]], total_objects: int) -> (
+    Dict[Edge, List[CountSeperator]],
+    Dict[Node, List[CountSeperator]]):
+    edges = sorted(list(edge_totals.keys()), key=lambda edge: edge_totals[edge])
 
     current_objects = total_objects
-    edge_thresholds: Dict[Tuple[str, str, str], float] = {}
-
-    # edge / node -> (threshold at which count is reached, count)
-    # Assume we have a list [ ..., (t_a, c_a), (t_b, c_b), ... ],
-    # and our threshold t fits t_a <= t < t_b, then the count of at that node / edge is c_b!
-    edge_counts_by_threshold: Dict[Tuple[str, str, str], List[(float, int)]] = {
-        edge: [(1.01, edge_counts[edge])] for edge in edges
-        # 1.01 because the upper end is exclusive and 1 should be in range.
-    }
-    node_counts_by_threshold: Dict[str, List[(float, int)]] = {
-        node: [(1.01, node_counts[node])] for node in node_counts.keys()
-        # 1.01 because the upper end is exclusive and 1 should be in range.
-    }
+    edge_counts: Dict[Edge, List[CountSeperator]] = { edge: [CountSeperator(1.01, edge_totals[edge])] for edge in edges }
+    node_counts: Dict[Node, List[CountSeperator]] = { node: [CountSeperator(1.01, node_totals[node])] for node in node_totals }
 
     for edge in edges:
-        assert current_objects >= 0
+        updated_edge_counts: Dict[Edge, int] = {}
+        updated_node_counts: Dict[Node, int] = {}
 
-        _, _, object_type = edge
+        for trace in edge_traces[edge]:
+            actions: List[Node] = trace.actions
+            count: int = trace.trace_count
+            seen_steps = set()
 
-        updated_edge_counts: Dict[Tuple[str, str, str], int] = {}
-        updated_node_counts: Dict[str, int] = {}
+            for i in range(len(actions) - 1):
+                other_edge = Edge(actions[i], actions[i + 1])
 
-        # Remove all traces that go through that edge.
-        for trace_tuple in edge_traces[edge]:
-            (trace, trace_count) = trace_tuple
-            for i in range(len(trace) - 1):
-                trace_step = (trace[i], trace[i + 1], object_type)
-                edge_traces[trace_step].remove(trace_tuple)
+                updated_edge_counts.setdefault(other_edge, edge_counts[other_edge][0].instance_count)
+                updated_edge_counts[other_edge] -= count
 
-                updated_edge_counts.setdefault(trace_step, edge_counts_by_threshold[trace_step][0][1])
-                updated_edge_counts[trace_step] -= trace_count
+                # We must not remove the trace from edge_traces[edge] because we are currently iterating through it.
+                # Also, an edge might occur twice in a single trace (e.g. "a, a, a"), so we must ensure that we don't
+                # remove it twice.
+                if other_edge != edge and other_edge not in seen_steps:
+                    edge_traces[other_edge].remove(trace)
+                    seen_steps.add(other_edge)
 
-            for node in trace:
-                updated_node_counts.setdefault(node, node_counts_by_threshold[node][0][1])
-                updated_node_counts[node] -= trace_count
+            for node in actions:
+                updated_node_counts.setdefault(node, node_counts[node][0].instance_count)
+                updated_node_counts[node] -= count
 
-            current_objects -= trace_count
+            current_objects -= count
 
-        # Calculate threshold of the edge:
-        current_threshold = current_objects / total_objects
-        edge_thresholds[edge] = current_threshold
+        threshold = current_objects / total_objects
+        for other_edge in updated_edge_counts:
+            edge_counts[other_edge].insert(0, CountSeperator(threshold, updated_edge_counts[other_edge]))
+        for node in updated_node_counts:
+            node_counts[node].insert(0, CountSeperator(threshold, updated_node_counts[node]))
 
-        # Update node_count_by_threshold and edge_count_by_threshold
-        for (node, new_count) in updated_node_counts.items():
-            node_counts_by_threshold[node].insert(0, (current_threshold, new_count))
-        for (updated_edge, new_count) in updated_edge_counts.items():
-            edge_counts_by_threshold[updated_edge].insert(0, (current_threshold, new_count))
+    return edge_counts, node_counts
 
-    return edge_thresholds, edge_counts_by_threshold, node_counts_by_threshold
+def combine_node_counts(object_type_node_counts: Dict[ObjectType, Dict[Node, List[CountSeperator]]]) -> Dict[Node, List[CountSeperator]]:
+    result: Dict[Node, List[CountSeperator]] = {}
+    for type_counts in object_type_node_counts.values():
+        for node, node_counts in type_counts.items():
+            result.setdefault(node, [])
+            result_counts = result[node]
+
+            last_added_count = 0
+            for seperator_to_insert in node_counts:
+                for i in range(len(result_counts)):
+                    if result_counts[i].upper_bound < seperator_to_insert.upper_bound:
+                        continue
+
+                    count_increase = seperator_to_insert.instance_count - last_added_count
+                    last_added_count = seperator_to_insert.instance_count
+
+                    if result_counts[i].upper_bound == seperator_to_insert.upper_bound:
+                        for j in range(i, len(result_counts)):
+                            result_counts[j] = increase_count(result_counts[j], count_increase)
+                        break
+
+                    for j in range(i, len(result_counts)):
+                        result_counts[j] = increase_count(result_counts[j], count_increase)
+                    if i == 0:
+                        result_counts.insert(i, seperator_to_insert)
+                    else:
+                        result_counts.insert(i, CountSeperator(seperator_to_insert.upper_bound,
+                                                               result_counts[i - 1].instance_count + count_increase))
+                    break
+                else:
+                    result_counts.append(seperator_to_insert)
+
+    return result
 
 
-def compute_node_thresholds(edge_thresholds: Dict[Tuple[str, str, str], float]) -> Dict[str, float]:
+def compute_node_thresholds(node_counts: Dict[ObjectType, Dict[Node, List[CountSeperator]]]) -> Dict[Node, float]:
     # Step 3: Calculate node thresholds
     node_thresholds: Dict[str, float] = {}
 
-    def update_node_threshold(node: str, possible_threshold: float) -> None:
-        if node not in node_thresholds:
-            node_thresholds[node] = possible_threshold
-        elif possible_threshold < node_thresholds[node]:
-            node_thresholds[node] = possible_threshold
-
-    for edge in edge_thresholds.keys():
-        update_node_threshold(edge[0], edge_thresholds[edge])
-        update_node_threshold(edge[1], edge_thresholds[edge])
+    for counts in node_counts.values():
+        for node, c in counts.items():
+            ot_thresh = c[0].upper_bound
+            node_thresholds.setdefault(node, ot_thresh)
+            if node_thresholds[node] > ot_thresh:
+                node_thresholds[node] = ot_thresh
     return node_thresholds
 
 
-def convert_to_frontend_friendly_graph_notation(edge_thresholds: Dict[Tuple[str, str, str], float],
-                                                node_thresholds: Dict[str, float],
-                                                edge_counts_by_threshold: Dict[Tuple[str, str, str], List[Tuple[float, int]]],
-                                                node_counts_by_threshold: Dict[str, List[Tuple[float, int]]]):
+def convert_to_frontend_friendly_graph_notation(edge_thresholds: Dict[ObjectType, Dict[Edge, float]],
+                                                node_thresholds: Dict[Node, float],
+                                                edge_counts: Dict[str, Dict[Edge, List[CountSeperator]]],
+                                                node_counts: Dict[Node, List[CountSeperator]]):
     # Step 4: Generate frontend-friendly output
-    node_indices: Dict[str, int] = {}
-    frontend_nodes = []
+    node_indices: Dict[str, int] = {
+        START_TOKEN: 0,
+        STOP_TOKEN: 1
+    }
     for node in node_thresholds.keys():
-        node_indices[node] = len(node_indices)
-        frontend_nodes.append({
+        node_indices.setdefault(node, len(node_indices))
+    frontend_nodes = [{} for _ in range(len(node_indices))]
+    for node in node_thresholds.keys():
+        frontend_nodes[node_indices[node]] = {
             'label': node,
             'threshold': node_thresholds[node],
-            'counts': node_counts_by_threshold[node]
-        })
-
-    frontend_subgraphs: Dict[str, List[Dict[str, float]]] = {}
-    for edge in edge_thresholds.keys():
-        frontend_edge = {
-            'source': node_indices[edge[0]],
-            'target': node_indices[edge[1]],
-            'threshold': edge_thresholds[edge],
-            'counts': edge_counts_by_threshold[edge]
+            'counts': node_counts[node]
         }
 
-        frontend_subgraphs.setdefault(edge[2], []).append(frontend_edge)
+    frontend_subgraphs: Dict[str, List[Dict[str, float]]] = \
+    {
+        object_type:
+        [
+            {
+                'source': node_indices[edge.source],
+                'target': node_indices[edge.target],
+                'threshold': edge_thresholds[object_type][edge],
+                'counts': edge_counts[object_type][edge]
+            }
+            for edge in edge_thresholds[object_type]
+        ]
+        for object_type in edge_thresholds
+    }
 
     return {
         'nodes': frontend_nodes,
         'subgraphs': frontend_subgraphs
     }
+
+
+def increase_count(seperator: CountSeperator, count: int):
+    return CountSeperator(seperator.upper_bound, seperator.instance_count + count)

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useState} from 'react';
 import '../../App.css';
 import {DirectlyFollowsMultigraph, FilteredDFM} from "../dfm/dfm";
 import { ObjectSelection } from "../ObjectSelection/ObjectSelection";
@@ -7,6 +7,9 @@ import {ExploriNavbar} from "../ExploriNavbar/ExploriNavbar";
 import "./Home.css";
 import {useAsyncAPI} from "../../api";
 import {UserSessionState} from "../UserSession/UserSession";
+import { FilteredCytoDFM } from '../cytoscape-dfm/cytodfm';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import {faSnowflake} from "@fortawesome/free-regular-svg-icons";
 
 
 export const Home = (props: { userSessionState: UserSessionState, stateChangeCallback: any}) => {
@@ -16,23 +19,36 @@ export const Home = (props: { userSessionState: UserSessionState, stateChangeCal
     const alreadySelectedAllObjectTypesInitially = props.userSessionState.alreadySelectedAllObjectTypesInitially;
     const stateChangeCallback = props.stateChangeCallback;
 
+    const [frozen, setFrozen] = useState<boolean>(false);
+
     const dfm_query = useAsyncAPI<DirectlyFollowsMultigraph>("/pm/dfm", {ocel: selectedOcel});
 
     const availableObjectTypes: string[] = dfm_query.result ? Object.keys(dfm_query.result.subgraphs) : [];
     selectedObjectTypes = selectedObjectTypes ? selectedObjectTypes : [];
-    const objectTypeSelection = <ObjectSelection
-        availableObjectTypes={availableObjectTypes}
-        selectedObjectTypes={selectedObjectTypes}
-        updateCallback={stateChangeCallback}
-        alreadySelectedAllObjectTypesInitially={alreadySelectedAllObjectTypesInitially}
-        selectAllObjectTypesInitially={true}
-    />
+
+    const navbarItems = (
+        <React.Fragment>
+            <button className={`Home-toggleButton ${frozen ? 'Home-toggleButton--active' : ''}`}
+                    onClick={() => setFrozen(!frozen)}
+                    title="Freezes all node positions so that they are not changed when the threshold is changed.">
+                <FontAwesomeIcon icon={faSnowflake} />
+            </button>
+            <ObjectSelection
+                availableObjectTypes={availableObjectTypes}
+                selectedObjectTypes={selectedObjectTypes}
+                updateCallback={stateChangeCallback}
+                alreadySelectedAllObjectTypesInitially={alreadySelectedAllObjectTypesInitially}
+                selectAllObjectTypesInitially={true} />
+        </React.Fragment>);
 
     return (
         <React.Fragment>
             <div className="Home">
-                <ExploriNavbar lowerRowSlot={objectTypeSelection} />
-                <FilteredDFM dfm={dfm_query.result} threshold={filteringThreshold / 100} selectedObjectTypes={selectedObjectTypes} />
+                <ExploriNavbar lowerRowSlot={navbarItems} />
+                <FilteredCytoDFM dfm={dfm_query.result}
+                                 threshold={filteringThreshold / 100}
+                                 selectedObjectTypes={selectedObjectTypes}
+                                 positionsFrozen={frozen} />
                 <div className="Home-DetailSlider">
                     <div className="Home-DetailSlider-Label">
                         Less detail
