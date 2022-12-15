@@ -26,9 +26,6 @@ import { TypeDataSource } from '@inovua/reactdatagrid-community/types';
 import { Session } from '../Session/Session';
 import { SwitchOcelsCallback } from "../../App";
 import getUuid from "uuid-by-string";
-import {UserSessionState} from "../UserSession/UserSession";
-import {Simulate} from "react-dom/test-utils";
-import change = Simulate.change;
 
 interface columnType {
     name: string,
