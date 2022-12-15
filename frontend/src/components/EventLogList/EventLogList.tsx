@@ -27,6 +27,8 @@ import { Session } from '../Session/Session';
 import { SwitchOcelsCallback } from "../../App";
 import getUuid from "uuid-by-string";
 import {UserSessionState} from "../UserSession/UserSession";
+import {Simulate} from "react-dom/test-utils";
+import change = Simulate.change;
 
 interface columnType {
     name: string,
@@ -48,6 +50,13 @@ export function EventLogList(props: EventLogListProps) {
     let initialDataSource: TypeDataSource = [];
     let initialColumns: columnType[] = [];
     let initialObjectTypes: string[] = [];
+    let initialCSVState: CSVState = {
+        objects: [],
+        activity: "",
+        timestamp: "",
+        id: "",
+        separator: "",
+    };
     const uri = getURI("/logs/available", {});
     const [selected, setSelected] = useState(null);
     const [dataSource, setDataSource] = useState(initialDataSource);
@@ -55,6 +64,7 @@ export function EventLogList(props: EventLogListProps) {
     const [dataCSV, setDataCSV] = useState(initialDataSource);
     const [csvSelected, setCSVSelected] = useState(false);
     const [selectedCSVLog, setSelectedCSVLog] = useState("");
+    const [savedCSVData, setSavedCSVData] = useState(initialCSVState);
     const [open, setOpen] = useState(false);
 
     const [objectTypes, setObjectTypes] = useState(initialObjectTypes);
@@ -239,6 +249,21 @@ export function EventLogList(props: EventLogListProps) {
         return matches
     }
 
+    async function fetchCSVColumns(){
+        const full_path = String(dataSource[Number(selected)].full_path)
+
+        const uri = getURI("/logs/restore", {name: full_path});
+
+        await fetch(uri)
+            .then((response) => response.json())
+            .then((result: CSVState) => {
+                setSavedCSVData(result);
+            })
+            .catch(err => {
+                console.log("Error in fetching column data ...")
+            });
+    }
+
     function generateSelect(
         label: string,
         changeValue: any,
@@ -259,6 +284,39 @@ export function EventLogList(props: EventLogListProps) {
                 )
             )
         ){
+            const full_path = String(dataSource[Number(selected)].full_path)
+
+            const uri = getURI("/logs/restore", {name: full_path});
+
+            fetch(uri)
+                .then((response) => response.json())
+                .then((result: CSVState) => {
+
+                    if (result !== initialCSVState){
+                        let value: string | string[] = "";
+                        switch(label) {
+                            case "Objects":
+                                value = result.objects;
+                                break;
+                            case "Activity":
+                                value = result.activity
+                                break;
+                            case "Timestamp":
+                                value = result.timestamp
+                                break;
+                            case "ID":
+                                value = result.id
+                                break;
+                        }
+                        if (value !== undefined && changeValue !== value){
+                            setDefaultValue(value);
+                        }
+                    }
+
+                })
+                .catch(err => {
+                    console.log("Error in fetching column data ...")
+                });
             const defaultValues = findDefaultValue(values, defaultString, isMultiple)
             if((Array.isArray(defaultValues) && defaultValues.length !== 0) || !Array.isArray(defaultValues)){
                 setDefaultValue(defaultValues);
@@ -446,11 +504,11 @@ export function EventLogList(props: EventLogListProps) {
                     </Button>
                 </Stack>
                 {
-                    // TODO: load csv column mapping from backend if saved before
                     // TODO: correct pathing in backend, currently hardcoded for unix, need os.path
                     // TODO: deselecting all object types renders default again
                     // TODO: on deletion of event log also unrender csv selection component
                     // TODO: on upload of event log, render csv selection component
+                    // TODO: get rid of error messages on restoring csv column data
                     csvSelected && (
                         <React.Fragment>
                             <div style={{'marginTop': '20px'}}>
@@ -460,9 +518,6 @@ export function EventLogList(props: EventLogListProps) {
                                     columns={columnsCSV}
                                     dataSource={dataCSV}
                                     style={gridStyle}
-                                    selected={selected}
-                                    //enableSelection={true}
-                                    onSelectionChange={onSelection}
                                 ></ReactDataGrid>
                             </div>
                             <Stack justifyContent="center" sx={{width: '85vw'}}>

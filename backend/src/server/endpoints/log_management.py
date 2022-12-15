@@ -189,6 +189,20 @@ def save_csv_columns(payload: StoreCSVPayload):
 
     return {'status': 'successful'}
 
+@router.get('/restore', response_model=CSV)
+def restore_csv_data(name: str) -> CSV:
+    file_path_extended = "data" + os.sep + name
+
+    cache = get_long_term_cache()
+    folder = cache.get_folder(file_path_extended)
+
+    csv_file = get_csv_file(folder.split(os.sep)[1])
+    if not os.path.isfile(csv_file):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Unknown column mappings file.")
+
+    with open(csv_file, 'r') as f:
+        return CSV(**json.load(f))
+
 def get_csv_file(ocel_name: str):
     """Determines the file to store the csv data to. Prevents path traversals."""
 
