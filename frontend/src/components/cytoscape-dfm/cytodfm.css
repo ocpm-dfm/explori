@@ -32,3 +32,14 @@
 
     margin-right: .5rem;
 }
+
+.CytoDFM-Export-Button {
+    line-height: 12px;
+    width: 18px;
+    font-size: 8pt;
+    margin-top: 1px;
+    margin-right: 2px;
+    position: absolute !important;
+    top: 14vh;
+    right: 0;
+}

@@ -1,9 +1,15 @@
 import CytoscapeComponent from "react-cytoscapejs";
 import {DirectlyFollowsMultigraph} from "../dfm/dfm";
 
+import Button from '@mui/material/Button';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faFileExport } from "@fortawesome/free-solid-svg-icons";
+
 import './cytodfm.css';
 import {useState} from "react";
+import React from "react";
 import cytoscape, {EventObject} from "cytoscape";
+const fileSaver = require('file-saver');
 
 
 const preselectedColors = [
@@ -199,6 +205,7 @@ export const FilteredCytoDFM = (props: {
     const dfm = props.dfm;
     const thresh = props.threshold;
     const selectedObjectTypes = props.selectedObjectTypes;
+    let cySaved: any;
 
     if (!dfm) {
         // Reset the state if necessary.
@@ -424,6 +431,10 @@ export const FilteredCytoDFM = (props: {
         }
     }
 
+    function exportImage(){
+        fileSaver.saveAs(cySaved.jpg(), "graph.jpg");
+    }
+
     function registerEvents(cy: cytoscape.Core) {
         cy.on("dragfreeon", "node", (event: EventObject) => {
             const item = event.target;
@@ -442,33 +453,38 @@ export const FilteredCytoDFM = (props: {
                 }
             }
         })
+        cySaved = cy;
     }
     // endregion
 
     return (
-        <div className="CytoDFM-container" id="DFM-container">
-            <CytoscapeComponent
-                elements={elements}
-                stylesheet={style}
-                layout={layout}
-                style={ { width: '100%', height: '100%' } }
-                wheelSensitivity={0.2}
-                cy={registerEvents}
-            />
-            { legendObjectTypeColors.length > 0 &&
-                <ul className="CytoDFM-Legend">
-                    {
-                        legendObjectTypeColors.map(([type, color]) => (
-                            <li key={type}>
-                                <div className="CytoDFM-Legend-Circle" style={{backgroundColor: color}}>
-                                </div>
-                                {type}
-                            </li>
-                        ))
-                    }
-                </ul>
-            }
-        </div>
+        <React.Fragment>
+            <div className="CytoDFM-container" id="DFM-container">
+                <CytoscapeComponent
+                    elements={elements}
+                    stylesheet={style}
+                    layout={layout}
+                    style={ { width: '100%', height: '100%' } }
+                    wheelSensitivity={0.2}
+                    cy={registerEvents}
+                />
+                { legendObjectTypeColors.length > 0 &&
+                    <ul className="CytoDFM-Legend">
+                        {
+                            legendObjectTypeColors.map(([type, color]) => (
+                                <li key={type}>
+                                    <div className="CytoDFM-Legend-Circle" style={{backgroundColor: color}}>
+                                    </div>
+                                    {type}
+                                </li>
+                            ))
+                        }
+                    </ul>
+                }
+
+            </div>
+            <Button onClick={exportImage} className={'CytoDFM-Export-Button'}><FontAwesomeIcon icon={faFileExport} /></Button>
+        </React.Fragment>
         )
     ;
 }
