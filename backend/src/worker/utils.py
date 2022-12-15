@@ -1,15 +1,22 @@
+import json
+import os
+from pathlib import PureWindowsPath
 from typing import Dict, List, Tuple
 
 import pm4py
+from fastapi import HTTPException
 from ocpa.algo.util.util import project_log
 from ocpa.objects.log.importer.csv.util import succint_mdl_to_exploded_mdl
 from ocpa.objects.log.ocel import OCEL
 from ocpa.objects.log.importer.ocel import factory as ocel_import_factory
+from ocpa.objects.log.importer.csv import factory as ocel_import_factory_csv
 from pandas import DataFrame
 from pm4py.objects.log.obj import EventLog
 from pydantic import BaseModel
+from starlette import status
 
 from cache import get_long_term_cache, projected_log, projected_log_traces, metadata, LongTermCacheEntryType
+from server.endpoints.log_management import CSV
 
 
 class OCELMetadata(BaseModel):
@@ -88,7 +95,7 @@ def get_metadata(ocel_filename: str, build_if_non_existent: bool = True) -> OCEL
         return OCELMetadata(**cache.get(ocel_filename, metadata()))
 
     if build_if_non_existent:
-        ocel: OCEL = ocel_import_factory.apply(ocel_filename)
+        ocel: OCEL = get_ocel(ocel_filename)
         return __build_metadata(ocel_filename, ocel)
     else:
         return None
@@ -96,8 +103,8 @@ def get_metadata(ocel_filename: str, build_if_non_existent: bool = True) -> OCEL
 
 def project_ocel(ocel_filename: str, build_metadata: bool = True) -> Dict[str, EventLog]:
     cache = get_long_term_cache()
+    ocel: OCEL = get_ocel(ocel_filename)
 
-    ocel: OCEL = ocel_import_factory.apply(ocel_filename)
     if build_metadata:
         __build_metadata(ocel_filename, ocel)
 
@@ -111,6 +118,24 @@ def project_ocel(ocel_filename: str, build_metadata: bool = True) -> Dict[str, E
         cache.set(ocel_filename, projected_log(object_type), result[object_type],
                   LongTermCacheEntryType.CLASSIC_EVENT_LOG)
     return result
+
+def get_ocel(ocel_filename: str):
+    # Use saved csv column data to properly import OCEL
+    if ocel_filename.split(".")[-1] == "csv":
+        csv_path = get_csv_file_name(ocel_filename)
+        if not os.path.isfile(csv_path):
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Unknown csv columns mapping.")
+
+        with open(csv_path, 'r') as f:
+            csv = CSV(**json.load(f))
+            parameters = {"obj_names": csv.objects,
+                          "val_names": [],
+                          "act_name": csv.activity,
+                          "time_name": csv.timestamp,
+                          "sep": csv.separator}
+            return ocel_import_factory_csv.apply(file_path=ocel_filename, parameters=parameters)
+    else:
+        return ocel_import_factory.apply(ocel_filename)
 
 
 def load_projected_event_logs(ocel_filename: str) -> Dict[str, EventLog] | None:
@@ -131,3 +156,17 @@ def __build_metadata(ocel_filename: str, ocel: OCEL) -> OCELMetadata:
     result = OCELMetadata(object_types=list(ocel.object_types))
     cache.set(ocel_filename, metadata(), result)
     return result
+
+def get_csv_file_name(ocel_filename: str):
+    cache = get_long_term_cache()
+    folder = cache.get_folder(ocel_filename)
+    csv_path_unvalidated = os.path.join("cache", "csv_columns", folder.split(os.sep)[-1] + ".json")
+
+    # The backend might run on windows which results in a mixture of windows and posix paths (as we simply use strings as path representations for now)
+    # If the path is a posix path, then the following transformation has no effect. If the path is a windows path, then afterwards it will be a posix path
+    csv_path_unvalidated = PureWindowsPath(csv_path_unvalidated).as_posix()
+    csv_file = PureWindowsPath(os.path.abspath(csv_path_unvalidated)).as_posix()
+
+    if csv_file[-len(csv_path_unvalidated):] != csv_path_unvalidated:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Path traversals are not allowed!")
+    return csv_file

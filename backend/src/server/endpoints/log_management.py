@@ -6,6 +6,8 @@ from pathlib import PureWindowsPath
 import pandas as pd
 from typing import List
 
+from ocpa.objects.log.importer.csv import factory as ocel_import_factory
+
 from fastapi import APIRouter, File, UploadFile, HTTPException
 from pydantic import BaseModel
 from starlette import status
@@ -23,6 +25,7 @@ class CSV(BaseModel):
     objects: List[str]
     activity: str
     timestamp: str
+    id: str
     separator: str
 
     class Config:
@@ -34,6 +37,7 @@ class CSV(BaseModel):
                 ],
                 "activity": "ocel:activity",
                 "timestamp": "ocel:timestamp",
+                "id": "ocel:id",
                 "separator": ","
             }
         }
@@ -101,7 +105,7 @@ def list_available_logs() -> TaskStatus:
 
 @router.put('/upload')
 async def upload_event_logs(file: UploadFile):
-    file_location = "./data/uploaded/" + file.filename
+    file_location = "." + os.sep + "data" + os.sep + "uploaded" + os.sep + file.filename
     file_content = await file.read()
     with open(file_location, "wb") as f:
         f.write(file_content)
@@ -117,7 +121,7 @@ async def upload_event_logs(file: UploadFile):
 
 @router.get('/delete')
 def delete_event_log(file_path: str, uuid: str):
-    file_path_extended = "data/" + file_path
+    file_path_extended = "data" + os.sep + file_path
     # Delete ocel and corresponding cache folder
     if os.path.exists(file_path_extended):
         os.remove(file_path_extended)
@@ -125,6 +129,10 @@ def delete_event_log(file_path: str, uuid: str):
         folder = cache.get_folder(file_path_extended)
         try:
             shutil.rmtree(folder)
+            # Delete csv column mappings when file is csv
+            if file_path.split(".")[-1] == "csv":
+                csv_file = get_csv_file(folder.split(os.sep)[1])
+                os.remove(csv_file)
         except OSError as e:
             print("Error: %s - %s." % (e.filename, e.strerror))
 
@@ -132,7 +140,7 @@ def delete_event_log(file_path: str, uuid: str):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="File not found!")
 
     # Delete corresponding autosave
-    autosave_path = "cache/sessions/autosave-" + uuid + ".json"
+    autosave_path = "cache" + os.sep + "sessions" + os.sep + "autosave-" + uuid + ".json"
     if os.path.exists(autosave_path):
         os.remove(autosave_path)
 
@@ -144,7 +152,7 @@ def delete_event_log(file_path: str, uuid: str):
 
 @router.get('/csv_columns', response_model=ColumnListResponseModel)
 def get_csv_columns(file_path: str):
-    file_path_extended = "data/" + file_path
+    file_path_extended = "data" + os.sep + file_path
 
     if not os.path.isfile(file_path_extended):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not a file.")
@@ -154,7 +162,7 @@ def get_csv_columns(file_path: str):
 
 @router.get('/csv_data')
 def get_csv_columns(file_path: str, n_columns: int):
-    file_path_extended = "data/" + file_path
+    file_path_extended = "data" + os.sep + file_path
 
     if not os.path.isfile(file_path_extended):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not a file.")
@@ -164,12 +172,18 @@ def get_csv_columns(file_path: str, n_columns: int):
 
 @router.put('/save_csv')
 def save_csv_columns(payload: StoreCSVPayload):
-    file_path_extended = "data/" + payload.name
+    file_path_extended = "data" + os.sep + payload.name
 
     cache = get_long_term_cache()
     folder = cache.get_folder(file_path_extended)
 
-    csv_file = get_csv_file(folder.split("/")[1])
+    # We need "id" as id column, else import of csv fails
+    # Right now, we manually change the id column to "id"
+    df = pd.read_csv(file_path_extended)
+    df.rename(columns={payload.csv.id: "id"}, inplace=True)
+    df.to_csv(file_path_extended, index=None)
+
+    csv_file = get_csv_file(folder.split(os.sep)[1])
     with open(csv_file, 'w') as f:
         json.dump(payload.csv.dict(), f)
 

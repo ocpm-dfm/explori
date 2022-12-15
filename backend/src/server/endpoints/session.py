@@ -45,7 +45,7 @@ async def store_session(payload: StoreSessionPayload):
 def restore_session(name: str) -> Session:
     session_file = get_session_file(name)
     if not os.path.isfile(session_file):
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Unkown session.")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Unknown session.")
 
     with open(session_file, 'r') as f:
         return Session(**json.load(f))

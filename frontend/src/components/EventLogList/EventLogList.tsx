@@ -38,6 +38,7 @@ export type CSVState = {
     objects: string[],
     activity: string,
     timestamp: string,
+    id: string,
     separator: string,
 }
 
@@ -59,6 +60,7 @@ export function EventLogList(props: EventLogListProps) {
     const [objectTypes, setObjectTypes] = useState(initialObjectTypes);
     const [activityName, setActivityName] = useState("");
     const [timestampName, setTimestampName] = useState("");
+    const [ocelID, setOcelID] = useState("");
     const [separator, setSeparator] = useState(",");
 
     const handleClickOpen = () => {
@@ -94,6 +96,13 @@ export function EventLogList(props: EventLogListProps) {
         setTimestampName(value);
     };
 
+    const handleIDNameChange = (event: SelectChangeEvent<string>) => {
+        const {
+            target: { value },
+        } = event;
+        setOcelID(value);
+    };
+
     const handleSeparatorChange = (event: SelectChangeEvent<string>) => {
         const {
             target: { value },
@@ -116,6 +125,7 @@ export function EventLogList(props: EventLogListProps) {
         setObjectTypes([]);
         setActivityName("");
         setTimestampName("");
+        setOcelID("");
         setSeparator(",");
     }
 
@@ -149,6 +159,7 @@ export function EventLogList(props: EventLogListProps) {
                     {objects: objectTypes,
                         activity: activityName,
                         timestamp: timestampName,
+                        id: ocelID,
                         separator: separator})
             }
 
@@ -435,8 +446,11 @@ export function EventLogList(props: EventLogListProps) {
                     </Button>
                 </Stack>
                 {
-                    // TODO: propagate selections to correct position
-                    // TODO: save settings for event log? if yes, also delete it when deleting log
+                    // TODO: load csv column mapping from backend if saved before
+                    // TODO: correct pathing in backend, currently hardcoded for unix, need os.path
+                    // TODO: deselecting all object types renders default again
+                    // TODO: on deletion of event log also unrender csv selection component
+                    // TODO: on upload of event log, render csv selection component
                     csvSelected && (
                         <React.Fragment>
                             <div style={{'marginTop': '20px'}}>
@@ -455,6 +469,7 @@ export function EventLogList(props: EventLogListProps) {
                                 {generateSelect("Objects", objectTypes, columnsCSV, handleObjectTypeChange, true, setObjectTypes, "type:" )}
                                 {generateSelect("Activity", activityName, columnsCSV, handleActivityNameChange, false, setActivityName, "activity" )}
                                 {generateSelect("Timestamp", timestampName, columnsCSV, handleTimestampNameChange, false, setTimestampName, "timestamp" )}
+                                {generateSelect("ID", ocelID, columnsCSV, handleIDNameChange, false, setOcelID, "id" )}
                                 <FormControl size="small" sx={{ m: 1, width: '80vw' }}>
                                     <InputLabel id="Separator_InputLabel">Separator</InputLabel>
                                     <Select
