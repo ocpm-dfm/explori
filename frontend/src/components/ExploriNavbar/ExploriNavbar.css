@@ -43,8 +43,6 @@
     color: var(--text-default);
     opacity: 0.7;
     transition: opacity 200ms ease-out;
-
-    margin-left: 1rem;
 }
 
 .ENAV-new-session:hover {
