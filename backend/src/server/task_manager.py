@@ -28,16 +28,20 @@ class TaskManager:
         self.__long_term_cache = long_term_cache
 
     def cached_task(self, ocel: str, task, args: List[Any], kwargs: Dict[str, Any] | None,
-                    task_name: TaskName | str, long_term_cache_key: str) -> TaskStatus:
+                    task_name: TaskName | str, long_term_cache_key: str,
+                    ignore_cache: bool = False,
+                    version: str | None = None) -> TaskStatus:
         if kwargs is None:
             kwargs = {}
 
         # Easiest case: Task has run before, we can just fetch the result from the cache.
-        if self.__long_term_cache.has(ocel, long_term_cache_key):
-            return TaskStatus(status="done", result=self.__long_term_cache.get(ocel, long_term_cache_key))
+        if not ignore_cache and self.__long_term_cache.has(ocel, long_term_cache_key):
+            cached_result = self.__long_term_cache.get(ocel, long_term_cache_key)
+            if version is None or ("version" in cached_result and cached_result["version"] == version):
+                return TaskStatus(status="done", result=self.__long_term_cache.get(ocel, long_term_cache_key))
 
         # Check if the task is currently running.
-        running_result = self.check_on_running_task(ocel, task_name, long_term_cache_key)
+        running_result = self.check_on_running_task(ocel, task_name, long_term_cache_key, version)
         if running_result is not None:
             return running_result
 
@@ -47,7 +51,7 @@ class TaskManager:
         return TaskStatus(status="running")
 
     def check_on_running_task(self, ocel: str, task_name: TaskName | str,
-                              long_term_cache_key: str) -> TaskStatus | None:
+                              long_term_cache_key: str, version: str | None) -> TaskStatus | None:
         if isinstance(task_name, TaskName):
             task_name = task_name.value
 
@@ -63,6 +67,8 @@ class TaskManager:
             # The task has finished since the last check.
             # We now write the result to the long term cache, clear up the short term cache and return the result.
             result = task_result.get()
+            if version is not None:
+                result['version'] = version
             self.__long_term_cache.set(ocel, long_term_cache_key, result)
             self.__short_term_cache.delete(task_cache_key)
             self.__short_term_cache.delete(preliminary_result_cache_key)

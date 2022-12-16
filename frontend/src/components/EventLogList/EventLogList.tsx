@@ -8,13 +8,15 @@ import { Link } from "react-router-dom";
 import { getURI } from "../../api";
 import ReactDataGrid from '@inovua/reactdatagrid-community';
 import '@inovua/reactdatagrid-community/index.css';
-import '@inovua/reactdatagrid-community/theme/blue-light.css'
+import '@inovua/reactdatagrid-community/theme/blue-light.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCheck, faMultiply } from "@fortawesome/free-solid-svg-icons";
 import { TypeDataSource } from '@inovua/reactdatagrid-community/types';
 import { Session } from '../Session/Session';
+import { SwitchOcelsCallback } from "../../App";
 
 export function EventLogList(props: EventLogListProps) {
+    const switchOcelsCallback = props.switchOcelsCallback;
 
     let initialDataSource: TypeDataSource = [];
     const uri = getURI("/logs/available", {});
@@ -30,6 +32,8 @@ export function EventLogList(props: EventLogListProps) {
     let onSelect = () => {
         if (selected !== null) {
             const selectedData = dataSource[selected]
+            switchOcelsCallback(String(dataSource[Number(selected)].full_path));
+
             // @ts-ignore
             console.log(selectedData.full_path);
         }
@@ -73,7 +77,6 @@ export function EventLogList(props: EventLogListProps) {
             .then(data => {
                 if (data !== undefined || data !== null) {
                     const formattedData = data.map((eventLog: any, index: number) => {
-                        console.log(eventLog)
                         const eventLogMetadata = formatEventLogMetadata(eventLog)
                         return {
                             ...eventLogMetadata,
@@ -118,7 +121,7 @@ export function EventLogList(props: EventLogListProps) {
                         formatEventLogMetadata={formatEventLogMetadata}
                         compare={compare}
                     />
-                    <Button component={Link} to={"/"} state={{ ocel: String(dataSource[Number(selected)]?.full_path) }} variant="outlined" onClick={onSelect} className="SelectButton" sx={
+                    <Button component={Link} to={"/"} variant="outlined" onClick={onSelect} className="SelectButton" sx={
                         { 'top': '10px', 'margin-top': '10px', 'color': 'rgb(var(--color1))', 'border-color': 'rgb(var(--color1))' }
                     }>
                         Select
@@ -131,10 +134,6 @@ export function EventLogList(props: EventLogListProps) {
 
 }
 
-
 interface EventLogListProps {
-
+    switchOcelsCallback: SwitchOcelsCallback,
 }
-
-/*interface EventLogListState {
-} */

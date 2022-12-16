@@ -1,96 +1,124 @@
-import React, {useEffect, useState} from 'react';
+import React, {useEffect} from 'react';
 import "./ObjectSelection.css";
-import { default as ReactSelect } from "react-select";
-import { components, MultiValue } from "react-select";
-
-
-/* TODO:
-    - [ ] store object selection when switching tabs (currently not clear how tabs will work exactly, keep this for later for now)
- */
-
-const Option = (props: any) => {
-    return (
-      <div>
-        <components.Option {...props}>
-          <input
-            type="checkbox"
-            checked={props.isSelected}
-            onChange={() => null}
-          />{" "}
-          <label>{props.label}</label>
-        </components.Option>
-      </div>
-    );
-};
-
-type ObjectSelectionState = {
-    // current state of selection component
-    selectedObjectTypes: MultiValue<any>,
-    // have we already selected all object types once at the start of visualizing a new dfm?
-    selectedAllObjectTypesInitiallyAlready: boolean,
-}
-
-export type selectedObjectTypesUpdateCallback = (selection: string[]) => void;
+import {StateChangeCallback} from "../../App";
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import {faTrash, faCheckSquare} from "@fortawesome/free-solid-svg-icons";
+import Select, { SelectChangeEvent } from '@mui/material/Select';
+import MenuItem from '@mui/material/MenuItem';
+import Checkbox from '@mui/material/Checkbox';
+import FormControl from '@mui/material/FormControl';
+import OutlinedInput from '@mui/material/OutlinedInput';
+import InputLabel from '@mui/material/InputLabel';
+import Button from '@mui/material/Button';
+import Stack from '@mui/material/Stack';
 
 export const ObjectSelection = (props: {
     // all available object types in the currently visualized dfm (empty list means object types have not been determined  yet)
-    objectTypes: string[],
+    availableObjectTypes: string[],
+    // all currently selected object types (needs to be passed in at least for initialization, e.g. when restoring a session)
+    selectedObjectTypes: string[],
     // callback to signal a change in selected object types (Visualization is sibling component -> need to pass information up, such that parent can pass back down to FilteredDFM)
-    updateCallback: selectedObjectTypesUpdateCallback,
+    updateCallback: StateChangeCallback,
     // should we select all object types at the start of visualizing a new dfm?
     selectAllObjectTypesInitially: boolean,
+    // have we already selected all object types for this dfm?
+    alreadySelectedAllObjectTypesInitially: boolean,
 }) => {
-    const objectTypes = props.objectTypes;
+    const availableObjectTypes = props.availableObjectTypes;
+    const selectedObjectTypes = props.selectedObjectTypes;
     const updateCallback = props.updateCallback;
     const selectAllObjectTypesInitially = props.selectAllObjectTypesInitially;
+    const alreadySelectedAllObjectTypesInitially = props.alreadySelectedAllObjectTypesInitially;
 
-    const [state, setState] = useState<ObjectSelectionState>({
-        selectedObjectTypes: [],
-        selectedAllObjectTypesInitiallyAlready: false,
-    });
+    // propagate current selection state up to parent
+    const setSelectedObjectTypes = function(selection: string[]) {
+        updateCallback({
+            selectedObjectTypes: selection,
+        });
+    }
 
-    // all available selection options
-    let objectTypeOptions: MultiValue<any> = objectTypes.map((typeName) => {
-        return {
-            value: typeName,
-            label: typeName,
+    const handleChange = (event: SelectChangeEvent<string[]>) => {
+        const {
+            target: { value },
+        } = event;
+        if (typeof value === "string") {
+            setSelectedObjectTypes([value])
+        } else {
+            setSelectedObjectTypes(value)
         }
-    });
+    };
 
     // select all object types?
     useEffect(() => {
-        if (objectTypes.length > 0 && selectAllObjectTypesInitially && !state.selectedAllObjectTypesInitiallyAlready) {
-            setSelectedObjectTypes(objectTypeOptions);
-            setState((old) => Object.assign({}, old, {
-                selectedAllObjectTypesInitiallyAlready: true,
-            }));
+        if (
+            !alreadySelectedAllObjectTypesInitially
+            && availableObjectTypes.length > 0
+            && selectAllObjectTypesInitially
+        ) {
+            updateCallback({
+                alreadySelectedAllObjectTypesInitially: true,
+                selectedObjectTypes: availableObjectTypes,
+            });
         }
     });
 
-    // update current selection state and pass information up to parent
-    const setSelectedObjectTypes = function(selection: MultiValue<any>) {
-        setState((old) => Object.assign({}, old, {
-            selectedObjectTypes: selection,
-        }));
-        updateCallback(selection.map((value, _idx, _arr) => {
-            return value.value;
-        }));
-    }
+    const MenuProps = {
+        PaperProps: {
+            style: {
+                //maxHeight: ITEM_HEIGHT * 4.5 + ITEM_PADDING_TOP,
+                width: 100,
+            },
+        },
+    };
 
     return (
         <div className="ObjectSelection">
-            <ReactSelect
-                options={objectTypeOptions}
-                isMulti={true}
-                closeMenuOnSelect={false}
-                hideSelectedOptions={false}
-                //allowSelectAll={true}
-                components={{
-                    Option
-                }}
-                onChange={setSelectedObjectTypes}
-                value={state.selectedObjectTypes}
-            />
+            <Stack spacing={1} direction="row" justifyContent="flex-end">
+                <FormControl size="small" sx={{ m: 1, width: 300 }}>
+                    <InputLabel id="demo-multiple-name-label">Objects</InputLabel>
+                    <Select
+                        labelId="demo-multiple-name-label"
+                        id="demo-multiple-name"
+                        multiple
+                        value={selectedObjectTypes}
+                        onChange={handleChange}
+                        input={<OutlinedInput label="Objects" />}
+                        renderValue={(selected) => selected.join(', ')}
+                        MenuProps={MenuProps}
+                    >
+                        {availableObjectTypes.map((name) => (
+                            <MenuItem
+                                key={name}
+                                value={name}
+                                //style={getStyles(name, personName, theme)}
+                            >
+                                <Checkbox checked={selectedObjectTypes.indexOf(name) > -1} />
+                                {name}
+                            </MenuItem>
+                        ))}
+                    </Select>
+                </FormControl>
+                <Button
+                    onClick={() => {
+                        setSelectedObjectTypes(availableObjectTypes)
+                    }}
+                    sx={
+                        { 'min-width': '0px', 'color': 'rgb(var(--color1))', 'border-color': 'rgb(var(--color1))' }
+                    }
+                >
+                    <FontAwesomeIcon icon={faCheckSquare} />
+                </Button>
+                <Button
+                    onClick={() => {
+                        setSelectedObjectTypes([])
+                    }}
+                    sx={
+                        {  'min-width': '0px', 'color': 'rgb(var(--color1))', 'border-color': 'rgb(var(--color1))' }
+                    }
+                >
+                    <FontAwesomeIcon icon={faTrash} />
+                </Button>
+            </Stack>
         </div>
     );
 }
