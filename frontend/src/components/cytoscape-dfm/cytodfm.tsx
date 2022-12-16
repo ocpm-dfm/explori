@@ -1,8 +1,18 @@
 import CytoscapeComponent from "react-cytoscapejs";
 
 import './cytodfm.css';
-import {useEffect, useMemo, useRef, useState} from "react";
+import {
+    ForwardedRef,
+    forwardRef,
+    useEffect,
+    useImperativeHandle,
+    useMemo,
+    useRef,
+    useState
+} from "react";
 import cytoscape, {EventObject} from "cytoscape";
+
+const fileSaver = require('file-saver');
 
 
 export type DirectlyFollowsMultigraph = {
@@ -30,6 +40,16 @@ export type DirectlyFollowsMultigraph = {
 }
 
 
+export type CytoDFMProps = {
+    dfm: DirectlyFollowsMultigraph | null,
+    threshold: number,
+    selectedObjectTypes: string[],
+    positionsFrozen: boolean
+}
+
+export interface CytoDFMMethods {
+    exportAsJpg(): void;
+}
 
 const preselectedColors = [
     '#E53935',
@@ -296,11 +316,7 @@ function initializeNodePositions(dfm: DirectlyFollowsMultigraph | null) {
     }));
 }
 
-export const FilteredCytoDFM = (props: {
-    dfm: DirectlyFollowsMultigraph | null,
-    threshold: number,
-    selectedObjectTypes: string[],
-    positionsFrozen: boolean}) =>
+export const FilteredCytoDFM = forwardRef ((props: CytoDFMProps, ref: ForwardedRef<CytoDFMMethods | undefined>) =>
 {
     // We don't actually want to rerender when the state changes, but we want it to persist accross rerenders.
     // That is why we use useRef instead of useState.
@@ -318,6 +334,16 @@ export const FilteredCytoDFM = (props: {
         selectedNode: null,
         selectedEdge: null
     });
+    const cytoscapeRef = useRef<cytoscape.Core | null>(null);
+
+    useImperativeHandle(ref, () => ({
+            exportAsJpg() {
+                if (cytoscapeRef.current == null)
+                    return;
+
+                fileSaver.saveAs(cytoscapeRef.current.jpg(), "graph.jpg");
+            }
+    }));
 
     let boxedThreshold = 0;
     if (props.dfm) {
@@ -583,6 +609,8 @@ export const FilteredCytoDFM = (props: {
     }
 
     function registerEvents(cy: cytoscape.Core) {
+        cytoscapeRef.current = cy;
+
         cy.on("dragfreeon", "node", (event: EventObject) => onNodeDrag(event));
 
         cy.on('tap', "node", (event: EventObject) => onNodeTap(event));
@@ -653,7 +681,7 @@ export const FilteredCytoDFM = (props: {
         </div>
         )
     ;
-}
+});
 
 function getCountAtThreshold(counts: [number, number][], threshold: number): number {
     let rangeStart = 0;
