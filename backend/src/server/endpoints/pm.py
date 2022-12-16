@@ -1,4 +1,4 @@
-from typing import Dict, Tuple, List
+from typing import Dict, Tuple, List, Any
 
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
@@ -28,6 +28,8 @@ class DFMEdgeResponseModel(BaseModel):
 
 
 class DFMResponseModel(BaseModel):
+    thresholds: List[float]
+    traces: List[Any]
     nodes: List[DFMNodeResponseModel]
     subgraphs: Dict[str, List[DFMEdgeResponseModel]]
 
@@ -44,5 +46,5 @@ def calculate_dfm_with_thresholds(ocel: str = Depends(ocel_filename_from_query),
     """
     return task_manager.cached_task(ocel, dfm_task, [ocel], None,
                                     TaskName.CREATE_DFM, dfm(),
-                                    ignore_cache=True, version="3")
+                                    ignore_cache=False, version="3")
 # endregion
