@@ -265,14 +265,24 @@ interface NodeState {
     frozen: boolean
 }
 
-interface CytoDFMState {
+interface CytoDFMSoftState {
     nodeStates: NodeState[],
+}
+
+interface CytoDFMSelectionState {
+    selectedNode: number | null,
+    selectedEdge: [string, number, number] | null
 }
 
 type RenderTraceData = {
     id: number,
     activities: String[],
     count: number
+}
+
+type SelectedTracesData = {
+    shown: {[key:string]: RenderTraceData[]},
+    hidden: {[key: string]: RenderTraceData[]}
 }
 
 function initializeNodePositions(dfm: DirectlyFollowsMultigraph | null) {
@@ -293,7 +303,7 @@ export const FilteredCytoDFM = (props: {
 {
     // We don't actually want to rerender when the state changes, but we want it to persist accross rerenders.
     // That is why we use useRef instead of useState.
-    const softState = useRef<CytoDFMState>({
+    const softState = useRef<CytoDFMSoftState>({
         nodeStates: initializeNodePositions(props.dfm),
     });
     // Automatically reset node positions when the DFM changes.
@@ -303,7 +313,10 @@ export const FilteredCytoDFM = (props: {
         }
     }, [props.dfm]);
 
-    const [selected, setSelected] = useState<number | null>(null);
+    const [selection, setSelection] = useState<CytoDFMSelectionState>({
+        selectedNode: null,
+        selectedEdge: null
+    });
 
     // The usage of useMemo reduces the number of rerenders, hence performance.
     const [elements, legendObjectTypeColors] = useMemo(() => {
@@ -349,6 +362,10 @@ export const FilteredCytoDFM = (props: {
                                     target: `${edge.target}`,
                                     label: `${count}`,
                                     color: objectTypeColor,
+
+                                    objectType,
+                                    sourceAsNumber: edge.source,
+                                    targetAsNumber: edge.target
                                 },
                             classes
                         });
@@ -427,10 +444,26 @@ export const FilteredCytoDFM = (props: {
         const thresh = props.threshold;
         const selectedObjectTypes = props.selectedObjectTypes;
 
-        if (selected === null || dfm === null)
-            return { shown: {}, hidden: [] };
+        if (dfm === null)
+            return { shown: {}, hidden: {} } as SelectedTracesData;
 
-        const selectedTraces = dfm.nodes[selected].traces;
+        let selectedTraces = null;
+
+        if (selection.selectedNode !== null)
+            selectedTraces = dfm.nodes[selection.selectedNode].traces;
+        else if (selection.selectedEdge !== null) {
+            const [objectType, source, target] = selection.selectedEdge;
+            const allEdges = dfm.subgraphs[objectType];
+            for (const edge of allEdges) {
+                if (edge.source === source && edge.target === target) {
+                    selectedTraces = edge.traces;
+                    break;
+                }
+            }
+        }
+
+        if (selectedTraces == null)
+            return { shown: {}, hidden: {} } as SelectedTracesData;
 
 
         const shown: {[key:string]:RenderTraceData[]} = {};
@@ -465,7 +498,7 @@ export const FilteredCytoDFM = (props: {
             shown,
             hidden
         }
-    }, [props.dfm, props.threshold, props.selectedObjectTypes, selected]);
+    }, [props.dfm, props.threshold, props.selectedObjectTypes, selection]);
 
 
     if (!props.dfm) {
@@ -522,14 +555,28 @@ export const FilteredCytoDFM = (props: {
     //endregion
 
     function onNodeTap(event: EventObject) {
-        setSelected(event.target.data().numberId);
+        setSelection({
+            selectedNode: event.target.data().numberId,
+            selectedEdge: null
+        });
+    }
+
+    function onEdgeTap(event: EventObject) {
+        const edgeData: { objectType: string, sourceAsNumber: number, targetAsNumber: number } = event.target.data();
+        setSelection({
+            selectedNode: null,
+            selectedEdge: [edgeData.objectType, edgeData.sourceAsNumber, edgeData.targetAsNumber]
+        });
     }
 
     function registerEvents(cy: cytoscape.Core) {
         cy.on("dragfreeon", "node", (event: EventObject) => onNodeDrag(event));
 
         cy.on('tap', "node", (event: EventObject) => onNodeTap(event));
+        cy.on('tap', 'edge', (event: EventObject) => onEdgeTap(event));
     }
+
+    const hasSelectedObject = selection.selectedNode !== null || selection.selectedEdge !== null;
 
     return (
         <div className="CytoDFM-container" id="DFM-container">
@@ -555,9 +602,20 @@ export const FilteredCytoDFM = (props: {
                 </ul>
             }
             {
-                selected !== null && selectedTraces !== null &&
+                hasSelectedObject && selectedTraces !== null &&
                 <div className="CytoDFM-Overlay CytoDFM-Infobox">
-                    { props.dfm.nodes[selected].label }
+                    {
+                        selection.selectedNode !== null &&
+                        <h3 className="CytoDFM-Infobox-Header">
+                            Activity: { props.dfm.nodes[selection.selectedNode].label }
+                        </h3>
+                    }
+                    {
+                        selection.selectedEdge !== null &&
+                        <h3 className="CytoDFM-Infobox-Header">
+                            Edge: { props.dfm.nodes[selection.selectedEdge[1]].label } to { props.dfm.nodes[selection.selectedEdge[2]].label }
+                        </h3>
+                    }
                     <ul>
                         {
                             Object.keys(selectedTraces.shown).map((objectType) => (
@@ -566,7 +624,7 @@ export const FilteredCytoDFM = (props: {
 
                                     <ul>
                                         {
-                                            selectedTraces.shown[objectType].map((trace) => (
+                                            selectedTraces.shown[objectType].map((trace: RenderTraceData) => (
                                                 <li key={`trace-${objectType}-${trace.id}`}>
                                                     {trace.count} x {trace.activities.reduce((a, b) => a + ", " + b)}
                                                 </li>

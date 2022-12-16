@@ -39,6 +39,8 @@
     top: 2rem;
     right: 1rem;
 
+    padding: 0.5rem 1rem;
+
     max-width: 30vw;
     max-height: 50vh;
     overflow-y: scroll;
