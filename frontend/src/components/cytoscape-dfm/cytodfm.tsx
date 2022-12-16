@@ -6,6 +6,7 @@ import cytoscape, {EventObject} from "cytoscape";
 
 
 export type DirectlyFollowsMultigraph = {
+    thresholds: number[]
     nodes: {
         label: string,
         counts: {[key:string]: [number, number][]}
@@ -318,10 +319,22 @@ export const FilteredCytoDFM = (props: {
         selectedEdge: null
     });
 
+    let boxedThreshold = 0;
+    if (props.dfm) {
+        for (const thresholdCandidate of props.dfm.thresholds) {
+            if (thresholdCandidate <= props.threshold)
+                boxedThreshold = thresholdCandidate;
+            else
+                break;
+        }
+    }
+
     // The usage of useMemo reduces the number of rerenders, hence performance.
     const [elements, legendObjectTypeColors] = useMemo(() => {
+        console.log("Filtering graph")
+
         const dfm = props.dfm;
-        const thresh = props.threshold;
+        const thresh = boxedThreshold;
         const selectedObjectTypes = props.selectedObjectTypes;
 
         if (!dfm)
@@ -436,12 +449,12 @@ export const FilteredCytoDFM = (props: {
         const elements: cytoscape.ElementDefinition[] = filteredNodes.concat(links);
 
         return [elements, legendObjectTypeColors];
-    }, [props.dfm, props.threshold, props.selectedObjectTypes]);
+    }, [props.dfm, boxedThreshold, props.selectedObjectTypes]);
 
 
     const selectedTraces = useMemo(() => {
         const dfm = props.dfm;
-        const thresh = props.threshold;
+        const thresh = boxedThreshold;
         const selectedObjectTypes = props.selectedObjectTypes;
 
         if (dfm === null)
@@ -498,7 +511,7 @@ export const FilteredCytoDFM = (props: {
             shown,
             hidden
         }
-    }, [props.dfm, props.threshold, props.selectedObjectTypes, selection]);
+    }, [props.dfm, boxedThreshold, props.selectedObjectTypes, selection]);
 
 
     if (!props.dfm) {

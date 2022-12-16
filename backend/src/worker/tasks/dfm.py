@@ -148,11 +148,14 @@ def convert_to_frontend_friendly_graph_notation(edge_counts: Dict[ObjectType, Di
     for node in nodes:
         node_indices.setdefault(node, len(node_indices))
 
-    # Step 2: Build frontend traces, store trace indices for edges and nodes.
+    # Step 2: Build frontend traces, store trace indices for edges and nodes. We also use the loop over all occurring
+    # thresholds to build the threshold boxes.
     seen_traces = set()
     frontend_traces = []
     node_traces: Dict[Node, List[int]] = {}
     edge_traces: Dict[Tuple[ObjectType, Node, Node], List[int]] = {}
+
+    all_occurring_thresholds = set()
 
     for traces in trace_thresholds.values():
         for trace in traces:
@@ -176,6 +179,9 @@ def convert_to_frontend_friendly_graph_notation(edge_counts: Dict[ObjectType, Di
                     for object_type in trace_object_types
                 }
             })
+
+            thresholds_set = { trace_thresholds[object_type][trace][1] for object_type in trace_object_types }
+            all_occurring_thresholds.update(thresholds_set)
 
             seen_nodes = set()
             for node in trace:
@@ -222,7 +228,10 @@ def convert_to_frontend_friendly_graph_notation(edge_counts: Dict[ObjectType, Di
         for object_type in edge_counts
     }
 
+    threshold_boxes = sorted(list(all_occurring_thresholds))
+
     return {
+        'thresholds': threshold_boxes,
         'traces': frontend_traces,
         'nodes': frontend_nodes,
         'subgraphs': frontend_subgraphs
