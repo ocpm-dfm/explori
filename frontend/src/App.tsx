@@ -67,9 +67,6 @@ function App() {
 
     // restore session once after mounting app component and allow autosaving session afterwards
     useEffect(() => {
-        //TODO: call restoreSessionReducer from here
-        // 
-
         restoreAutoSessionOrCreateNew(sessionState.ocel);
         setAppState((old) => Object.assign({}, old, {
             startAutosaving: true,

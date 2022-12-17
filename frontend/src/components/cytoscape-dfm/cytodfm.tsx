@@ -1,5 +1,5 @@
 import CytoscapeComponent from "react-cytoscapejs";
-import {DirectlyFollowsMultigraph} from "../dfm/dfm";
+import { DirectlyFollowsMultigraph } from "../dfm/dfm";
 
 
 type FilteredNode = {
@@ -32,7 +32,7 @@ function generateColors(numColors: number, colorIndex: number) {
     let q = 1 - f;
 
     let r, g, b;
-    switch(i % 6){
+    switch (i % 6) {
         case 0: r = 1; g = f; b = 0; break;
         case 1: r = q; g = 1; b = 0; break;
         case 2: r = 0; g = 1; b = f; break;
@@ -53,7 +53,7 @@ function generateColors(numColors: number, colorIndex: number) {
 function getEdgeColor(numberOfColorsNeeded: number, indexOfCurrentColor: number) {
     console.assert(indexOfCurrentColor >= 0 && indexOfCurrentColor < numberOfColorsNeeded);
 
-    if(numberOfColorsNeeded <= preselectedColors.length) {
+    if (numberOfColorsNeeded <= preselectedColors.length) {
         return preselectedColors[indexOfCurrentColor];
     } else {
         return generateColors(numberOfColorsNeeded, indexOfCurrentColor);
@@ -63,8 +63,8 @@ function getEdgeColor(numberOfColorsNeeded: number, indexOfCurrentColor: number)
 export const FilteredCytoDFM = (props: {
     dfm: DirectlyFollowsMultigraph | null,
     threshold: number,
-    selectedObjectTypes: string[]}) =>
-{
+    selectedObjectTypes: string[]
+}) => {
     // const elements = [
     //     { data: { id: 'one', label: 'Node 1' }, classes: 'activity' },
     //     { data: { id: 'two', label: 'Node 2' }, classes: 'activity' },
@@ -77,7 +77,7 @@ export const FilteredCytoDFM = (props: {
     const selectedObjectTypes = props.selectedObjectTypes;
 
     if (!dfm) {
-        return <div style={{height: "100%"}} />;
+        return <div style={{ height: "100%" }} />;
     }
 
 
@@ -86,7 +86,7 @@ export const FilteredCytoDFM = (props: {
 
     let allNodesOfSelectedObjectTypes = new Set<number>();
     const numberOfColorsNeeded = Object.keys(dfm.subgraphs).length;
-    const nodeDegrees: {[key:number]:number} = {}
+    const nodeDegrees: { [key: number]: number } = {}
 
     Object.keys(dfm.subgraphs).forEach((objectType, i) => {
         if (selectedObjectTypes.includes(objectType)) {
@@ -158,66 +158,66 @@ export const FilteredCytoDFM = (props: {
     const elements: cytoscape.ElementDefinition[] = filteredNodes.concat(links);
 
     const style: cytoscape.Stylesheet[] = [
-    {
-        "selector": 'node',  // For all nodes
-        'style':
         {
-            "opacity": 0.9,
-            "label": "data(label)",  // Label of node to display
-            "background-color": "rgb(25, 118, 210)",  // node color
-            "color": "#FFFFFF",  // node label color
-            "text-halign": "center",
-            "text-valign": "center",
-            'width': 'label',
-            "shape": "round-rectangle",
-            "padding-left": ".5em"
-        }
-    },
-    {
-        'selector': '.activity',
-        'style':
+            "selector": 'node',  // For all nodes
+            'style':
+            {
+                "opacity": 0.9,
+                "label": "data(label)",  // Label of node to display
+                "background-color": "rgb(25, 118, 210)",  // node color
+                "color": "#FFFFFF",  // node label color
+                "text-halign": "center",
+                "text-valign": "center",
+                'width': 'label',
+                "shape": "round-rectangle",
+                "padding-left": ".5em"
+            }
+        },
         {
-            'shape': 'rectangle'
-        }
-    },
-    {
-        'selector': '.object_type',
-        'style': {
-        'shape': 'ellipse'
-    }
-    },
-    {
-        'selector': '.formula',
-        'style': {
-        'shape': 'roundrectangle'
-    }
-    },
-    {
-        "selector": 'edge',  // For all edges
-        "style":
+            'selector': '.activity',
+            'style':
+            {
+                'shape': 'rectangle'
+            }
+        },
         {
-            "target-arrow-color": "data(color)",  // Arrow color
-            "target-arrow-shape": "triangle",  // Arrow shape
-            "line-color": "data(color)",  // edge color
-            'arrow-scale': 2,  // Arrow size
-            // Default curve-If it is style, the arrow will not be displayed, so specify it
-            'curve-style': 'bezier',
-            'label': 'data(label)',
-            'text-wrap': 'wrap',
-            'color': 'black',
-        }
-    },
-    {
-        "selector": '.loop',
-        "style":
+            'selector': '.object_type',
+            'style': {
+                'shape': 'ellipse'
+            }
+        },
         {
-            'loop-direction': '-90deg',
-            'loop-sweep': '-25deg',
-            // 'control-point-step-size': '100'
-            // 'target-endpoint': 'outside-to-line',
-            // 'source-endpoint': 'outside-to-line',
-        }
-    }];
+            'selector': '.formula',
+            'style': {
+                'shape': 'roundrectangle'
+            }
+        },
+        {
+            "selector": 'edge',  // For all edges
+            "style":
+            {
+                "target-arrow-color": "data(color)",  // Arrow color
+                "target-arrow-shape": "triangle",  // Arrow shape
+                "line-color": "data(color)",  // edge color
+                'arrow-scale': 2,  // Arrow size
+                // Default curve-If it is style, the arrow will not be displayed, so specify it
+                'curve-style': 'bezier',
+                'label': 'data(label)',
+                'text-wrap': 'wrap',
+                'color': 'black',
+            }
+        },
+        {
+            "selector": '.loop',
+            "style":
+            {
+                'loop-direction': '-90deg',
+                'loop-sweep': '-25deg',
+                // 'control-point-step-size': '100'
+                // 'target-endpoint': 'outside-to-line',
+                // 'source-endpoint': 'outside-to-line',
+            }
+        }];
 
     const layout = {
         name: 'breadthfirst',
@@ -235,11 +235,11 @@ export const FilteredCytoDFM = (props: {
     }
 
     return <CytoscapeComponent
-                elements={elements}
-                stylesheet={style}
-                layout={layout}
-                style={ { width: '100%', height: '100%' } }
-                wheelSensitivity={0.2}/>;
+        elements={elements}
+        stylesheet={style}
+        layout={layout}
+        style={{ width: '100%', height: '100%' }}
+        wheelSensitivity={0.2} />;
 }
 
 function getCountAtThreshold(counts: [number, number][], threshold: number): number {

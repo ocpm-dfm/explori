@@ -1,7 +1,7 @@
-import { USER_SESSION_INITIAL_STATE } from "./userSession.initialState";
+import USER_SESSION_INITIAL_STATE from "./userSession.initialState";
 import { CREATE_USER_SESSION, RESTORE_USER_SESSION, SAVE_USER_SESSION } from "./userSession.types";
 
-const sessionStateReducer = (state = USER_SESSION_INITIAL_STATE, action) => {
+const sessionStateReducer = (state = USER_SESSION_INITIAL_STATE, action: Action) => {
     switch (action.type) {
         case CREATE_USER_SESSION: return state
         case SAVE_USER_SESSION: return state
@@ -11,3 +11,8 @@ const sessionStateReducer = (state = USER_SESSION_INITIAL_STATE, action) => {
 }
 
 export default sessionStateReducer
+
+interface Action {
+    type: string,
+    payload: {}
+}

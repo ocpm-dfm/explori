@@ -1,7 +1,7 @@
 import './Session.css';
-import {RefObject, useEffect, useState} from 'react';
+import { RefObject, useEffect, useState } from 'react';
 import { getURI } from '../../api';
-import {Button, TextField, Stack} from "@mui/material";
+import { Button, TextField, Stack } from "@mui/material";
 
 export function Session(_props: any) {
     /*
@@ -41,7 +41,7 @@ export function Session(_props: any) {
         formData.append('file', selectedFile)
 
         const uploadFileUrl: string = getURI('/logs/upload', {})
-        console.log(uploadFileUrl + ": " + uploadFileUrl)
+
         fetch(uploadFileUrl, {
             method: 'PUT',
             body: formData
@@ -57,7 +57,7 @@ export function Session(_props: any) {
                     ]
                     newDataSource = newDataSource.sort(compare)
 
-                    for (let i = 0; i < newDataSource.length; i++){
+                    for (let i = 0; i < newDataSource.length; i++) {
                         newDataSource[i].id = i;
                     }
 
@@ -72,43 +72,43 @@ export function Session(_props: any) {
     return (
         <div className="Session">
             <Stack spacing={3} direction="row" justifyContent="flex-end">
-            <TextField
-                sx={{'top': '10px', 'color': 'rgb(var(--color1))'}}
-                id="standard-read-only-input"
-                value={selectedFile.name}
-                InputProps={{
-                   readOnly: true,
-                }}
-                variant="standard"
-            />
-            <form id="uploadEventLogForm">
-                { /* <label htmlFor="uploadEventLog">Upload an event log:</label> */ }
-                <Button variant="contained" component="label" sx={{'top': '10px', 'background-color': 'rgb(var(--color1))'}}>
-                    Upload
-                    <input
-                        type="file"
-                        hidden
-                        accept=".jsonocel, .xmlocel"
-                        name="uploadEventLog"
-                        onChange={handleFileSelection}
-                    >
-                    </input>
-                </Button>
+                <TextField
+                    sx={{ 'top': '10px', 'color': 'rgb(var(--color1))' }}
+                    id="standard-read-only-input"
+                    value={selectedFile.name}
+                    InputProps={{
+                        readOnly: true,
+                    }}
+                    variant="standard"
+                />
+                <form id="uploadEventLogForm">
+                    { /* <label htmlFor="uploadEventLog">Upload an event log:</label> */}
+                    <Button variant="contained" component="label" sx={{ 'top': '10px', 'background-color': 'rgb(var(--color1))' }}>
+                        Upload
+                        <input
+                            type="file"
+                            hidden
+                            accept=".jsonocel, .xmlocel"
+                            name="uploadEventLog"
+                            onChange={handleFileSelection}
+                        >
+                        </input>
+                    </Button>
 
-                {
-                    //FIX: <div>{fileStatus}</div>
-                }
-                <Button variant="contained" component="label" sx={{ 'top': '10px', 'margin-left': '10px', 'background-color': 'rgb(var(--color1))' }}>
-                    Confirm upload
-                    <button
-                        form='uploadEventLogForm'
-                        hidden
-                        disabled={false}
-                        onClick={uploadFile} >
-                        Confirm Upload
-                    </button>
-                </Button>
-            </form>
+                    {
+                        //FIX: <div>{fileStatus}</div>
+                    }
+                    <Button variant="contained" component="label" sx={{ 'top': '10px', 'margin-left': '10px', 'background-color': 'rgb(var(--color1))' }}>
+                        Confirm upload
+                        <button
+                            form='uploadEventLogForm'
+                            hidden
+                            disabled={false}
+                            onClick={uploadFile} >
+                            Confirm Upload
+                        </button>
+                    </Button>
+                </form>
             </Stack>
         </div>
     )
