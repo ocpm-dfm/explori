@@ -9,14 +9,15 @@ import {
     UPDATE_USER_SESSION
 } from './userSession.types'
 
-export const saveUserSession = (payload: SessionInterface) => async (dispatch: Function) => {
-    const sessionName = "autosave-" + getUuid(payload.ocel)
+export const saveUserSession = (session: SessionInterface) => async (dispatch: Function) => {
+    console.log("SAVING USER SESSION: ", session)
+    const sessionName = "autosave-" + getUuid(session.ocel)
     const uri = getURI("/session/store", {})
 
     const sessionState = {
-        base_ocel: payload.ocel,
-        threshold: payload.filteringThreshold,
-        object_types: payload.selectedObjectTypes
+        base_ocel: session.ocel,
+        threshold: session.filteringThreshold,
+        object_types: session.selectedObjectTypes
     }
 
     await fetch(uri, {
@@ -45,75 +46,76 @@ export const saveUserSession = (payload: SessionInterface) => async (dispatch: F
     return dispatch(action)
 }
 
-export const createUserSession = (payload: SessionInterface) => async (dispatch: Function) => {
+export const createUserSession = (fullOcelPath: string) => async (dispatch: Function) => {
     const action = {
         type: CREATE_USER_SESSION,
         payload: {
             ...USER_SESSION_INITIAL_STATE,
-            ...payload
+            currentSelected: fullOcelPath
         }
     }
     return dispatch(action)
 }
 
-export const modifyUserSession = (payload: SessionInterface) => (dispatch: Function) => {
+export const modifyUserSession = (session: SessionInterface) => (dispatch: Function) => {
     const action = {
         type: UPDATE_USER_SESSION,
-        payload: { ...payload }
+        payload: { ...session }
     }
 
-    if ("ocel" in payload) {
-        localStorage.setItem("explori-currentOcel", payload["ocel"]);
+    if ("ocel" in session) {
+        localStorage.setItem("explori-currentOcel", session["ocel"]);
     }
 
     return dispatch(action)
 }
 
-export const restoreUserSession = (payload: SessionInterface) => async (dispatch: Function) => {
-    const sessionName = "autosave-" + getUuid(payload.ocel)
-    const uri = getURI("/session/restore", { name: sessionName });
+export const restoreUserSession = (fullOcelPath: string) =>
+    async (dispatch: Function) => {
+        const sessionName = "autosave-" + getUuid(fullOcelPath)
+        const uri = getURI("/session/restore", { name: sessionName });
 
-    let action = {
-        type: "",
-        payload: {}
+        let action = {
+            type: "",
+            payload: {}
+        }
+
+        await fetch(uri)
+            .then((response) => response.json())
+            .then((result) => {
+
+                const sessionExist = result.base_ocel !== undefined ? true : false
+
+                if (sessionExist) {
+                    action = {
+                        type: RESTORE_USER_SESSION,
+                        payload: {
+                            currentSelected: result.base_ocel,
+                            filteringThreshold: result.threshold,
+                            selectedObjectTypes: result.object_types,
+                            // Set `alreadySelectedAllObjectTypesInitially` to true as we're in the process of restoring a session
+                            // which implies an existing object type selection which we don't want to overwrite!
+                            alreadySelectedAllObjectTypesInitially: true
+                        }
+                    }
+                }
+                else {
+                    action = {
+                        type: CREATE_USER_SESSION,
+                        payload: {
+                            ...USER_SESSION_INITIAL_STATE,
+                            currentSelected: fullOcelPath
+                        }
+                    }
+                }
+            })
+            .catch(err => console.log("Error in restoring session ... "));
+        return dispatch(action)
     }
-
-    await fetch(uri)
-        .then((response) => response.json())
-        .then((result) => {
-
-            const sessionExist = result.base_ocel !== undefined ? true : false
-
-            if (sessionExist) {
-                action = {
-                    type: RESTORE_USER_SESSION,
-                    payload: {
-                        ocel: result.base_ocel,
-                        filteringThreshold: result.threshold,
-                        selectedObjectTypes: result.object_types,
-                        // Set `alreadySelectedAllObjectTypesInitially` to true as we're in the process of restoring a session
-                        // which implies an existing object type selection which we don't want to overwrite!
-                        alreadySelectedAllObjectTypesInitially: true
-                    }
-                }
-            }
-            else {
-                action = {
-                    type: CREATE_USER_SESSION,
-                    payload: {
-                        ...USER_SESSION_INITIAL_STATE,
-                        ocel: payload.ocel
-                    }
-                }
-            }
-        })
-        .catch(err => console.log("Error in restoring session ... "));
-    return dispatch(action)
-}
 
 interface SessionInterface {
     ocel: string,
     filteringThreshold: number,
-    selectedObjectTypes: [string],
+    selectedObjectTypes: string[],
     alreadySelectedAllObjectTypesInitially: boolean
 }

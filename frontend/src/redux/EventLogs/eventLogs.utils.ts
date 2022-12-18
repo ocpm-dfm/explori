@@ -23,7 +23,7 @@ export const formatEventLogMetadata = (data: any) => {
     return eventLogMetadata
 }
 
-export const fetchEventLogs = () => {
+export const fetchEventLogs = (): [] => {
 
     const uri = getURI("/logs/available", {});
     fetch(uri)
@@ -50,6 +50,6 @@ export const fetchEventLogs = () => {
         })
         .catch(err => {
             console.log("Error in loading ...")
-            return []
         })
+    return []
 }

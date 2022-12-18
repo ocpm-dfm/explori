@@ -7,6 +7,8 @@ import { QueryClient, QueryClientProvider } from 'react-query';
 import { UserSession, UserSessionState, storeSession, restoreSession } from "./components/UserSession/UserSession";
 import getUuid from "uuid-by-string";
 
+import store from './redux/store';
+
 export type StateChangeCallback = (update: any) => void;
 export type SwitchOcelsCallback = (ocel: string) => void;
 
