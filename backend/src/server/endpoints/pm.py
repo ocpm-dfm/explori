@@ -9,7 +9,7 @@ from server.utils import ocel_filename_from_query, secure_ocel_filename
 from shared_types import FrontendFriendlyDFM
 from task_names import TaskName
 from worker.tasks.dfm import dfm as dfm_task
-from worker.tasks.alignments import compute_alignments as alignment_task
+from worker.tasks.alignments import compute_alignments as alignment_task, TraceAlignment
 
 router = APIRouter(prefix="/pm",
                    tags=['Process Mining'])
@@ -39,6 +39,10 @@ class DFMResponseModel(BaseModel):
         pass  # TODO: Create example output
 
 
+class AlignmentResponseModel(BaseModel):
+    aligned_traces_by_object_type: Dict[str, Dict[str, List[TraceAlignment]]]
+
+
 @router.get('/dfm', response_model=TaskStatus[DFMResponseModel])
 def calculate_dfm_with_thresholds(ocel: str = Depends(ocel_filename_from_query),
                     task_manager: TaskManager = Depends(get_task_manager)):
@@ -51,11 +55,13 @@ def calculate_dfm_with_thresholds(ocel: str = Depends(ocel_filename_from_query),
 # endregion
 
 
-@router.get('/alignments', response_model=TaskStatus[Any])
-def compute_alignments(process_ocel: str = Depends(ocel_filename_from_query),
+@router.get('/alignments', response_model=TaskStatus[AlignmentResponseModel])
+def compute_alignments(process_ocel: str = Query(example="uploaded/p2p-normal.jsonocel"),
                        conformance_ocel: str = Query(example="uploaded/p2p-normal.jsonocel"),
                        threshold: float = Query(example=0.75),
                        task_manager: TaskManager = Depends(get_task_manager)):
+
+    process_ocel = secure_ocel_filename(process_ocel)
     conformance_ocel = secure_ocel_filename(conformance_ocel)
 
     dfm_task_definition = TaskDefinition(process_ocel, TaskName.CREATE_DFM, dfm_task, [process_ocel], dfm_cache_key(), result_version="3")

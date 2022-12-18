@@ -1,6 +1,9 @@
+import json
 from collections import namedtuple
+from enum import Enum
 from pathlib import PureWindowsPath
-from typing import List, Tuple, NamedTuple
+from typing import List, Tuple, NamedTuple, Dict, Any, Literal
+import operator as op
 
 from pydantic import BaseModel
 
@@ -23,14 +26,52 @@ class FilteredDFG(BaseModel):
     nodes: List[str]
     edges: List[Edge]
 
+SKIP_MOVE = ">>"
+
+class AlignElement(BaseModel):
+    activity: str | Literal[SKIP_MOVE]
+
+class TraceAlignment(BaseModel):
+    log_alignment: List[AlignElement]
+    model_alignment: List[AlignElement]
+
+
+def rearrange_and_deduplicate_alignments(aligned_traces: List[Dict[str, Any]]) -> List[TraceAlignment]:
+    # TODO: deterministic ordering?
+
+    deduplicated_traces = set()
+    for trace in aligned_traces:
+        alignment_info: List[Tuple[str, str | None]] = trace['alignment']
+        deduplicated_traces.add(tuple(alignment_info))
+
+    rearranged_traces: List[TraceAlignment] = []
+    for trace in deduplicated_traces:
+        alignment_log = map(op.itemgetter(0), trace)
+        alignment_model = map(op.itemgetter(1), trace)
+
+        filtered_alignment_log = []
+        filtered_alignment_model = []
+        for (log_elem, model_elem) in zip(alignment_log, alignment_model):
+            # we filter out model moves of optional (start) transitions for now
+            if log_elem == SKIP_MOVE and model_elem is None:
+                continue
+
+            filtered_alignment_log.append(AlignElement(activity=log_elem))
+            filtered_alignment_model.append(AlignElement(activity=model_elem))
+
+        assert (len(filtered_alignment_log) == len(filtered_alignment_model))
+        rearranged_traces.append(TraceAlignment(log_alignment=filtered_alignment_log, model_alignment=filtered_alignment_model))
+
+    return rearranged_traces
+
+
 @app.task()
 def compute_alignments(process_ocel: str, ocel_filename_conformance: str, threshold: float, object_type: str):
-    # TODO:
     process_ocel = PureWindowsPath(process_ocel).as_posix()
     ocel_filename_conformance = PureWindowsPath(ocel_filename_conformance).as_posix()
 
+    # we know that the DFM exists because the `compute_alignments` endpoint does not start this task before the DFM is discovered
     long_term_cache = get_long_term_cache()
-    print(f"CACHE HAS DFM: {long_term_cache.has(process_ocel, dfm_cache_key())}")
     dfm = FrontendFriendlyDFM(**long_term_cache.get(process_ocel, dfm_cache_key()))
     dfg = filter_threshold_of_graph_notation(dfm, object_type, threshold)
 
@@ -38,8 +79,11 @@ def compute_alignments(process_ocel: str, ocel_filename_conformance: str, thresh
     petrinet, initial_marking, final_marking = build_petrinet(dfg)
 
     aligned_traces = conformance_diagnostics_alignments(projected_log, petrinet, initial_marking, final_marking)
+    rearranged_traces = rearrange_and_deduplicate_alignments(aligned_traces)
 
-    return aligned_traces
+    return {
+        'aligned_traces': [json.loads(trace.json()) for trace in rearranged_traces],
+    }
 
 
 def filter_threshold_of_graph_notation(dfm: FrontendFriendlyDFM, object_type: str, filter_threshold: float) -> FilteredDFG:
@@ -60,14 +104,6 @@ def filter_threshold_of_graph_notation(dfm: FrontendFriendlyDFM, object_type: st
     ]
 
     return FilteredDFG(nodes=nodes, edges=edges)
-
-
-def node_selection_from_edges(all_nodes, edges: List[FrontendFriendlyEdge]):
-    selection = set()
-    for edge in edges:
-        selection.add(edge.source)
-        selection.add(edge.target)
-    return selection
 
 
 def build_petrinet(dfg):
