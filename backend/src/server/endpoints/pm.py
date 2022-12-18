@@ -1,7 +1,9 @@
+import pprint
 from typing import Dict, Tuple, List, Any
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, HTTPException
 from pydantic import BaseModel
+from starlette import status
 
 from cache import dfm as dfm_cache_key, alignments
 from server.task_manager import get_task_manager, TaskManager, TaskStatus, TaskDefinition
@@ -50,8 +52,7 @@ def calculate_dfm_with_thresholds(ocel: str = Depends(ocel_filename_from_query),
     Async: Tries to load the given OCEL from the data folder, calculates the DFM and the threshold associated with
     each edge and node.
     """
-    task = TaskDefinition(ocel, TaskName.CREATE_DFM, dfm_task, [ocel], dfm_cache_key(), result_version="3")
-    return task_manager.cached_task(task, ignore_cache=False)
+    return run_dfm_task(ocel, task_manager)
 # endregion
 
 
@@ -64,32 +65,62 @@ def compute_alignments(process_ocel: str = Query(example="uploaded/p2p-normal.js
     process_ocel = secure_ocel_filename(process_ocel)
     conformance_ocel = secure_ocel_filename(conformance_ocel)
 
-    dfm_task_definition = TaskDefinition(process_ocel, TaskName.CREATE_DFM, dfm_task, [process_ocel], dfm_cache_key(), result_version="3")
-    dfm_task_result = task_manager.cached_task(dfm_task_definition)
+    dfm_task_result = run_dfm_task(process_ocel, task_manager)
     if dfm_task_result.status != "done":
         return dfm_task_result
+    process_dfm = FrontendFriendlyDFM(**dfm_task_result.result)
 
-    dfm = FrontendFriendlyDFM(**dfm_task_result.result)
+    dfm_task_result = run_dfm_task(conformance_ocel, task_manager)
+    if dfm_task_result.status != "done":
+        return dfm_task_result
+    conformance_dfm = FrontendFriendlyDFM(**dfm_task_result.result)
+
+    if not set(conformance_dfm.subgraphs.keys()).issubset(process_dfm.subgraphs.keys()):
+        raise HTTPException(status_code=status.HTTP_412_PRECONDITION_FAILED, detail="The object types of the OCELS do not match.")
 
     base_threshold = 0
-    for threshold_candidate in dfm.thresholds:
+    for threshold_candidate in process_dfm.thresholds:
         if threshold_candidate <= threshold:
             base_threshold = threshold_candidate
         else:
             break
 
     tasks = {
-        object_type: TaskDefinition(
+        (object_type, trace_id): TaskDefinition(
             base_ocel=process_ocel,
-            task_name=TaskName.COMPUTE_ALIGNMENTS.with_attributes(process_ocel=process_ocel,
-                                                                  conformance_ocel=conformance_ocel,
-                                                                  base_threshold=base_threshold),
+            task_name=TaskName.COMPUTE_ALIGNMENTS.with_attributes(conformance_ocel=conformance_ocel,
+                                                                  base_threshold=base_threshold,
+                                                                  trace_id=trace_id),
             task=alignment_task,
-            args=[process_ocel, conformance_ocel, base_threshold, object_type],
+            args=[process_ocel, base_threshold, object_type,
+                  [conformance_dfm.nodes[node_id].label for node_id in conformance_dfm.traces[trace_id].actions]],
             long_term_cache_key=alignments(base_threshold, conformance_ocel, object_type),
+            result_version="2"
         )
-        for object_type in dfm.subgraphs
+        for trace_id in range(len(conformance_dfm.traces))
+        for object_type in conformance_dfm.traces[trace_id].thresholds
     }
 
-    return task_manager.cached_group(tasks)
-# endregion
+    result = task_manager.cached_group(tasks)
+
+    def reformat_output(task_output: Dict[Tuple[str, int], Any] | None):
+        if task_output is None:
+            return None
+
+        return [
+            {
+                object_type: task_output[object_type, trace_id]
+                for object_type in conformance_dfm.traces[trace_id].thresholds
+            }
+            for trace_id in range(len(conformance_dfm.traces))
+        ]
+
+    result.result = reformat_output(result.result)
+    result.preliminary = reformat_output(result.preliminary)
+    return result
+
+
+def run_dfm_task(ocel: str, task_manager, ignore_cache=False):
+    dfm_task_definition = TaskDefinition(ocel, TaskName.CREATE_DFM, dfm_task, [ocel], dfm_cache_key(),
+                                         result_version="3")
+    return task_manager.cached_task(dfm_task_definition, ignore_cache)

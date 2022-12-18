@@ -5,6 +5,8 @@ from pathlib import PureWindowsPath
 from typing import List, Tuple, NamedTuple, Dict, Any, Literal
 import operator as op
 
+import pandas
+from pm4py.objects.log.obj import EventLog
 from pydantic import BaseModel
 
 from cache import get_long_term_cache, dfm as dfm_cache_key
@@ -19,6 +21,8 @@ from pm4py.objects.petri_net.utils.initial_marking import discover_initial_marki
 from pm4py.objects.petri_net.utils.final_marking import discover_final_marking
 from pm4py.objects.petri_net.utils.check_soundness import check_wfnet
 from pm4py.objects.petri_net.utils.petri_utils import PetriNet, add_place, add_transition, add_arc_from_to
+from pm4py.objects.conversion.log import converter as log_conv_factory
+
 
 Edge = namedtuple("Edge", ['source', 'target'])
 
@@ -65,25 +69,39 @@ def rearrange_and_deduplicate_alignments(aligned_traces: List[Dict[str, Any]]) -
     return rearranged_traces
 
 
+def rearrange_alignment(alignment: List[List[Tuple[str, str]]]) -> TraceAlignment:
+    alignment_log = map(op.itemgetter(0), alignment)
+    alignment_model = map(op.itemgetter(1), alignment)
+
+    filtered_alignment_log = []
+    filtered_alignment_model = []
+    for (log_elem, model_elem) in zip(alignment_log, alignment_model):
+        # we filter out model moves of optional (start) transitions for now
+        if log_elem == SKIP_MOVE and model_elem is None:
+            continue
+
+        filtered_alignment_log.append(AlignElement(activity=log_elem))
+        filtered_alignment_model.append(AlignElement(activity=model_elem))
+
+    assert (len(filtered_alignment_log) == len(filtered_alignment_model))
+    return TraceAlignment(log_alignment=filtered_alignment_log, model_alignment=filtered_alignment_model)
+
+
 @app.task()
-def compute_alignments(process_ocel: str, ocel_filename_conformance: str, threshold: float, object_type: str):
+def compute_alignments(process_ocel: str, threshold: float, object_type: str, trace: List[str]):
     process_ocel = PureWindowsPath(process_ocel).as_posix()
-    ocel_filename_conformance = PureWindowsPath(ocel_filename_conformance).as_posix()
 
     # we know that the DFM exists because the `compute_alignments` endpoint does not start this task before the DFM is discovered
     long_term_cache = get_long_term_cache()
     dfm = FrontendFriendlyDFM(**long_term_cache.get(process_ocel, dfm_cache_key()))
     dfg = filter_threshold_of_graph_notation(dfm, object_type, threshold)
 
-    projected_log = get_projected_event_log(ocel_filename_conformance, object_type)
+    projected_log = build_trace_event_log(trace)
     petrinet, initial_marking, final_marking = build_petrinet(dfg)
 
     aligned_traces = conformance_diagnostics_alignments(projected_log, petrinet, initial_marking, final_marking)
-    rearranged_traces = rearrange_and_deduplicate_alignments(aligned_traces)
 
-    return {
-        'aligned_traces': [json.loads(trace.json()) for trace in rearranged_traces],
-    }
+    return rearrange_alignment(aligned_traces[0]['alignment']).dict()
 
 
 def filter_threshold_of_graph_notation(dfm: FrontendFriendlyDFM, object_type: str, filter_threshold: float) -> FilteredDFG:
@@ -105,6 +123,15 @@ def filter_threshold_of_graph_notation(dfm: FrontendFriendlyDFM, object_type: st
 
     return FilteredDFG(nodes=nodes, edges=edges)
 
+
+def build_trace_event_log(trace: List[str]) -> EventLog:
+    df = pandas.DataFrame({
+        "concept:name": trace,
+        "time:timestamp": list(range(len(trace))),
+        "case:concept:name": 1
+    })
+
+    return log_conv_factory.apply(df)
 
 def build_petrinet(dfg):
     net = PetriNet()
