@@ -1,4 +1,4 @@
-import { configureStore } from '@reduxjs/toolkit'
+import {applyMiddleware, configureStore, ThunkDispatch} from '@reduxjs/toolkit'
 import rootReducer from './rootReducer'
 import thunkMiddleware from 'redux-thunk'
 import logger from 'redux-logger'
@@ -6,6 +6,14 @@ import { testUserSession } from "./store.test"
 
 import USER_SESSION_INITIAL_STATE from './UserSession/userSession.initialState';
 import EVENT_LIST_INITIAL_STATE from './EventLogs/eventLogs.initialState';
+import {TypedUseSelectorHook, useDispatch, useSelector} from "react-redux";
+import {SessionState} from "./UserSession/userSession.types";
+import {EventLogMetadata} from "./EventLogs/eventLogs.types";
+import {DirectlyFollowsMultigraph} from "../components/cytoscape-dfm/cytodfm";
+import {CombinedState} from "@reduxjs/toolkit/dist/query/core/apiState";
+import userSessionReducer from "./UserSession/userSession.reducer";
+import sessionStateReducer from "./UserSession/userSession.reducer";
+import eventLogsReducer from "./EventLogs/eventLogs.reducer";
 
 /*
 TODO:
@@ -26,16 +34,36 @@ if ("REACT_APP_STAGE" in process.env) {
     }
 }
 
+export interface RootState {
+    session: SessionState,
+    listOfEventLogs: EventLogMetadata[],
+    discoveredDFM: DirectlyFollowsMultigraph | undefined
+}
+
+const initalState: RootState = {
+    session: USER_SESSION_INITIAL_STATE,
+    listOfEventLogs: EVENT_LIST_INITIAL_STATE,
+    discoveredDFM: undefined
+}
+
 const store = configureStore({
-    reducer: rootReducer,
+    reducer: {
+        session: sessionStateReducer,
+        listOfEventLogs: eventLogsReducer
+    },
     middleware: middleware,
-    preloadedState: {
-        session: USER_SESSION_INITIAL_STATE,
-        listOfEventLogs: EVENT_LIST_INITIAL_STATE,
-        startAutosaving: undefined,
-        discoveredDFM: undefined
-    }
-})
+    preloadedState: initalState
+});
+
+// Infer the `RootState` and `AppDispatch` types from the store itself
+// export type RootState = ReturnType<typeof store.getState>
+// Inferred type: {posts: PostsState, comments: CommentsState, users: UsersState}
+export type AppDispatch = typeof store.dispatch
+
+
+// Use throughout your app instead of plain `useDispatch` and `useSelector`
+export const useAppDispatch: () => AppDispatch = useDispatch
+export const useAppSelector: TypedUseSelectorHook<RootState> = useSelector
 
 if ("REACT_APP_STAGE" in process.env) {
     if (process.env.REACT_APP_STAGE === "test_redux") {

@@ -8,12 +8,30 @@ import { UserSession, UserSessionState, storeSession, restoreSession } from "./c
 import getUuid from "uuid-by-string";
 import {Alignments} from "./components/Alignments/Alignments";
 
-import store from './redux/store';
+import store, {RootState, useAppDispatch} from './redux/store';
+import {connect, useDispatch} from "react-redux";
+import {saveUserSession} from "./redux/UserSession/userSession.actions";
+import {ThunkDispatch} from "@reduxjs/toolkit";
+import {SessionState} from "./redux/UserSession/userSession.types";
 
 export type StateChangeCallback = (update: any) => void;
 export type SwitchOcelsCallback = (ocel: string) => void;
 
-function App() {
+interface OwnProps {
+
+}
+
+interface StateProps {
+    session: SessionState
+}
+
+interface DispatchProps {
+    saveUserSession: (session: SessionState) => void
+}
+
+type Props = OwnProps & StateProps & DispatchProps;
+
+export function App(props: Props) {
     // TODO: currently the session is not necessarily the same for this default ocel and choosing the same ocel in the
     //  eventloglist (at least on Windows) as choosing it from the list results in a different (Windows style) path
     //  and we currently simply hash the path as id.
@@ -96,4 +114,15 @@ function App() {
     );
 }
 
-export default App;
+const mapStateToProps = (state: RootState, ownProps: OwnProps): StateProps => ({
+    session: state.session
+});
+
+const mapDispatchToProps = (dispatch: ThunkDispatch<{}, {}, any>, ownProps: OwnProps): DispatchProps => ({
+    saveUserSession: async (session: SessionState) => {
+        await dispatch(saveUserSession(session));
+        console.log("[App] Saved user session");
+    }
+})
+
+export default connect<StateProps, DispatchProps, OwnProps, RootState>(mapStateToProps, mapDispatchToProps)(App)

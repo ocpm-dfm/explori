@@ -6,17 +6,20 @@ import {
     SAVE_USER_SESSION,
     RESTORE_USER_SESSION,
     NO_CHANGE_USER_SESSION,
-    UPDATE_USER_SESSION
+    UPDATE_USER_SESSION, SessionState
 } from './userSession.types'
+import {ThunkDispatch} from "@reduxjs/toolkit";
+import {RootState} from "../store";
+import {Action} from "./userSession.reducer";
 
-export const saveUserSession = (session: SessionInterface) => async (dispatch: Function) => {
+export const saveUserSession = (session: SessionState) => async (dispatch: ThunkDispatch<RootState, void, Action>) => {
     console.log("SAVING USER SESSION: ", session)
     const sessionName = "autosave-" + getUuid(session.ocel)
     const uri = getURI("/session/store", {})
 
     const sessionState = {
         base_ocel: session.ocel,
-        threshold: session.filteringThreshold,
+        threshold: session.threshold,
         object_types: session.selectedObjectTypes
     }
 
@@ -57,7 +60,7 @@ export const createUserSession = (fullOcelPath: string) => async (dispatch: Func
     return dispatch(action)
 }
 
-export const modifyUserSession = (session: SessionInterface) => (dispatch: Function) => {
+export const modifyUserSession = (session: SessionState) => (dispatch: Function) => {
     const action = {
         type: UPDATE_USER_SESSION,
         payload: { ...session }
@@ -112,10 +115,3 @@ export const restoreUserSession = (fullOcelPath: string) =>
             .catch(err => console.log("Error in restoring session ... "));
         return dispatch(action)
     }
-
-interface SessionInterface {
-    ocel: string,
-    filteringThreshold: number,
-    selectedObjectTypes: string[],
-    alreadySelectedAllObjectTypesInitially: boolean
-}

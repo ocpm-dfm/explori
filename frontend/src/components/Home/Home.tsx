@@ -10,7 +10,7 @@ import {CytoDFMMethods, DirectlyFollowsMultigraph, FilteredCytoDFM} from '../cyt
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {faSnowflake} from "@fortawesome/free-regular-svg-icons";
 import {faShareFromSquare} from "@fortawesome/free-solid-svg-icons";
-
+import {SessionState} from "../../redux/UserSession/userSession.types";
 
 export const Home = (props: { userSessionState: UserSessionState, stateChangeCallback: any}) => {
     const filteringThreshold = props.userSessionState.filteringThreshold;

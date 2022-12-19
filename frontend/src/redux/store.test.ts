@@ -7,7 +7,7 @@ export const testUserSession = (store: any) => {
 
     store.dispatch(modifyUserSession({
         ocel: "uploaded/test-redux.jsonocel",
-        filteringThreshold: 50,
+        threshold: 50,
         selectedObjectTypes: ["Object1", "Object2"],
         alreadySelectedAllObjectTypesInitially: true
     }))

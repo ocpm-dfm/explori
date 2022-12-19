@@ -7,7 +7,7 @@ import sessionStateReducer from "./UserSession/userSession.reducer";
 const rootReducer = combineReducers({
     session: sessionStateReducer,
     listOfEventLogs: eventLogsReducer,
-    startAutosaving: startAutoSavingReducer,
+    // startAutosaving: startAutoSavingReducer,
     discoveredDFM: discoveredDFMReducer
 })
 
