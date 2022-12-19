@@ -94,7 +94,7 @@ def compute_alignments(process_ocel: str = Query(example="uploaded/p2p-normal.js
             task=alignment_task,
             args=[process_ocel, base_threshold, object_type,
                   [conformance_dfm.nodes[node_id].label for node_id in conformance_dfm.traces[trace_id].actions]],
-            long_term_cache_key=alignments(base_threshold, conformance_ocel, object_type),
+            long_term_cache_key=alignments(base_threshold, conformance_ocel, object_type, trace_id),
             result_version="2"
         )
         for trace_id in range(len(conformance_dfm.traces))

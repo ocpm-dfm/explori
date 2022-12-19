@@ -167,12 +167,14 @@ def build_petrinet(dfg):
             # we introduce optional transition for start of event, although we currently only handle data
             # containing only event completions
             target_label = dfg.nodes[edge.target]
-            start_label = f"[START]-{target_label}"
-            end_label = f"{target_label}"
+            # start_label = f"[START]-{target_label}"
+            # end_label = f"{target_label}"
+            #
+            # intermediate_place = add_place(net)
+            # add_optional_connected_transition(s, intermediate_place, start_label, start_label, net)
+            # add_connected_transition(intermediate_place, t, end_label, end_label, net)
 
-            intermediate_place = add_place(net)
-            add_optional_connected_transition(s, intermediate_place, start_label, start_label, net)
-            add_connected_transition(intermediate_place, t, end_label, end_label, net)
+            add_connected_transition(s, t, target_label, target_label, net)
 
     initial_marking = discover_initial_marking(net)
     final_marking = discover_final_marking(net)
