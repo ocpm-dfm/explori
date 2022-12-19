@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from typing import Any, List, Dict, TypeVar, Generic
 
 from celery import Celery
@@ -19,6 +20,17 @@ class TaskStatus(BaseModel, Generic[T]):
     preliminary: T | None = None
 
 
+@dataclass
+class TaskDefinition:
+    base_ocel: str
+    task_name: TaskName | str
+    task: Any
+    args: List[Any]
+    long_term_cache_key: str
+    kwargs: Dict[str, Any] | None = None
+    result_version: str | None = None
+
+
 class TaskManager:
     __short_term_cache: ShortTermCache
     __long_term_cache: LongTermCache
@@ -27,28 +39,48 @@ class TaskManager:
         self.__short_term_cache = short_term_cache
         self.__long_term_cache = long_term_cache
 
-    def cached_task(self, ocel: str, task, args: List[Any], kwargs: Dict[str, Any] | None,
-                    task_name: TaskName | str, long_term_cache_key: str,
-                    ignore_cache: bool = False,
-                    version: str | None = None) -> TaskStatus:
-        if kwargs is None:
-            kwargs = {}
+    def cached_task(self, task: TaskDefinition, ignore_cache: bool = False) -> TaskStatus:
+        ocel = task.base_ocel
+        long_term_key = task.long_term_cache_key
 
         # Easiest case: Task has run before, we can just fetch the result from the cache.
-        if not ignore_cache and self.__long_term_cache.has(ocel, long_term_cache_key):
-            cached_result = self.__long_term_cache.get(ocel, long_term_cache_key)
-            if version is None or ("version" in cached_result and cached_result["version"] == version):
-                return TaskStatus(status="done", result=self.__long_term_cache.get(ocel, long_term_cache_key))
+        if not ignore_cache and self.__long_term_cache.has(ocel, long_term_key):
+            cached_result = self.__long_term_cache.get(ocel, task.long_term_cache_key)
+            if task.result_version is None or \
+                    ("version" in cached_result and cached_result["version"] == task.result_version):
+                return TaskStatus(status="done", result=self.__long_term_cache.get(ocel, task.long_term_cache_key))
 
         # Check if the task is currently running.
-        running_result = self.check_on_running_task(ocel, task_name, long_term_cache_key, version)
+        running_result = self.check_on_running_task(ocel, task.task_name, long_term_key, task.result_version)
         if running_result is not None:
             return running_result
 
         # The task is not running and has never run before. Hence, we need to start it.
-        task_result: AsyncResult = task.delay(*args, **kwargs)
-        self.__short_term_cache[TaskManager.__task_cache_key(ocel, task_name)] = task_result.id
+        task_result: AsyncResult = task.task.delay(*task.args, **(task.kwargs if task.kwargs else {}))
+        self.__short_term_cache[TaskManager.__task_cache_key(ocel, task.task_name)] = task_result.id
         return TaskStatus(status="running")
+
+    def cached_group(self, tasks: Dict[str, TaskDefinition], ignore_cache: bool = False) -> TaskStatus:
+        task_statuses: Dict[str, TaskStatus] = {key: self.cached_task(task, ignore_cache) for (key, task) in tasks.items()}
+
+        assembled_result: Dict[str, Any] = {}
+        is_preliminary: bool = False
+
+        for (key, task) in task_statuses.items():
+            if task.status == "failed":
+                print("Failed because of task " + key)
+                return TaskStatus(status="failed", result=None, preliminary=None)
+
+            if task.status == "done":
+                assembled_result[key] = task.result
+            else:
+                assembled_result[key] = task.preliminary
+                is_preliminary = True
+
+        if is_preliminary:
+            return TaskStatus(status="running", result=None, preliminary=assembled_result)
+        else:
+            return TaskStatus(status="done", result=assembled_result, preliminary=None)
 
     def check_on_running_task(self, ocel: str, task_name: TaskName | str,
                               long_term_cache_key: str, version: str | None) -> TaskStatus | None:
