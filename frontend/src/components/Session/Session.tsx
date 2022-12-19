@@ -1,19 +1,35 @@
 import './Session.css';
-import { RefObject, useEffect, useState } from 'react';
+import {Dispatch, RefObject, SetStateAction, useEffect, useState} from 'react';
 import { getURI } from '../../api';
 import { Button, TextField, Stack } from "@mui/material";
+import {RootState} from "../../redux/store";
+import {ThunkDispatch} from "@reduxjs/toolkit";
+import {EventLogMetadata} from "../../redux/EventLogs/eventLogs.types";
+import {addEventLog} from "../../redux/EventLogs/eventLogs.actions";
+import {connect} from "react-redux";
+import {formatEventLogMetadata} from "../../redux/EventLogs/eventLogs.utils";
 
-export function Session(_props: any) {
+interface SessionProps {
+    setSelected: Dispatch<SetStateAction<null>>;
+}
+
+const mapStateToProps = (state: RootState, props: SessionProps) => ({})
+const mapDispatchToProps = (dispatch: ThunkDispatch<any, any, any>, props: SessionProps) => ({
+    addEventLog: (eventLog: EventLogMetadata) => {
+        dispatch(addEventLog(eventLog))
+    }
+});
+
+type StateProps = ReturnType<typeof mapStateToProps>;
+type DispatchProps = ReturnType<typeof mapDispatchToProps>;
+type Props = SessionProps & StateProps & DispatchProps;
+
+export const Session = connect<StateProps, DispatchProps, SessionProps, RootState>(mapStateToProps, mapDispatchToProps)(
+    (props: Props) => {
     /*
     TODO: implement selectedFile, isFileSelected, fileStatus again
     FIX: disabled attribute in upload button
     */
-
-    const compare = _props.compare
-    const dataSource = _props.dataSource
-    // const setDataSource = _props.setDataSource
-    const setSelected = _props.setSelected
-    const formatEventLogMetadata = _props.formatEventLogMetadata
 
     const initialSelectedFile: any = {}
     const [selectedFile, setSelectedFile] = useState(initialSelectedFile)
@@ -50,23 +66,10 @@ export function Session(_props: any) {
             .then((result) => {
                 if (result.status === "successful") {
                     const eventLogMetadata = formatEventLogMetadata(result.data)
-                    eventLogMetadata.id = dataSource.length + 1
-                    let newDataSource = [
-                        ...dataSource,
-                        eventLogMetadata
-                    ]
-                    newDataSource = newDataSource.sort(compare)
-
-                    for (let i = 0; i < newDataSource.length; i++) {
-                        newDataSource[i].id = i;
-                    }
-
-                    // setDataSource(newDataSource)
-                    setSelected(eventLogMetadata.id)
+                    props.addEventLog(eventLogMetadata);
                 }
             })
             .catch(err => console.log("Error in uploading ..."))
-
     }
 
     return (
@@ -112,4 +115,4 @@ export function Session(_props: any) {
             </Stack>
         </div>
     )
-}
+});

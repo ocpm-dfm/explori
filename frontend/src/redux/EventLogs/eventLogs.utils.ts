@@ -1,7 +1,7 @@
 import {getURI} from "../../api";
 import {EventLogMetadata} from "./eventLogs.types";
 
-let compare = (a: { dir_type: string; }, b: { dir_type: string; }) => {
+export let compare = (a: { dir_type: string; }, b: { dir_type: string; }) => {
     if (a.dir_type < b.dir_type) {
         return 1;
     }

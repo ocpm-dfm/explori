@@ -107,34 +107,6 @@ export const EventLogList = connect<StateProps, DispatchProps, EventLogListProps
             return eventLogMetadata
         }
 
-        // useEffect(() => {
-        //     fetch(uri)
-        //         .then(res => res.json())
-        //         .then(data => {
-        //             if (data !== undefined || data !== null) {
-        //                 const formattedData = data.map((eventLog: any, index: number) => {
-        //                     const eventLogMetadata = formatEventLogMetadata(eventLog)
-        //                     return {
-        //                         ...eventLogMetadata,
-        //                         id: index
-        //                     }
-        //                 })
-        //
-        //                 formattedData.sort(compare)
-        //
-        //                 // Give items correct id for selection, we get a wrong id if we assign it in the data.map already
-        //                 for (let i = 0; i < formattedData.length; i++){
-        //                     formattedData[i].id = i;
-        //                 }
-        //
-        //                 setDataSource(formattedData)
-        //             }
-        //         })
-        //         .catch(err => {
-        //             console.log("Error in loading ...")
-        //         })
-        // }, [])
-
         return (
             <div className="DefaultLayout-Container">
                 <ExploriNavbar />
@@ -150,13 +122,7 @@ export const EventLogList = connect<StateProps, DispatchProps, EventLogListProps
                         onSelectionChange={onSelection}
                     ></ReactDataGrid>
                     <Stack spacing={1} direction="row" justifyContent="flex-end">
-                        <Session
-                            dataSource={dataSource}
-                            // setDataSource={setDataSource}
-                            setSelected={setSelected}
-                            formatEventLogMetadata={formatEventLogMetadata}
-                            compare={compare}
-                        />
+                        <Session setSelected={setSelected}/>
                         <Button component={Link} to={"/"} variant="outlined" onClick={onSelect} className="SelectButton" sx={
                             { 'top': '10px', 'margin-top': '10px', 'color': 'rgb(var(--color1))', 'border-color': 'rgb(var(--color1))' }
                         }>
