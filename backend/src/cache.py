@@ -5,6 +5,7 @@ from dataclasses import is_dataclass, asdict
 from enum import Enum
 from hashlib import sha256
 from multiprocessing import Lock
+from pathlib import PureWindowsPath
 from typing import Any, Dict, List
 
 import pm4py
@@ -166,7 +167,7 @@ class FileBasedLongTermCache(LongTermCache):
         return os.path.join(self.__get_ocel_cache_folder(ocel), f"{key}.{value_type.value}")
 
     def __get_ocel_cache_folder(self, ocel: str) -> str:
-        digest = sha256(ocel.encode("UTF-8")).hexdigest()
+        digest = hash_path(ocel)
         folder = os.path.join(self.__cache_folder, digest)
         os.makedirs(folder, exist_ok=True)
         return folder
@@ -201,19 +202,25 @@ def metadata() -> str:
 
 
 def projected_log(object_type: str) -> str:
-    return f"projection-{object_type}"
+    return f"projection-{hash(object_type)}"
 
 
 def projected_log_traces(object_type: str) -> str:
-    return f"projection-{object_type}-traces"
+    return f"projection-{hash(object_type)}-traces"
 
 
 def dfm(ignored_object_types: List[str] | None = None) -> str:
     return f"dfm{__extra_attribute('ignored', ignored_object_types)}"
 
 
-def alignments(base_threshold: float, object_type: str | None) -> str:
-    return f"alginments-{object_type}-{base_threshold}"
+def alignments(base_threshold: float, conformance_ocel: str, object_type: str | None, trace_id: int) -> str:
+    return f"alignments-{hash_path(conformance_ocel)}-{hash(object_type)}-{base_threshold}-{trace_id}"
+
+def hash(data: str) -> str:
+    return sha256(data.encode('utf-8')).hexdigest()
+
+def hash_path(path: str) -> str:
+    return hash(PureWindowsPath(path).as_posix())
 # endregion
 
 
