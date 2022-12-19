@@ -4,12 +4,14 @@ import { ObjectSelection } from "../ObjectSelection/ObjectSelection";
 import {ExploriNavbar} from "../ExploriNavbar/ExploriNavbar";
 
 import "./Home.css";
-import {useAsyncAPI} from "../../api";
+import {useAsyncAPI, useInterval} from "../../api";
 import {UserSessionState} from "../UserSession/UserSession";
 import {CytoDFMMethods, DirectlyFollowsMultigraph, FilteredCytoDFM} from '../cytoscape-dfm/cytodfm';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {faSnowflake} from "@fortawesome/free-regular-svg-icons";
 import {faShareFromSquare} from "@fortawesome/free-solid-svg-icons";
+import CircularProgress from '@mui/material/CircularProgress';
+import Box from '@mui/material/Box';
 
 
 export const Home = (props: { userSessionState: UserSessionState, stateChangeCallback: any}) => {
@@ -55,6 +57,19 @@ export const Home = (props: { userSessionState: UserSessionState, stateChangeCal
                                  selectedObjectTypes={selectedObjectTypes}
                                  positionsFrozen={frozen}
                                  ref={graphRef} />
+                {!dfm_query.result && (
+                    <Box sx={{
+                        display: 'flex',
+                        position: 'absolute',
+                        top: '50%',
+                        left: '50%',
+                        'margin-right': '-50%',
+                        transform: 'translate(-50%, -50%)'
+                    }}>
+                        <CircularProgress />
+                    </Box>
+                )
+                }
                 <div className="Home-DetailSlider">
                     <div className="Home-DetailSlider-Label">
                         Less detail
