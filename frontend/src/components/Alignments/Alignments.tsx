@@ -20,7 +20,7 @@ type TraceAlignment = {
     model_alignment: AlignElement[],
 }
 
-type TraceAlignments = {[key: string]: {[key: string]: TraceAlignment[]}};
+type TraceAlignments = {[key: string]: TraceAlignment | null}[];
 
 export function Alignments(props: {modelOcel: string, conformanceOcel: string, threshold: number}) {
     const modelOcel = props.modelOcel;
@@ -33,22 +33,38 @@ export function Alignments(props: {modelOcel: string, conformanceOcel: string, t
         threshold: threshold/100.0,
     });
 
-    let tables = [];
+    let object_type_alignments: {[key:string]: TraceAlignment[]} = {}
 
     const alignmentData = alignmentsQuery.preliminary ? alignmentsQuery.preliminary : alignmentsQuery.result;
     if (alignmentData) {
-        for (const objectType of Object.keys(alignmentData)) {
-            if(alignmentData[objectType]){
-                tables.push(<AlignmentTable objectType={objectType} traces={alignmentData[objectType]['aligned_traces']} />);
-            }
+        try {
+            alignmentData.forEach((traceWithAlignments) => {
+                Object.keys(traceWithAlignments).forEach((objectType) => {
+                    const alignment = traceWithAlignments[objectType];
+                    if (alignment) {
+                        if (!object_type_alignments[objectType])
+                            object_type_alignments[objectType] = [];
+                        object_type_alignments[objectType].push(alignment);
+                    }
+                })
+            });
+
+            console.log(object_type_alignments['MATERIAL']);
+        }
+        catch (e) {
+            console.error(e);
+            console.log(alignmentData)
         }
     }
+
 
     return (
         <div className="DefaultLayout-Container">
             <ExploriNavbar />
             <div className="DefaultLayout-Content">
-                {tables}
+                {Object.keys(object_type_alignments).map((objectType) => (
+                    <AlignmentTable objectType={objectType} traces={object_type_alignments[objectType]} key={`alignments=${objectType}`} />
+                ))}
             </div>
         </div>
     )
