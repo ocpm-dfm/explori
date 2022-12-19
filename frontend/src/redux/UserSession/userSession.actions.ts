@@ -6,7 +6,7 @@ import {
     SAVE_USER_SESSION,
     RESTORE_USER_SESSION,
     NO_CHANGE_USER_SESSION,
-    UPDATE_USER_SESSION, SessionState
+    UPDATE_USER_SESSION, SessionState, SET_THRESHOLD
 } from './userSession.types'
 import {ThunkDispatch} from "@reduxjs/toolkit";
 import {RootState} from "../store";
@@ -115,3 +115,11 @@ export const restoreUserSession = (fullOcelPath: string) =>
             .catch(err => console.log("Error in restoring session ... "));
         return dispatch(action)
     }
+
+
+export const setThreshold = (newThreshold: number) => (dispatch: Function) => {
+    dispatch({
+        type: SET_THRESHOLD,
+        payload: newThreshold
+    })
+}

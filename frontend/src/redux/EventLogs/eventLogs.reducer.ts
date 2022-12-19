@@ -3,7 +3,6 @@ import {AnyAction} from "redux";
 import {compare} from "./eventLogs.utils";
 
 const eventLogsReducer = (state: EventLogMetadata[] = [], action: AnyAction) => {
-    console.log("Reducing", state, action);
     switch (action.type) {
         case SET_EVENT_LOGS:
             return action.payload

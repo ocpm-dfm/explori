@@ -357,11 +357,11 @@ export const FilteredCytoDFM = forwardRef ((props: CytoDFMProps, ref: ForwardedR
 
     // The usage of useMemo reduces the number of rerenders, hence performance.
     const [elements, legendObjectTypeColors] = useMemo(() => {
-        console.log("Filtering graph")
-
         const dfm = props.dfm;
         const thresh = boxedThreshold;
         const selectedObjectTypes = props.selectedObjectTypes;
+
+        console.log("Filtering", dfm, selectedObjectTypes, thresh);
 
         if (!dfm)
             return [[], []];

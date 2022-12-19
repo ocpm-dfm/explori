@@ -10,10 +10,34 @@ import {CytoDFMMethods, DirectlyFollowsMultigraph, FilteredCytoDFM} from '../cyt
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {faSnowflake} from "@fortawesome/free-regular-svg-icons";
 import {faShareFromSquare} from "@fortawesome/free-solid-svg-icons";
-import {SessionState} from "../../redux/UserSession/userSession.types";
+import {RootState} from "../../redux/store";
+import {ThunkDispatch} from "@reduxjs/toolkit";
+import {connect} from "react-redux";
+import {setThreshold} from "../../redux/UserSession/userSession.actions";
 
-export const Home = (props: { userSessionState: UserSessionState, stateChangeCallback: any}) => {
-    const filteringThreshold = props.userSessionState.filteringThreshold;
+interface HomeProps {
+    userSessionState: UserSessionState,
+    stateChangeCallback: any
+}
+
+const mapStateToProps = (state: RootState, props: HomeProps) => ({
+    threshold: state.session.threshold,
+    ocel: state.session.ocel
+});
+const mapDispatchToProps = (dispatch: ThunkDispatch<any, any, any>, props: HomeProps) => ({
+    setThreshold: async (threshold: number) => {
+        dispatch(setThreshold(threshold));
+    }
+});
+
+type StateProps = ReturnType<typeof mapStateToProps>
+type DispatchProps = ReturnType<typeof mapDispatchToProps>
+type Props = HomeProps & StateProps & DispatchProps
+
+
+export const Home = connect<StateProps, DispatchProps, HomeProps, RootState>(mapStateToProps, mapDispatchToProps)((props: Props) => {
+    console.log("Rerendering home");
+
     let selectedObjectTypes = props.userSessionState.selectedObjectTypes;
     const selectedOcel = props.userSessionState.ocel;
     const alreadySelectedAllObjectTypesInitially = props.userSessionState.alreadySelectedAllObjectTypesInitially;
@@ -51,7 +75,7 @@ export const Home = (props: { userSessionState: UserSessionState, stateChangeCal
             <div className="Home">
                 <ExploriNavbar lowerRowSlot={navbarItems} />
                 <FilteredCytoDFM dfm={dfm_query.result}
-                                 threshold={filteringThreshold / 100}
+                                 threshold={props.threshold / 100}
                                  selectedObjectTypes={selectedObjectTypes}
                                  positionsFrozen={frozen}
                                  ref={graphRef} />
@@ -61,10 +85,12 @@ export const Home = (props: { userSessionState: UserSessionState, stateChangeCal
                     </div>
                     <input type="range" min="0" max="100"
                         className="Home-DetailSlider-Slider"
-                        value={filteringThreshold} onInput={(e) => {
-                            stateChangeCallback({
-                                filteringThreshold: (e.target as HTMLInputElement).value
-                            })
+                        value={props.threshold} onInput={(e) => {
+                            const newThreshold = (e.target as HTMLInputElement).value as unknown as number;
+                            // stateChangeCallback({
+                            //     filteringThreshold: newThreshold
+                            // });
+                            props.setThreshold(newThreshold);
                         }}
                     />
                     <div className="Home-DetailSlider-Label">
@@ -74,4 +100,4 @@ export const Home = (props: { userSessionState: UserSessionState, stateChangeCal
             </div>
         </React.Fragment>
     );
-}
+});
