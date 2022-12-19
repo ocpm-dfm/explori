@@ -50,7 +50,7 @@ export const EventLogList = connect<StateProps, DispatchProps, EventLogListProps
 
         let initialDataSource: TypeDataSource = [];
         const uri = getURI("/logs/available", {});
-        const [selected, setSelected] = useState(null);
+        const [selected, setSelected] = useState<number | null>(null);
         // const [dataSource, setDataSource] = useState(initialDataSource);
 
         const dataSource = props.eventLogs;

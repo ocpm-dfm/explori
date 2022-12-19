@@ -10,7 +10,7 @@ import {connect} from "react-redux";
 import {formatEventLogMetadata} from "../../redux/EventLogs/eventLogs.utils";
 
 interface SessionProps {
-    setSelected: Dispatch<SetStateAction<null>>;
+    setSelected: Dispatch<SetStateAction<number | null>>;
 }
 
 const mapStateToProps = (state: RootState, props: SessionProps) => ({})
@@ -67,6 +67,10 @@ export const Session = connect<StateProps, DispatchProps, SessionProps, RootStat
                 if (result.status === "successful") {
                     const eventLogMetadata = formatEventLogMetadata(result.data)
                     props.addEventLog(eventLogMetadata);
+                    if ("id" in eventLogMetadata) {
+                        const processedMetadata = eventLogMetadata as unknown as {id: number};
+                        props.setSelected(processedMetadata.id);
+                    }
                 }
             })
             .catch(err => console.log("Error in uploading ..."))
