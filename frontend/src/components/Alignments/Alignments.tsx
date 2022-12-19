@@ -8,6 +8,8 @@ import '@inovua/reactdatagrid-community/theme/blue-light.css';
 import "@inovua/reactdatagrid-community/theme/blue-light.css";
 import "@inovua/reactdatagrid-community/base.css";
 import "@inovua/reactdatagrid-community/index.css";
+import CircularProgress from '@mui/material/CircularProgress';
+import Box from '@mui/material/Box';
 
 
 const SKIP_MOVE = ">>";
@@ -62,9 +64,33 @@ export function Alignments(props: {modelOcel: string, conformanceOcel: string, t
         <div className="DefaultLayout-Container">
             <ExploriNavbar />
             <div className="DefaultLayout-Content">
+                {!alignmentsQuery.result && !alignmentsQuery.preliminary && (
+                    <Box sx={{
+                        display: 'flex',
+                        position: 'absolute',
+                        top: '50%',
+                        left: '50%',
+                        'margin-right': '-50%',
+                        transform: 'translate(-50%, -50%)'
+                    }}>
+                        <CircularProgress />
+                    </Box>
+                )}
                 {Object.keys(object_type_alignments).map((objectType) => (
                     <AlignmentTable objectType={objectType} traces={object_type_alignments[objectType]} key={`alignments=${objectType}`} />
                 ))}
+                {!alignmentsQuery.result && alignmentsQuery.preliminary && (
+                    <Box sx={{
+                        display: 'flex',
+                        position: 'absolute',
+                        top: '14%',
+                        left: '98%',
+                        'margin-right': '-50%',
+                        transform: 'translate(-50%, -50%)'
+                    }}>
+                        <CircularProgress />
+                    </Box>
+                )}
             </div>
         </div>
     )
