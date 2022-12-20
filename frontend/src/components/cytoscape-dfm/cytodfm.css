@@ -3,17 +3,19 @@
     height: 100%;
 }
 
-.CytoDFM-Legend {
+.CytoDFM-Overlay {
     position: absolute;
-    top: 2rem;
-    left: 1rem;
-
     border-style: solid;
     border-width: 1px;
     border-color: rgba(0, 0, 0, 0.2);
     z-index: 3;
 
     background-color: white;
+}
+
+.CytoDFM-Legend {
+    top: 2rem;
+    left: 1rem;
 
     list-style: none;
     padding: 0.5rem 1rem;
@@ -33,13 +35,13 @@
     margin-right: .5rem;
 }
 
-.CytoDFM-Export-Button {
-    line-height: 12px;
-    width: 18px;
-    font-size: 8pt;
-    margin-top: 1px;
-    margin-right: 2px;
-    position: absolute !important;
-    top: 14vh;
-    right: 0;
+.CytoDFM-Infobox {
+    top: 2rem;
+    right: 1rem;
+
+    padding: 0.5rem 1rem;
+
+    max-width: 30vw;
+    max-height: 50vh;
+    overflow-y: scroll;
 }

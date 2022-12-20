@@ -1,0 +1,64 @@
+{
+    "ocel:global-log": {
+        "ocel:attribute-names": [],
+        "ocel:object-types": [
+            "ONLY_OBJECT_TYPE"
+        ],
+        "ocel:version": [
+            "1.0"
+        ],
+        "ocel:ordering": [
+            "timestamp"
+        ]
+    },
+    "ocel:events": {
+        "0": {
+            "ocel:activity": "a1",
+            "ocel:timestamp": "2021-03-08T09:00:01+01:00",
+            "ocel:omap": [
+                "OBJECT1",
+                "OBJECT3"
+            ],
+            "ocel:vmap": {}
+        },
+        "1": {
+            "ocel:activity": "a2",
+            "ocel:timestamp": "2021-03-08T09:00:02+01:00",
+            "ocel:omap": [
+                "OBJECT1"
+            ],
+            "ocel:vmap": {}
+        },
+        "2": {
+            "ocel:activity": "c",
+            "ocel:timestamp": "2021-03-08T09:00:01+01:00",
+            "ocel:omap": [
+                "OBJECT2"
+            ],
+            "ocel:vmap": {}
+        },
+        "3": {
+            "ocel:activity": "b",
+            "ocel:timestamp": "2021-03-08T09:00:02+01:00",
+            "ocel:omap": [
+                "OBJECT2",
+                "OBJECT3"
+            ],
+            "ocel:vmap": {}
+        }
+    },
+    "ocel:objects": {
+        "OBJECT1": {
+            "ocel:type": "ONLY_OBJECT_TYPE",
+            "ocel:ovmap": {}
+        },
+        "OBJECT2": {
+            "ocel:type": "ONLY_OBJECT_TYPE",
+            "ocel:ovmap": {}
+        },
+        "OBJECT3": {
+            "ocel:type": "ONLY_OBJECT_TYPE",
+            "ocel:ovmap": {}
+        }
+    }
+}

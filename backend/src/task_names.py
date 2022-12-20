@@ -4,6 +4,7 @@ from typing import Any, List
 
 class TaskName(Enum):
     CREATE_DFM = "create_dfm"
+    COMPUTE_ALIGNMENTS = "compute_alignments"
 
     def with_attributes(self, **kwargs) -> str:
         """Sometimes, a big task is divided into subtasks.

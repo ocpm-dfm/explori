@@ -3,7 +3,7 @@ import os
 from unittest import TestCase
 
 from worker.tasks.dfm import prepare_dfg_computation, \
-    calculate_threshold_counts_on_dfg, combine_node_counts, START_TOKEN, STOP_TOKEN, CountSeperator
+    calculate_threshold_counts_on_dfg, START_TOKEN, STOP_TOKEN, CountSeperator
 
 
 class DfmTests(TestCase):
@@ -63,7 +63,7 @@ class DfmTests(TestCase):
                                                      'cross-referenced' in trace[0]]
 
                 edge_totals, node_totals, edge_traces, total_objects = prepare_dfg_computation(projected_traces[object_type])
-                edge_counts, node_counts = calculate_threshold_counts_on_dfg(edge_totals, node_totals, edge_traces, total_objects)
+                edge_counts, node_counts, trace_thresholds = calculate_threshold_counts_on_dfg(edge_totals, node_totals, edge_traces, total_objects)
 
                 for edge in edge_totals:
                     self.assertIn(edge, edge_counts, "No count ranges exist for edge.")
@@ -77,12 +77,47 @@ class DfmTests(TestCase):
         test(DfmTests.get_simple_looping_traces())
         test(DfmTests.load_traces_from_resources("github-pm4py-traces.json"))
 
-    def test_combine_node_counts(self):
-        type_a_count = {"n": [                          CountSeperator(0.5, 10),                           CountSeperator(1, 20)]}
-        type_b_count = {"n": [CountSeperator(0.25, 10), CountSeperator(0.5, 20), CountSeperator(0.75, 30), CountSeperator(1, 40)]}
-        expected = {"n": [CountSeperator(0.25, 10), CountSeperator(0.5, 30), CountSeperator(0.75, 40), CountSeperator(1, 60)]}
+    def test_edge_and_node_counts_using_trace_thresholds(self):
+        def test(traces):
+            edge_totals, node_totals, edge_traces, total_objects = prepare_dfg_computation(traces)
+            edge_counts, node_counts, trace_thresholds = calculate_threshold_counts_on_dfg(edge_totals, node_totals, edge_traces, total_objects)
 
-        self.assertEqual(expected, combine_node_counts({"a": type_a_count, "b": type_b_count}))
+            for node in node_totals:
+                counts = node_counts[node]
+                for (threshold, calculated_count) in counts:
+                    reference_count = 0
+                    for (actions, (trace_count, trace_threshold)) in trace_thresholds.items():
+                        if trace_threshold >= threshold:
+                            continue
+
+                        for action in actions:
+                            if action == node:
+                                reference_count += trace_count
+
+                    self.assertEqual(reference_count, calculated_count, f"Node counts for node {node} does not match at threshold <{threshold}")
+
+            for edge in edge_counts:
+                counts = edge_counts[edge]
+                for (threshold, calculated_count) in counts:
+                    reference_count = 0
+                    for (actions, (trace_count, trace_threshold)) in trace_thresholds.items():
+                        if trace_threshold >= threshold:
+                            continue
+
+                        for i in range(len(actions) - 1):
+                            step = (actions[i], actions[i + 1])
+                            if step == edge:
+                                reference_count += trace_count
+
+                    self.assertEqual(reference_count, calculated_count, f"Edge counts for edge {edge} does not match at threshold <{threshold}")
+
+        def test_all_object_types(projected_traces):
+            for traces in projected_traces.values():
+                test(traces)
+
+        test_all_object_types(DfmTests.get_simple_traces())
+        test_all_object_types(DfmTests.get_simple_looping_traces())
+        test_all_object_types(DfmTests.load_traces_from_resources("github-pm4py-traces.json"))
 
     @staticmethod
     def get_simple_traces():

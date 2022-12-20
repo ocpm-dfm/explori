@@ -24,7 +24,7 @@
     margin: auto 0;
 }
 
-.Home-toggleButton {
+.Home-NavbarButton {
     --border-color: #BDBDBD;
 
     background-color: rgba(0, 0, 0, 0);
@@ -35,22 +35,24 @@
     border-radius: 4px;
 
     height: calc(100% - 2*0.5rem);
-    aspect-ratio: 1/1;
 
     display: grid;
     justify-content: center;
     align-content: center;
+
+    margin-left: 0.5rem;
 }
 
-.Home-toggleButton>svg {
-    width: 1.5rem;
-    height: 1.5rem;
-}
-
-.Home-toggleButton:hover {
+.Home-NavbarButton:hover {
     border-color: black;
 }
 
-.Home-toggleButton--active {
+.Home-NavbarButton--icon>svg {
+    width: 1.5rem;
+    height: 1.5rem;
+    aspect-ratio: 1/1;
+}
+
+.Home-NavbarButton--active {
     background-color: var(--border-color);
 }
