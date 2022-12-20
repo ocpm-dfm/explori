@@ -6,6 +6,6 @@ export interface EventLogMetadata {
     name: string
     size: string
     dir_type: string
-    extra: string
+    extra: any
     type: string
 }
