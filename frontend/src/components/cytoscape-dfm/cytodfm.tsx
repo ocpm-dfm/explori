@@ -357,11 +357,11 @@ export const FilteredCytoDFM = forwardRef ((props: CytoDFMProps, ref: ForwardedR
 
     // The usage of useMemo reduces the number of rerenders, hence performance.
     const [elements, legendObjectTypeColors] = useMemo(() => {
-        console.log("Filtering graph")
-
         const dfm = props.dfm;
         const thresh = boxedThreshold;
         const selectedObjectTypes = props.selectedObjectTypes;
+
+        console.log("Filtering", dfm, selectedObjectTypes, thresh);
 
         if (!dfm)
             return [[], []];
@@ -481,7 +481,7 @@ export const FilteredCytoDFM = forwardRef ((props: CytoDFMProps, ref: ForwardedR
     const selectedTraces = useMemo(() => {
         const dfm = props.dfm;
         const thresh = boxedThreshold;
-        const selectedObjectTypes = props.selectedObjectTypes;
+        let selectedObjectTypes = props.selectedObjectTypes;
 
         if (dfm === null)
             return { shown: {}, hidden: {} } as SelectedTracesData;
@@ -499,6 +499,9 @@ export const FilteredCytoDFM = forwardRef ((props: CytoDFMProps, ref: ForwardedR
                     break;
                 }
             }
+
+            // Only show traces of the correct object type.
+            selectedObjectTypes = [objectType];
         }
 
         if (selectedTraces == null)
@@ -531,7 +534,7 @@ export const FilteredCytoDFM = forwardRef ((props: CytoDFMProps, ref: ForwardedR
         });
         Object.keys(shown).forEach((objectType) => {
             shown[objectType].sort((a, b) => a.count > b.count ? -1 : 1);
-        })
+        });
 
         return {
             shown,

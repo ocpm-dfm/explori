@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef } from "react";
-import { stat } from "fs";
 
 let API_BASE_URL = 'https://production.com/api';
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -35,7 +34,7 @@ export function useInterval(callback: () => any, delay: number | null) {
     }, [callback, delay]);
 }
 
-interface AsyncApiState<DataType> {
+export type AsyncApiState<DataType> = {
     preliminary: DataType | null
     result: DataType | null
     failed: boolean
@@ -47,12 +46,24 @@ type ApiResponse<DataType> = {
     result: DataType | null
 }
 
-export function useAsyncAPI<DataType>(endpoint: string, parameters: { [key: string]: string | number }) {
-    const [state, setState] = useState<AsyncApiState<DataType>>({
+type PossibleAsyncFunction<ParamType, RType> = ((param: ParamType) => RType) | ((param: ParamType) => Promise<RType>)
+
+type StateBackend<T> = {
+    state: AsyncApiState<T>,
+    setState: PossibleAsyncFunction<AsyncApiState<T>, void>
+}
+
+export function useAsyncAPI<DataType>(endpoint: string, parameters: { [key: string]: string | number },
+                                      stateBackend: StateBackend<DataType> | null = null) {
+    const componentState = useState<AsyncApiState<DataType>>({
         preliminary: null,
         result: null,
         failed: false
     });
+
+    const state: AsyncApiState<DataType> = stateBackend ? stateBackend.state : componentState[0];
+    const setState: PossibleAsyncFunction<AsyncApiState<DataType>, void> | null =
+        stateBackend ? stateBackend.setState : componentState[1];
 
     const parameters_empty = Object.keys(parameters).length === 0;
 
