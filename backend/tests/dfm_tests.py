@@ -1,9 +1,12 @@
 import json
 import os
+from typing import Dict, List, Tuple
 from unittest import TestCase
 
+from shared_types import FrontendFriendlyDFM, FrontendFriendlyEdge
 from worker.tasks.dfm import prepare_dfg_computation, \
-    calculate_threshold_counts_on_dfg, START_TOKEN, STOP_TOKEN, CountSeperator
+    calculate_threshold_counts_on_dfg, START_TOKEN, STOP_TOKEN, CountSeperator, ObjectType, Edge, Node, \
+    convert_to_frontend_friendly_graph_notation
 
 
 class DfmTests(TestCase):
@@ -62,8 +65,11 @@ class DfmTests(TestCase):
                     projected_traces[object_type] = [trace for trace in projected_traces[object_type] if
                                                      'cross-referenced' in trace[0]]
 
-                edge_totals, node_totals, edge_traces, total_objects = prepare_dfg_computation(projected_traces[object_type])
-                edge_counts, node_counts, trace_thresholds = calculate_threshold_counts_on_dfg(edge_totals, node_totals, edge_traces, total_objects)
+                edge_totals, node_totals, edge_traces, total_objects = prepare_dfg_computation(
+                    projected_traces[object_type])
+                edge_counts, node_counts, trace_thresholds = calculate_threshold_counts_on_dfg(edge_totals, node_totals,
+                                                                                               edge_traces,
+                                                                                               total_objects)
 
                 for edge in edge_totals:
                     self.assertIn(edge, edge_counts, "No count ranges exist for edge.")
@@ -80,7 +86,8 @@ class DfmTests(TestCase):
     def test_edge_and_node_counts_using_trace_thresholds(self):
         def test(traces):
             edge_totals, node_totals, edge_traces, total_objects = prepare_dfg_computation(traces)
-            edge_counts, node_counts, trace_thresholds = calculate_threshold_counts_on_dfg(edge_totals, node_totals, edge_traces, total_objects)
+            edge_counts, node_counts, trace_thresholds = calculate_threshold_counts_on_dfg(edge_totals, node_totals,
+                                                                                           edge_traces, total_objects)
 
             for node in node_totals:
                 counts = node_counts[node]
@@ -94,7 +101,8 @@ class DfmTests(TestCase):
                             if action == node:
                                 reference_count += trace_count
 
-                    self.assertEqual(reference_count, calculated_count, f"Node counts for node {node} does not match at threshold <{threshold}")
+                    self.assertEqual(reference_count, calculated_count,
+                                     f"Node counts for node {node} does not match at threshold <{threshold}")
 
             for edge in edge_counts:
                 counts = edge_counts[edge]
@@ -109,7 +117,8 @@ class DfmTests(TestCase):
                             if step == edge:
                                 reference_count += trace_count
 
-                    self.assertEqual(reference_count, calculated_count, f"Edge counts for edge {edge} does not match at threshold <{threshold}")
+                    self.assertEqual(reference_count, calculated_count,
+                                     f"Edge counts for edge {edge} does not match at threshold <{threshold}")
 
         def test_all_object_types(projected_traces):
             for traces in projected_traces.values():
@@ -118,6 +127,95 @@ class DfmTests(TestCase):
         test_all_object_types(DfmTests.get_simple_traces())
         test_all_object_types(DfmTests.get_simple_looping_traces())
         test_all_object_types(DfmTests.load_traces_from_resources("github-pm4py-traces.json"))
+
+    def test_frontend_friendly(self):
+        projected_traces = DfmTests.get_simple_traces()
+        edge_counts: Dict[ObjectType, Dict[Edge, List[CountSeperator]]] = {}
+        node_counts: Dict[ObjectType, Dict[Node, List[CountSeperator]]] = {}
+        trace_thresholds: Dict[ObjectType, Dict[Tuple[Node], Tuple[int, float]]] = {}
+
+        for object_type in projected_traces:
+            edge_totals, node_totals, edge_traces, total_objects = prepare_dfg_computation(
+                projected_traces[object_type])
+
+            type_edge_counts, type_node_counts, type_trace_thresholds = \
+                calculate_threshold_counts_on_dfg(edge_totals, node_totals, edge_traces, total_objects)
+
+            edge_counts[object_type] = type_edge_counts
+            node_counts[object_type] = type_node_counts
+            trace_thresholds[object_type] = type_trace_thresholds
+
+        frontend_friendly = convert_to_frontend_friendly_graph_notation(edge_counts, node_counts, trace_thresholds)
+        frontend_friendly = FrontendFriendlyDFM(**frontend_friendly)
+
+        expected_edge_traces = {
+            ("type_a", START_TOKEN, "a"): {(START_TOKEN, "a", "b", "c", STOP_TOKEN),
+                                           (START_TOKEN, "a", "b", STOP_TOKEN)},
+            ("type_a", "a", "b"): {(START_TOKEN, "a", "b", "c", STOP_TOKEN), (START_TOKEN, "a", "b", STOP_TOKEN)},
+            ("type_a", "b", "c"): {(START_TOKEN, "a", "b", "c", STOP_TOKEN)},
+            ("type_a", "b", STOP_TOKEN): {(START_TOKEN, "a", "b", STOP_TOKEN)},
+            ("type_a", "c", STOP_TOKEN): {(START_TOKEN, "a", "b", "c", STOP_TOKEN)},
+            ("type_b", START_TOKEN, "a"): {(START_TOKEN, "a", "b", "c", STOP_TOKEN),
+                                           (START_TOKEN, "a", "c", STOP_TOKEN)},
+            ("type_b", START_TOKEN, "b"): {(START_TOKEN, "b", "c", STOP_TOKEN)},
+            ("type_b", "a", "b"): {(START_TOKEN, "a", "b", "c", STOP_TOKEN)},
+            ("type_b", "b", "c"): {(START_TOKEN, "a", "b", "c", STOP_TOKEN), (START_TOKEN, "b", "c", STOP_TOKEN)},
+            ("type_b", "a", "c"): {(START_TOKEN, "a", "c", STOP_TOKEN)},
+            ("type_b", "c", STOP_TOKEN): {(START_TOKEN, "a", "b", "c", STOP_TOKEN),
+                                          (START_TOKEN, "b", "c", STOP_TOKEN),
+                                          (START_TOKEN, "a", "c", STOP_TOKEN)}
+        }
+
+        expected_node_traces = {
+            START_TOKEN: {(START_TOKEN, "a", "b", "c", STOP_TOKEN),
+                          (START_TOKEN, "a", "b", STOP_TOKEN),
+                          (START_TOKEN, "a", "c", STOP_TOKEN),
+                          (START_TOKEN, "b", "c", STOP_TOKEN)},
+            "a": {(START_TOKEN, "a", "b", "c", STOP_TOKEN),
+                  (START_TOKEN, "a", "b", STOP_TOKEN),
+                  (START_TOKEN, "a", "c", STOP_TOKEN)},
+            "b": {(START_TOKEN, "a", "b", "c", STOP_TOKEN),
+                  (START_TOKEN, "a", "b", STOP_TOKEN),
+                  (START_TOKEN, "b", "c", STOP_TOKEN)},
+            "c": {(START_TOKEN, "a", "b", "c", STOP_TOKEN),
+                  (START_TOKEN, "a", "c", STOP_TOKEN),
+                  (START_TOKEN, "b", "c", STOP_TOKEN)},
+            STOP_TOKEN: {(START_TOKEN, "a", "b", "c", STOP_TOKEN),
+                          (START_TOKEN, "a", "b", STOP_TOKEN),
+                          (START_TOKEN, "a", "c", STOP_TOKEN),
+                          (START_TOKEN, "b", "c", STOP_TOKEN)},
+        }
+
+        traces_as_nodes = []
+        for trace in frontend_friendly.traces:
+            trace_tuple = tuple(frontend_friendly.nodes[node_id].label for node_id in trace.actions)
+            traces_as_nodes.append(trace_tuple)
+
+            for object_type in trace_thresholds:
+                if trace_tuple in trace_thresholds[object_type]:
+                    expected_count, expected_threshold = trace_thresholds[object_type][trace_tuple]
+                    self.assertEqual(expected_count, trace.thresholds[object_type].count)
+                    self.assertEqual(expected_threshold, trace.thresholds[object_type].threshold)
+
+        for (object_type, edges) in frontend_friendly.subgraphs.items():
+            edges: List[FrontendFriendlyEdge] = edges
+            for edge in edges:
+                source_node = frontend_friendly.nodes[edge.source].label
+                target_node = frontend_friendly.nodes[edge.target].label
+                print(object_type, source_node, target_node)
+                expected_traces = expected_edge_traces[object_type, source_node, target_node]
+                real_traces = set(traces_as_nodes[trace_id] for trace_id in edge.traces)
+
+                self.assertEqual(expected_traces, real_traces)
+                self.assertEqual(edge_counts[object_type][source_node, target_node], edge.counts)
+
+        for node in frontend_friendly.nodes:
+            real_traces = set(traces_as_nodes[trace_id] for trace_id in node.traces)
+            self.assertEqual(expected_node_traces[node.label], real_traces)
+
+            for object_type in node_counts:
+                if node.label in node_counts[object_type]:
+                    self.assertEqual(node_counts[object_type][node.label], node.counts[object_type])
 
     @staticmethod
     def get_simple_traces():
