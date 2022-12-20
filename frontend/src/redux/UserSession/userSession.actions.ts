@@ -3,7 +3,6 @@ import { getURI } from '../../api'
 import USER_SESSION_INITIAL_STATE from './userSession.initialState'
 import {
     CREATE_USER_SESSION,
-    SAVE_USER_SESSION,
     RESTORE_USER_SESSION,
     NO_CHANGE_USER_SESSION,
     UPDATE_USER_SESSION, SessionState, SET_THRESHOLD, SET_SELECTED_OBJECT_TYPES
@@ -83,13 +82,13 @@ export const restoreUserSession = (fullOcelPath: string) =>
             return dispatch({
                 type: RESTORE_USER_SESSION,
                 payload: {
-                    currentSelected: result.base_ocel,
-                    filteringThreshold: result.threshold,
+                    ocel: result.base_ocel,
+                    threshold: result.threshold,
                     selectedObjectTypes: result.object_types,
                     // Set `alreadySelectedAllObjectTypesInitially` to true as we're in the process of restoring a session
                     // which implies an existing object type selection which we don't want to overwrite!
                     alreadySelectedAllObjectTypesInitially: true
-                }
+                } as SessionState
             });
         }
         else {
