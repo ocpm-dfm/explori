@@ -1,5 +1,4 @@
-import {applyMiddleware, configureStore, ThunkDispatch} from '@reduxjs/toolkit'
-import rootReducer from './rootReducer'
+import {configureStore} from '@reduxjs/toolkit'
 import thunkMiddleware from 'redux-thunk'
 import logger from 'redux-logger'
 import { testUserSession } from "./store.test"
@@ -10,10 +9,12 @@ import {TypedUseSelectorHook, useDispatch, useSelector} from "react-redux";
 import {SessionState} from "./UserSession/userSession.types";
 import {EventLogMetadata} from "./EventLogs/eventLogs.types";
 import {DirectlyFollowsMultigraph} from "../components/cytoscape-dfm/cytodfm";
-import {CombinedState} from "@reduxjs/toolkit/dist/query/core/apiState";
-import userSessionReducer from "./UserSession/userSession.reducer";
 import sessionStateReducer from "./UserSession/userSession.reducer";
 import eventLogsReducer from "./EventLogs/eventLogs.reducer";
+import {DfmQueryInitialState, DfmQueryReducer} from "./DFMQuery/dfmquery";
+import {AsyncApiState} from "../api";
+import {AlignementQueryReduce, AlignmentsInitialState} from "./AlignmentsQuery/alingmentsquery";
+import {TraceAlignments} from "../components/Alignments/Alignments";
 
 /*
 TODO:
@@ -37,19 +38,23 @@ if ("REACT_APP_STAGE" in process.env) {
 export interface RootState {
     session: SessionState,
     listOfEventLogs: EventLogMetadata[],
-    discoveredDFM: DirectlyFollowsMultigraph | undefined
+    dfmQuery: AsyncApiState<DirectlyFollowsMultigraph>,
+    alignmentsQuery: AsyncApiState<TraceAlignments>
 }
 
 const initalState: RootState = {
     session: USER_SESSION_INITIAL_STATE,
     listOfEventLogs: EVENT_LIST_INITIAL_STATE,
-    discoveredDFM: undefined
+    dfmQuery: DfmQueryInitialState,
+    alignmentsQuery: AlignmentsInitialState
 }
 
 const store = configureStore({
     reducer: {
         session: sessionStateReducer,
-        listOfEventLogs: eventLogsReducer
+        listOfEventLogs: eventLogsReducer,
+        dfmQuery: DfmQueryReducer as any,
+        alignmentsQuery: AlignementQueryReduce as any
     },
     middleware: middleware,
     preloadedState: initalState

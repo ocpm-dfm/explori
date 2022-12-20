@@ -1,6 +1,6 @@
 import React from 'react';
 import  "../DefaultLayout/DefaultLayout.css";
-import {useAsyncAPI} from "../../api";
+import {AsyncApiState, useAsyncAPI} from "../../api";
 import {ExploriNavbar} from "../ExploriNavbar/ExploriNavbar";
 import ReactDataGrid from '@inovua/reactdatagrid-community';
 import '@inovua/reactdatagrid-community/index.css';
@@ -10,6 +10,8 @@ import "@inovua/reactdatagrid-community/base.css";
 import "@inovua/reactdatagrid-community/index.css";
 import {RootState} from "../../redux/store";
 import {connect} from "react-redux";
+import {ThunkDispatch} from "@reduxjs/toolkit";
+import {setAlignmentQueryState} from "../../redux/AlignmentsQuery/alingmentsquery";
 
 
 const SKIP_MOVE = ">>";
@@ -22,17 +24,22 @@ type TraceAlignment = {
     model_alignment: AlignElement[],
 }
 
-type TraceAlignments = {[key: string]: TraceAlignment | null}[];
+export type TraceAlignments = {[key: string]: TraceAlignment | null}[];
 
 type AlignmentProps = {
 }
 
 const mapStateToProps = (state: RootState, props: AlignmentProps) => ({
     modelOcel: state.session.ocel,
-    threshold: state.session.threshold
+    threshold: state.session.threshold,
+    queryState: state.alignmentsQuery
 });
 
-const mapDispatchToProps = (state: RootState, props: AlignmentProps) => ({});
+const mapDispatchToProps = (dispatch: ThunkDispatch<any, any, any>, props: AlignmentProps) => ({
+    setQueryState: (state: AsyncApiState<TraceAlignments>) => {
+        dispatch(setAlignmentQueryState(state));
+    }
+});
 
 type StateProps = ReturnType<typeof mapStateToProps>;
 type DispatchProps = ReturnType<typeof mapDispatchToProps>;
@@ -47,6 +54,9 @@ export const Alignments = connect<StateProps, DispatchProps, AlignmentProps, Roo
         process_ocel: modelOcel,
         conformance_ocel: conformanceOcel,
         threshold: threshold/100.0,
+    }, {
+        state: props.queryState,
+        setState: props.setQueryState
     });
 
     let object_type_alignments: {[key:string]: TraceAlignment[]} = {}

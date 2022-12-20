@@ -4,7 +4,7 @@ import { ObjectSelection } from "../ObjectSelection/ObjectSelection";
 import {ExploriNavbar} from "../ExploriNavbar/ExploriNavbar";
 
 import "./Home.css";
-import {useAsyncAPI} from "../../api";
+import {AsyncApiState, useAsyncAPI} from "../../api";
 import {CytoDFMMethods, DirectlyFollowsMultigraph, FilteredCytoDFM} from '../cytoscape-dfm/cytodfm';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {faSnowflake} from "@fortawesome/free-regular-svg-icons";
@@ -13,13 +13,15 @@ import {RootState} from "../../redux/store";
 import {ThunkDispatch} from "@reduxjs/toolkit";
 import {connect} from "react-redux";
 import {setSelectedObjectTypes, setThreshold} from "../../redux/UserSession/userSession.actions";
+import {setDfmQueryState} from "../../redux/DFMQuery/dfmquery";
 
 interface HomeProps {
 
 }
 
 const mapStateToProps = (state: RootState, props: HomeProps) => ({
-    session: state.session
+    session: state.session,
+    dfmQuery: state.dfmQuery
 });
 const mapDispatchToProps = (dispatch: ThunkDispatch<any, any, any>, props: HomeProps) => ({
     setThreshold: async (threshold: number) => {
@@ -27,6 +29,9 @@ const mapDispatchToProps = (dispatch: ThunkDispatch<any, any, any>, props: HomeP
     },
     setSelectedObjectTypes: async (selectedObjectTypes: string[]) => {
         dispatch(setSelectedObjectTypes(selectedObjectTypes))
+    },
+    setDfmQuery: (state: AsyncApiState<DirectlyFollowsMultigraph>) => {
+        dispatch(setDfmQueryState(state));
     }
 });
 
@@ -42,7 +47,8 @@ export const Home = connect<StateProps, DispatchProps, HomeProps, RootState>(map
 
     const [frozen, setFrozen] = useState<boolean>(false);
 
-    const dfm_query = useAsyncAPI<DirectlyFollowsMultigraph>("/pm/dfm", {ocel: selectedOcel});
+    const dfm_query = useAsyncAPI<DirectlyFollowsMultigraph>("/pm/dfm", {ocel: selectedOcel},
+        {state: props.dfmQuery, setState: props.setDfmQuery});
     const graphRef = useRef<CytoDFMMethods>();
 
     const availableObjectTypes: string[] = dfm_query.result ? Object.keys(dfm_query.result.subgraphs) : [];
