@@ -1,5 +1,5 @@
 import {AsyncApiState} from "../../api";
-import {TraceAlignments} from "../../components/Alignments/Alignments";
+import {TraceAlignments} from "../../pages/Alignments/Alignments";
 import {QueryReducer, ResetQueryState, SetQueryState} from "../QueryState";
 
 const SET_ALIGNMENT_QUERY_STATE = "SET_ALIGNMENT_QUERY_STATE";

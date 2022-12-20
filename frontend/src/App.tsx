@@ -1,10 +1,10 @@
 import React, {useEffect, useRef, useState} from 'react';
 import './App.css';
-import { Home } from "./components/Home/Home";
+import { Home } from "./pages/Home/Home";
 import { EventLogList } from "./components/EventLogList/EventLogList";
 import { Routes, Route, useNavigate } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from 'react-query';
-import {Alignments} from "./components/Alignments/Alignments";
+import {Alignments} from "./pages/Alignments/Alignments";
 
 import {RootState} from './redux/store';
 import {connect} from "react-redux";

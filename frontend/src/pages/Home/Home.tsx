@@ -1,11 +1,11 @@
 import React, {useRef, useState} from 'react';
 import '../../App.css';
-import { ObjectSelection } from "../ObjectSelection/ObjectSelection";
-import {ExploriNavbar} from "../ExploriNavbar/ExploriNavbar";
+import { ObjectSelection } from "../../components/ObjectSelection/ObjectSelection";
+import {ExploriNavbar} from "../../components/ExploriNavbar/ExploriNavbar";
 
 import "./Home.css";
 import {AsyncApiState, useAsyncAPI} from "../../api";
-import {CytoDFMMethods, DirectlyFollowsMultigraph, FilteredCytoDFM} from '../cytoscape-dfm/cytodfm';
+import {CytoDFMMethods, DirectlyFollowsMultigraph, FilteredCytoDFM} from '../../components/cytoscape-dfm/cytodfm';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {faSnowflake} from "@fortawesome/free-regular-svg-icons";
 import {faShareFromSquare} from "@fortawesome/free-solid-svg-icons";
