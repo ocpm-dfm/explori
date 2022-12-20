@@ -72,7 +72,7 @@ class ColumnListResponseModel(BaseModel):
         }
 
 @router.get('/available', response_model=AvailableLogsResponseModel)
-def list_available_logs() -> TaskStatus:
+def list_available_logs():
     """
     Lists all available OCELS and returns them as list of strings that can be used to access them using other
     API endpoints. OCELs that were uploaded by the user over the web interface will be prefixed by "uploaded/".
