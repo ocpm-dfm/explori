@@ -1,128 +1,107 @@
-import React, { useEffect, useState } from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import './App.css';
 import { Home } from "./components/Home/Home";
 import { EventLogList } from "./components/EventLogList/EventLogList";
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, useNavigate } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from 'react-query';
-import { UserSession, UserSessionState, storeSession, restoreSession } from "./components/UserSession/UserSession";
-import getUuid from "uuid-by-string";
 import {Alignments} from "./components/Alignments/Alignments";
 
-import store, {RootState, useAppDispatch} from './redux/store';
-import {connect, useDispatch} from "react-redux";
-import {saveUserSession} from "./redux/UserSession/userSession.actions";
+import {RootState} from './redux/store';
+import {connect} from "react-redux";
+import {modifyUserSession, restoreUserSession, saveUserSession} from "./redux/UserSession/userSession.actions";
 import {ThunkDispatch} from "@reduxjs/toolkit";
 import {SessionState} from "./redux/UserSession/userSession.types";
 
 export type StateChangeCallback = (update: any) => void;
-export type SwitchOcelsCallback = (ocel: string) => void;
+export type SwitchOcelsCallback = (newOcel: string) => Promise<void>;
 
 interface OwnProps {
 
 }
 
-interface StateProps {
-    session: SessionState
-}
+const mapStateToProps = (state: RootState, ownProps: OwnProps) => ({
+    session: state.session
+});
 
-interface DispatchProps {
-    saveUserSession: (session: SessionState) => void
-}
+const mapDispatchToProps = (dispatch: ThunkDispatch<{}, {}, any>, ownProps: OwnProps) => ({
+    saveSession: async (session: SessionState) => {
+        await dispatch(saveUserSession(session));
+        console.log("[App] Saved user session");
+    },
+    setSession: (session: SessionState) => {
+        dispatch(modifyUserSession(session))
+    },
+    loadSession: async (ocel: string) => {
+        await dispatch(restoreUserSession(ocel));
+    }
+})
 
+type StateProps = ReturnType<typeof mapStateToProps>
+type DispatchProps = ReturnType<typeof mapDispatchToProps>
 type Props = OwnProps & StateProps & DispatchProps;
 
 export function App(props: Props) {
-    // TODO: currently the session is not necessarily the same for this default ocel and choosing the same ocel in the
-    //  eventloglist (at least on Windows) as choosing it from the list results in a different (Windows style) path
-    //  and we currently simply hash the path as id.
-    const currentOcel = localStorage.getItem("explori-currentOcel") || "uploaded/p2p-normal.jsonocel";
+    const currentOcel = localStorage.getItem("explori-currentOcel");
 
-    const [sessionState, setSessionState] = useState<UserSessionState>({
-        ocel: currentOcel,
-        filteringThreshold: 100,
-        selectedObjectTypes: [],
-        alreadySelectedAllObjectTypesInitially: false,
-    });
-
-    const [appState, setAppState] = useState({
-        startAutosaving: false,
-    });
-
+    const navigateTo = useNavigate();
     const queryClient = new QueryClient();
 
-    function restoreAutoSessionOrCreateNew(ocel: string) {
-        restoreSession("autosave-" + getUuid(ocel), (session: UserSessionState) => {
-            if (session.ocel !== undefined) {
-                stateChangeCallback(session);
-            } else {
-                stateChangeCallback({
-                    ocel: ocel,
-                    filteringThreshold: 100,
-                    selectedObjectTypes: [],
-                    alreadySelectedAllObjectTypesInitially: false,
-                });
-            }
-        });
-    }
+    const autosaveEnabled = useRef<boolean>(false);
 
-    const switchOcelsCallback = (ocel: string) => {
-        restoreAutoSessionOrCreateNew(ocel);
-    };
-
-    const stateChangeCallback: StateChangeCallback = (update: any) => {
-        let validUpdates: { [key: string]: any } = {};
-        for (const key of Object.keys(update)) {
-            if (key in sessionState) {
-                validUpdates[key] = update[key];
-            } else {
-                console.log("WARNING: setting state with unknown key/value pair (" + key + ", " + update[key] + ")");
-            }
-        }
-
-        setSessionState((old) => Object.assign({}, old, validUpdates));
-
-        if ("ocel" in validUpdates) {
-            localStorage.setItem("explori-currentOcel", validUpdates["ocel"]);
-        }
-    };
-
-    // restore session once after mounting app component and allow autosaving session afterwards
+    // Autosave the session on changes.
     useEffect(() => {
-        restoreAutoSessionOrCreateNew(sessionState.ocel);
-        setAppState((old) => Object.assign({}, old, {
-            startAutosaving: true,
-        }));
+        if (props.session.ocel && autosaveEnabled.current) {
+            props.saveSession(props.session);
+        }
+    }, [props.session]);
+
+    // Try to load session on startup or navigate to the new session page if it does not exist.
+    useEffect(() => {
+        (async () => {
+            if (!currentOcel) {
+                navigateTo("/session")
+                return;
+            }
+
+            try {
+                await props.loadSession(currentOcel);
+                autosaveEnabled.current = true;
+            }
+            catch (e) {
+                navigateTo("/session");
+            }
+        })();
     }, []);
 
-    // store session everytime it changes
-    useEffect(() => {
-        if (appState.startAutosaving) {
-            storeSession("autosave-" + getUuid(sessionState.ocel), sessionState);
+    const loadSessionOrStartNewOne = async (newOcel: string) => {
+        try {
+            autosaveEnabled.current = false;
+            await props.loadSession(newOcel);
         }
-    }, [sessionState]);
+        catch (e) {
+            props.setSession({
+                ocel: newOcel,
+                threshold: 75,
+                selectedObjectTypes: [],
+                alreadySelectedAllObjectTypesInitially: false
+            });
+        }
+        localStorage.setItem("explori-currentOcel", newOcel);
+        autosaveEnabled.current = true;
+    }
 
     return (
         <QueryClientProvider client={queryClient}>
             <Routes>
-                <Route path="/" element={<Home userSessionState={sessionState} stateChangeCallback={stateChangeCallback} />}></Route>
-                <Route path="/alignments" element={<Alignments modelOcel={sessionState.ocel} conformanceOcel={sessionState.ocel} threshold={sessionState.filteringThreshold}/>}></Route>
-                <Route path="/session" element={<EventLogList switchOcelsCallback={switchOcelsCallback} />}></Route>
-                <Route path="/user-session/store" element={<UserSession storeOrRestore={"store"} userSessionState={sessionState} />}></Route>
-                <Route path="/user-session/restore" element={<UserSession storeOrRestore={"restore"} stateChangeCallback={stateChangeCallback} />}></Route>
+                <Route path="/" element={<Home />}></Route>
+                <Route path="/alignments" element={<Alignments modelOcel={props.session.ocel} conformanceOcel={props.session.ocel} threshold={props.session.threshold}/>}></Route>
+                <Route path="/session" element={<EventLogList switchOcelsCallback={loadSessionOrStartNewOne} />}></Route>
+                {/*<Route path="/user-session/store" element={<UserSession storeOrRestore={"store"} userSessionState={sessionState} />}></Route>*/}
+                {/*<Route path="/user-session/restore" element={<UserSession storeOrRestore={"restore"} stateChangeCallback={stateChangeCallback} />}></Route>*/}
             </Routes>
         </QueryClientProvider>
     );
 }
 
-const mapStateToProps = (state: RootState, ownProps: OwnProps): StateProps => ({
-    session: state.session
-});
-
-const mapDispatchToProps = (dispatch: ThunkDispatch<{}, {}, any>, ownProps: OwnProps): DispatchProps => ({
-    saveUserSession: async (session: SessionState) => {
-        await dispatch(saveUserSession(session));
-        console.log("[App] Saved user session");
-    }
-})
-
 export default connect<StateProps, DispatchProps, OwnProps, RootState>(mapStateToProps, mapDispatchToProps)(App)
+// export default App;

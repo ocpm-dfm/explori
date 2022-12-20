@@ -17,25 +17,18 @@ export const ObjectSelection = (props: {
     availableObjectTypes: string[],
     // all currently selected object types (needs to be passed in at least for initialization, e.g. when restoring a session)
     selectedObjectTypes: string[],
-    // callback to signal a change in selected object types (Visualization is sibling component -> need to pass information up, such that parent can pass back down to FilteredDFM)
-    updateCallback: StateChangeCallback,
     // should we select all object types at the start of visualizing a new dfm?
     selectAllObjectTypesInitially: boolean,
     // have we already selected all object types for this dfm?
     alreadySelectedAllObjectTypesInitially: boolean,
+    setSelectedObjectTypes: (selectedObjectTypes: string[]) => void,
 }) => {
     const availableObjectTypes = props.availableObjectTypes;
     const selectedObjectTypes = props.selectedObjectTypes;
-    const updateCallback = props.updateCallback;
     const selectAllObjectTypesInitially = props.selectAllObjectTypesInitially;
     const alreadySelectedAllObjectTypesInitially = props.alreadySelectedAllObjectTypesInitially;
 
-    // propagate current selection state up to parent
-    const setSelectedObjectTypes = function(selection: string[]) {
-        updateCallback({
-            selectedObjectTypes: selection,
-        });
-    }
+    const setSelectedObjectTypes = props.setSelectedObjectTypes;
 
     const handleChange = (event: SelectChangeEvent<string[]>) => {
         const {
@@ -55,10 +48,7 @@ export const ObjectSelection = (props: {
             && availableObjectTypes.length > 0
             && selectAllObjectTypesInitially
         ) {
-            updateCallback({
-                alreadySelectedAllObjectTypesInitially: true,
-                selectedObjectTypes: availableObjectTypes,
-            });
+            setSelectedObjectTypes(availableObjectTypes);
         }
     });
 
@@ -80,7 +70,7 @@ export const ObjectSelection = (props: {
                         labelId="demo-multiple-name-label"
                         id="demo-multiple-name"
                         multiple
-                        value={selectedObjectTypes}
+                        value={props.selectedObjectTypes}
                         onChange={handleChange}
                         input={<OutlinedInput label="Objects" />}
                         renderValue={(selected) => selected.join(', ')}

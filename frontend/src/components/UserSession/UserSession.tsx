@@ -8,13 +8,7 @@ import ReactDataGrid from '@inovua/reactdatagrid-community';
 import '@inovua/reactdatagrid-community/index.css';
 import '@inovua/reactdatagrid-community/theme/blue-light.css';
 import { TypeDataSource } from '@inovua/reactdatagrid-community/types';
-
-export type UserSessionState = {
-    ocel: string,
-    filteringThreshold: number,
-    selectedObjectTypes: string[],
-    alreadySelectedAllObjectTypesInitially: boolean,
-}
+import {SessionState} from "../../redux/UserSession/userSession.types";
 
 type BackendSession = {
     base_ocel: string,
@@ -22,7 +16,7 @@ type BackendSession = {
     object_types: string[],
 }
 
-export function UserSession(props: {storeOrRestore: string, userSessionState?: UserSessionState, stateChangeCallback?: any}) {
+export function UserSession(props: {storeOrRestore: string, userSessionState?: SessionState, stateChangeCallback?: any}) {
     const storeOrRestore = props.storeOrRestore;
     const userSessionState = props.userSessionState;
     const stateChangeCallback = props.stateChangeCallback;
@@ -163,7 +157,7 @@ export function UserSession(props: {storeOrRestore: string, userSessionState?: U
     )
 }
 
-export async function storeSession(name: string, session: UserSessionState) {
+export async function storeSession(name: string, session: SessionState) {
     const uri = getURI("/session/store", {});
 
     await fetch(uri, {
@@ -197,18 +191,18 @@ export async function restoreSession(name: string, stateChangeCallback: any) {
         .catch(err => console.log("Error in uploading ..."));
 }
 
-function translateToBackend(session: UserSessionState): BackendSession{
+function translateToBackend(session: SessionState): BackendSession{
     return {
         base_ocel: session.ocel,
-        threshold: session.filteringThreshold,
+        threshold: session.threshold,
         object_types: session.selectedObjectTypes,
     }
 }
 
-function translateToFrontend(session: BackendSession): UserSessionState {
+function translateToFrontend(session: BackendSession): SessionState {
     return {
         ocel: session.base_ocel,
-        filteringThreshold: session.threshold,
+        threshold: session.threshold,
         selectedObjectTypes: session.object_types,
         // Set `alreadySelectedAllObjectTypesInitially` to true as we're in the process of restoring a session
         // which implies an existing object type selection which we don't want to overwrite!

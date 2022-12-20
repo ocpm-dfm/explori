@@ -5,7 +5,6 @@ import {ExploriNavbar} from "../ExploriNavbar/ExploriNavbar";
 
 import "./Home.css";
 import {useAsyncAPI} from "../../api";
-import {UserSessionState} from "../UserSession/UserSession";
 import {CytoDFMMethods, DirectlyFollowsMultigraph, FilteredCytoDFM} from '../cytoscape-dfm/cytodfm';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {faSnowflake} from "@fortawesome/free-regular-svg-icons";
@@ -13,20 +12,21 @@ import {faShareFromSquare} from "@fortawesome/free-solid-svg-icons";
 import {RootState} from "../../redux/store";
 import {ThunkDispatch} from "@reduxjs/toolkit";
 import {connect} from "react-redux";
-import {setThreshold} from "../../redux/UserSession/userSession.actions";
+import {setSelectedObjectTypes, setThreshold} from "../../redux/UserSession/userSession.actions";
 
 interface HomeProps {
-    userSessionState: UserSessionState,
-    stateChangeCallback: any
+
 }
 
 const mapStateToProps = (state: RootState, props: HomeProps) => ({
-    threshold: state.session.threshold,
-    ocel: state.session.ocel
+    session: state.session
 });
 const mapDispatchToProps = (dispatch: ThunkDispatch<any, any, any>, props: HomeProps) => ({
     setThreshold: async (threshold: number) => {
         dispatch(setThreshold(threshold));
+    },
+    setSelectedObjectTypes: async (selectedObjectTypes: string[]) => {
+        dispatch(setSelectedObjectTypes(selectedObjectTypes))
     }
 });
 
@@ -36,12 +36,9 @@ type Props = HomeProps & StateProps & DispatchProps
 
 
 export const Home = connect<StateProps, DispatchProps, HomeProps, RootState>(mapStateToProps, mapDispatchToProps)((props: Props) => {
-    console.log("Rerendering home");
 
-    let selectedObjectTypes = props.userSessionState.selectedObjectTypes;
-    const selectedOcel = props.userSessionState.ocel;
-    const alreadySelectedAllObjectTypesInitially = props.userSessionState.alreadySelectedAllObjectTypesInitially;
-    const stateChangeCallback = props.stateChangeCallback;
+    const selectedOcel = props.session.ocel;
+    const alreadySelectedAllObjectTypesInitially = props.session.alreadySelectedAllObjectTypesInitially;
 
     const [frozen, setFrozen] = useState<boolean>(false);
 
@@ -49,7 +46,6 @@ export const Home = connect<StateProps, DispatchProps, HomeProps, RootState>(map
     const graphRef = useRef<CytoDFMMethods>();
 
     const availableObjectTypes: string[] = dfm_query.result ? Object.keys(dfm_query.result.subgraphs) : [];
-    selectedObjectTypes = selectedObjectTypes ? selectedObjectTypes : [];
 
     const navbarItems = (
         <React.Fragment>
@@ -64,8 +60,8 @@ export const Home = connect<StateProps, DispatchProps, HomeProps, RootState>(map
             </button>
             <ObjectSelection
                 availableObjectTypes={availableObjectTypes}
-                selectedObjectTypes={selectedObjectTypes}
-                updateCallback={stateChangeCallback}
+                selectedObjectTypes={props.session.selectedObjectTypes}
+                setSelectedObjectTypes={props.setSelectedObjectTypes}
                 alreadySelectedAllObjectTypesInitially={alreadySelectedAllObjectTypesInitially}
                 selectAllObjectTypesInitially={true} />
         </React.Fragment>);
@@ -75,8 +71,8 @@ export const Home = connect<StateProps, DispatchProps, HomeProps, RootState>(map
             <div className="Home">
                 <ExploriNavbar lowerRowSlot={navbarItems} />
                 <FilteredCytoDFM dfm={dfm_query.result}
-                                 threshold={props.threshold / 100}
-                                 selectedObjectTypes={selectedObjectTypes}
+                                 threshold={props.session.threshold / 100}
+                                 selectedObjectTypes={props.session.selectedObjectTypes}
                                  positionsFrozen={frozen}
                                  ref={graphRef} />
                 <div className="Home-DetailSlider">
@@ -85,8 +81,8 @@ export const Home = connect<StateProps, DispatchProps, HomeProps, RootState>(map
                     </div>
                     <input type="range" min="0" max="100"
                         className="Home-DetailSlider-Slider"
-                        value={props.threshold} onInput={(e) => {
-                            const newThreshold = (e.target as HTMLInputElement).value as unknown as number;
+                        value={props.session.threshold} onInput={(e) => {
+                            const newThreshold = Number.parseInt((e.target as HTMLInputElement).value);
                             // stateChangeCallback({
                             //     filteringThreshold: newThreshold
                             // });

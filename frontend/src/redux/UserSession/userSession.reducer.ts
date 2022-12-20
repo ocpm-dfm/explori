@@ -4,7 +4,7 @@ import {
     CREATE_USER_SESSION,
     NO_CHANGE_USER_SESSION,
     RESTORE_USER_SESSION,
-    SAVE_USER_SESSION,
+    SAVE_USER_SESSION, SET_SELECTED_OBJECT_TYPES,
     SET_THRESHOLD,
     UPDATE_USER_SESSION
 } from "./userSession.types";
@@ -37,6 +37,16 @@ const sessionStateReducer = (session = USER_SESSION_INITIAL_STATE, action: AnyAc
                 ...{
                     threshold: action.payload
                 }
+            }
+        case SET_SELECTED_OBJECT_TYPES:
+            return {
+                ...session,
+                ...{
+                    selectedObjectTypes: action.payload
+                },
+                ...(action["alreadySelectedAllObjectTypesInitially"] !== undefined ?  {
+                    alreadySelectedAllObjectTypesInitially: action.alreadySelectedAllObjectTypesInitially
+                } : {})
             }
         case NO_CHANGE_USER_SESSION:
             return session

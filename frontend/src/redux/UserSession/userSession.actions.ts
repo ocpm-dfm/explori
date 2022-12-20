@@ -6,14 +6,13 @@ import {
     SAVE_USER_SESSION,
     RESTORE_USER_SESSION,
     NO_CHANGE_USER_SESSION,
-    UPDATE_USER_SESSION, SessionState, SET_THRESHOLD
+    UPDATE_USER_SESSION, SessionState, SET_THRESHOLD, SET_SELECTED_OBJECT_TYPES
 } from './userSession.types'
 import {ThunkDispatch} from "@reduxjs/toolkit";
 import {RootState} from "../store";
 import {Action} from "./userSession.reducer";
 
 export const saveUserSession = (session: SessionState) => async (dispatch: ThunkDispatch<RootState, void, Action>) => {
-    console.log("SAVING USER SESSION: ", session)
     const sessionName = "autosave-" + getUuid(session.ocel)
     const uri = getURI("/session/store", {})
 
@@ -78,42 +77,24 @@ export const restoreUserSession = (fullOcelPath: string) =>
         const sessionName = "autosave-" + getUuid(fullOcelPath)
         const uri = getURI("/session/restore", { name: sessionName });
 
-        let action = {
-            type: "",
-            payload: {}
+        const result = await (await fetch(uri)).json();
+
+        if (result.base_ocel) {
+            return dispatch({
+                type: RESTORE_USER_SESSION,
+                payload: {
+                    currentSelected: result.base_ocel,
+                    filteringThreshold: result.threshold,
+                    selectedObjectTypes: result.object_types,
+                    // Set `alreadySelectedAllObjectTypesInitially` to true as we're in the process of restoring a session
+                    // which implies an existing object type selection which we don't want to overwrite!
+                    alreadySelectedAllObjectTypesInitially: true
+                }
+            });
         }
-
-        await fetch(uri)
-            .then((response) => response.json())
-            .then((result) => {
-
-                const sessionExist = result.base_ocel !== undefined ? true : false
-
-                if (sessionExist) {
-                    action = {
-                        type: RESTORE_USER_SESSION,
-                        payload: {
-                            currentSelected: result.base_ocel,
-                            filteringThreshold: result.threshold,
-                            selectedObjectTypes: result.object_types,
-                            // Set `alreadySelectedAllObjectTypesInitially` to true as we're in the process of restoring a session
-                            // which implies an existing object type selection which we don't want to overwrite!
-                            alreadySelectedAllObjectTypesInitially: true
-                        }
-                    }
-                }
-                else {
-                    action = {
-                        type: CREATE_USER_SESSION,
-                        payload: {
-                            ...USER_SESSION_INITIAL_STATE,
-                            currentSelected: fullOcelPath
-                        }
-                    }
-                }
-            })
-            .catch(err => console.log("Error in restoring session ... "));
-        return dispatch(action)
+        else {
+            throw new Error("No session associated with this OCEL exists.");
+        }
     }
 
 
@@ -122,4 +103,12 @@ export const setThreshold = (newThreshold: number) => (dispatch: Function) => {
         type: SET_THRESHOLD,
         payload: newThreshold
     })
+}
+
+export const setSelectedObjectTypes = (selectedObjectTypes: string[]) => (dispatch: Function) => {
+    dispatch({
+        type: SET_SELECTED_OBJECT_TYPES,
+        payload: selectedObjectTypes,
+        alreadySelectedAllObjectTypesInitially: true
+    });
 }
