@@ -14,6 +14,7 @@ import {ThunkDispatch} from "@reduxjs/toolkit";
 import {connect} from "react-redux";
 import {setSelectedObjectTypes, setThreshold} from "../../redux/UserSession/userSession.actions";
 import {setDfmQueryState} from "../../redux/DFMQuery/dfmquery";
+import {resetAlignmentQueryState} from "../../redux/AlignmentsQuery/alingmentsquery";
 
 interface HomeProps {
 
@@ -32,6 +33,9 @@ const mapDispatchToProps = (dispatch: ThunkDispatch<any, any, any>, props: HomeP
     },
     setDfmQuery: (state: AsyncApiState<DirectlyFollowsMultigraph>) => {
         dispatch(setDfmQueryState(state));
+    },
+    resetAlignmentsQuery: () => {
+        dispatch(resetAlignmentQueryState())
     }
 });
 
@@ -92,6 +96,7 @@ export const Home = connect<StateProps, DispatchProps, HomeProps, RootState>(map
                             // stateChangeCallback({
                             //     filteringThreshold: newThreshold
                             // });
+                            props.resetAlignmentsQuery();
                             props.setThreshold(newThreshold);
                         }}
                     />
