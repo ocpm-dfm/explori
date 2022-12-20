@@ -220,8 +220,8 @@ def dfm(ignored_object_types: List[str] | None = None) -> str:
     return f"dfm{__extra_attribute('ignored', ignored_object_types)}"
 
 
-def alignments(base_threshold: float, conformance_ocel: str, object_type: str | None) -> str:
-    return f"alignments-{hash_path(conformance_ocel)}-{hash(object_type)}-{base_threshold}"
+def alignments(base_threshold: float, conformance_ocel: str, object_type: str | None, trace_id: int) -> str:
+    return f"alignments-{hash_path(conformance_ocel)}-{hash(object_type)}-{base_threshold}-{trace_id}"
 
 def hash(data: str) -> str:
     return sha256(data.encode('utf-8')).hexdigest()

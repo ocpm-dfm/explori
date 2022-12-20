@@ -1,7 +1,7 @@
 import './Session.css';
 import {RefObject, useEffect, useState} from 'react';
 import { getURI } from '../../api';
-import {Button, TextField, Stack} from "@mui/material";
+import {Button, TextField, Stack, CircularProgress} from "@mui/material";
 
 export function Session(_props: any) {
     /*
@@ -16,7 +16,8 @@ export function Session(_props: any) {
     const formatEventLogMetadata = _props.formatEventLogMetadata
 
     const initialSelectedFile: any = {}
-    const [selectedFile, setSelectedFile] = useState(initialSelectedFile)
+    const [selectedFile, setSelectedFile] = useState(initialSelectedFile);
+    const [loading, setLoading] = useState(false);
     //const [isFileSelected, setIsFileSelected] = useState(false)
     //const [fileStatus, setFileStatus] = useState("")
 
@@ -35,7 +36,11 @@ export function Session(_props: any) {
     }
 
     const uploadFile = async (event: any) => {
-        event.preventDefault()
+        event.preventDefault();
+
+        if (!loading) {
+            setLoading(true);
+        }
 
         const formData = new FormData()
         formData.append('file', selectedFile)
@@ -63,6 +68,7 @@ export function Session(_props: any) {
 
                     setDataSource(newDataSource);
                     setSelected(eventLogMetadata.id);
+                    setLoading(false);
                 }
             })
             .catch(err => console.log("Error in uploading ..."))
@@ -103,11 +109,22 @@ export function Session(_props: any) {
                     <button
                         form='uploadEventLogForm'
                         hidden
-                        disabled={false}
+                        disabled={loading}
                         onClick={uploadFile} >
                         Confirm Upload
                     </button>
                 </Button>
+                {loading && (
+                    <CircularProgress
+                        sx={{
+                            position: 'absolute',
+                            top: '50%',
+                            left: '50%',
+                            marginTop: '-12px',
+                            marginLeft: '-12px',
+                        }}
+                    />
+                )}
             </form>
             </Stack>
         </div>
