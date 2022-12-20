@@ -8,6 +8,8 @@ import '@inovua/reactdatagrid-community/theme/blue-light.css';
 import "@inovua/reactdatagrid-community/theme/blue-light.css";
 import "@inovua/reactdatagrid-community/base.css";
 import "@inovua/reactdatagrid-community/index.css";
+import {RootState} from "../../redux/store";
+import {connect} from "react-redux";
 
 
 const SKIP_MOVE = ">>";
@@ -22,9 +24,23 @@ type TraceAlignment = {
 
 type TraceAlignments = {[key: string]: TraceAlignment | null}[];
 
-export function Alignments(props: {modelOcel: string, conformanceOcel: string, threshold: number}) {
+type AlignmentProps = {
+}
+
+const mapStateToProps = (state: RootState, props: AlignmentProps) => ({
+    modelOcel: state.session.ocel,
+    threshold: state.session.threshold
+});
+
+const mapDispatchToProps = (state: RootState, props: AlignmentProps) => ({});
+
+type StateProps = ReturnType<typeof mapStateToProps>;
+type DispatchProps = ReturnType<typeof mapDispatchToProps>;
+type Props = AlignmentProps & StateProps & DispatchProps;
+
+export const Alignments = connect<StateProps, DispatchProps, AlignmentProps, RootState>(mapStateToProps, mapDispatchToProps)((props: Props) => {
     const modelOcel = props.modelOcel;
-    const conformanceOcel = props.conformanceOcel;
+    const conformanceOcel = props.modelOcel;
     const threshold = props.threshold;
 
     const alignmentsQuery = useAsyncAPI<TraceAlignments>("/pm/alignments", {
@@ -68,7 +84,7 @@ export function Alignments(props: {modelOcel: string, conformanceOcel: string, t
             </div>
         </div>
     )
-}
+});
 
 export function AlignmentTable(props: {objectType: string, traces: TraceAlignment[]}) {
     const objectType = props.objectType;

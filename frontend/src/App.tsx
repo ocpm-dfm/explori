@@ -94,7 +94,7 @@ export function App(props: Props) {
         <QueryClientProvider client={queryClient}>
             <Routes>
                 <Route path="/" element={<Home />}></Route>
-                <Route path="/alignments" element={<Alignments modelOcel={props.session.ocel} conformanceOcel={props.session.ocel} threshold={props.session.threshold}/>}></Route>
+                <Route path="/alignments" element={<Alignments />}></Route>
                 <Route path="/session" element={<EventLogList switchOcelsCallback={loadSessionOrStartNewOne} />}></Route>
                 {/*<Route path="/user-session/store" element={<UserSession storeOrRestore={"store"} userSessionState={sessionState} />}></Route>*/}
                 {/*<Route path="/user-session/restore" element={<UserSession storeOrRestore={"restore"} stateChangeCallback={stateChangeCallback} />}></Route>*/}
