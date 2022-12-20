@@ -4,12 +4,15 @@ import { ObjectSelection } from "../ObjectSelection/ObjectSelection";
 import {ExploriNavbar} from "../ExploriNavbar/ExploriNavbar";
 
 import "./Home.css";
-import {useAsyncAPI} from "../../api";
+import {useAsyncAPI, useInterval} from "../../api";
 import {UserSessionState} from "../UserSession/UserSession";
 import {CytoDFMMethods, DirectlyFollowsMultigraph, FilteredCytoDFM} from '../cytoscape-dfm/cytodfm';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {faSnowflake} from "@fortawesome/free-regular-svg-icons";
 import {faShareFromSquare} from "@fortawesome/free-solid-svg-icons";
+import CircularProgress from '@mui/material/CircularProgress';
+import Box from '@mui/material/Box';
+import Alert from '@mui/material/Alert';
 
 
 export const Home = (props: { userSessionState: UserSessionState, stateChangeCallback: any}) => {
@@ -55,6 +58,22 @@ export const Home = (props: { userSessionState: UserSessionState, stateChangeCal
                                  selectedObjectTypes={selectedObjectTypes}
                                  positionsFrozen={frozen}
                                  ref={graphRef} />
+                {!dfm_query.result && !dfm_query.failed && (
+                    <Box sx={{
+                        display: 'flex',
+                        position: 'absolute',
+                        top: '50%',
+                        left: '50%',
+                        'margin-right': '-50%',
+                        transform: 'translate(-50%, -50%)'
+                    }}>
+                        <CircularProgress />
+                    </Box>
+                )
+                }
+                {dfm_query.failed && (
+                    <Alert severity="error" sx={{'z-index': 999, 'padding-bottom': 0, 'padding-top': 0}}>Task failed due to server related reasons. (Received 200)</Alert>
+                )}
                 <div className="Home-DetailSlider">
                     <div className="Home-DetailSlider-Label">
                         Less detail
