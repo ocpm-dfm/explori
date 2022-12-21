@@ -2,7 +2,7 @@
     height: 100vh;
     width: 100vw;
     display: grid;
-    grid-template-rows: auto auto 2rem;
+    grid-template-rows: var(--navbar-height) 1fr 2rem;
 }
 
 .Home-DetailSlider {

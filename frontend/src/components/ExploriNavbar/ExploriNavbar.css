@@ -2,6 +2,9 @@
     width: 100vw;
     display: grid;
     grid-template-rows: auto auto;
+
+    /** For some reason, the explori logo is 39px high (at least on my machine) **/
+    height: var(--navbar-height);
 }
 
 .ENAV-Row {
@@ -37,6 +40,7 @@
     font-size: 1.8rem;
     font-family: "Nunito", sans-serif;
     font-weight: 600;
+    line-height: 2rem;
 }
 
 .ENAV-new-session {
