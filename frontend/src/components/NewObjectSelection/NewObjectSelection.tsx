@@ -6,9 +6,10 @@ import {
     faCaretDown,
     faCaretUp,
 } from "@fortawesome/free-solid-svg-icons";
-import {useEffect, useRef, useState} from "react";
+import {useState} from "react";
 import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
 import {faCircle} from "@fortawesome/free-regular-svg-icons";
+import {useDelayedExecution} from "../../hooks";
 
 type ObjectSelectionProps = {
     // all available object types in the currently visualized dfm (empty list means object types have not been determined  yet)
@@ -24,20 +25,11 @@ type ObjectSelectionProps = {
 
 export const NewObjectSelection = (props: ObjectSelectionProps) => {
     const [open, setOpen] = useState<boolean>(false);
-    const closeTimeout = useRef<NodeJS.Timeout | null>(null);
+    const delayedClose = useDelayedExecution(() => setOpen(false), 300);
 
     const selectionCount = props.selectedObjectTypes.length;
     const countIcon = selectionCount === 0 ? faCircle : (selectionCount === 1 ? faBox : faBoxesStacked);
     const dropdownIcon = open ? faCaretUp : faCaretDown;
-
-    // Always clear timeout on component unmount.
-    useEffect(() => {
-        return () => {
-            if (closeTimeout.current)
-                // eslint-disable-next-line react-hooks/exhaustive-deps
-                clearTimeout(closeTimeout.current);
-        }
-    }, []);
 
     const toggleObjectType = (objectType: string) => {
         const newSelection = props.selectedObjectTypes.map((x) => x);
@@ -49,23 +41,10 @@ export const NewObjectSelection = (props: ObjectSelectionProps) => {
         props.setSelectedObjectTypes(newSelection);
     }
 
-    const delayedClose = () => {
-        if (closeTimeout.current)
-            clearTimeout(closeTimeout.current);
-
-        closeTimeout.current = setTimeout(() => {
-            setOpen(false);
-            closeTimeout.current = null;
-        }, 300)
-    };
-
-    const cancelDelayedClose = () => {
-        if (closeTimeout.current)
-            clearTimeout(closeTimeout.current);
-    }
-
     return (
-        <div className="NOS-Container" onMouseLeave={() => delayedClose()} onMouseEnter={() => cancelDelayedClose()}>
+        <div className="NOS-Container"
+             onMouseLeave={() => delayedClose.execute()}
+             onMouseEnter={() => delayedClose.cancel()}>
             <div className={`NOS-ButtonWrapper ${open ? 'NOS-ButtonWrapper--open' : ''}`}>
                 <NavbarButton icon={countIcon}
                               active={open}
