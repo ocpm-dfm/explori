@@ -1,4 +1,4 @@
-import {AsyncApiState} from "../../api";
+import {AsyncApiState} from "../../hooks";
 import {TraceAlignments} from "../../pages/Alignments/Alignments";
 import {QueryReducer, ResetQueryState, SetQueryState} from "../QueryState";
 

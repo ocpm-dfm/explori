@@ -1,6 +1,6 @@
 import React from 'react';
 import  "../../components/DefaultLayout/DefaultLayout.css";
-import {AsyncApiState, useAsyncAPI} from "../../api";
+import {AsyncApiState, useAsyncAPI} from "../../hooks";
 import {ExploriNavbar} from "../../components/ExploriNavbar/ExploriNavbar";
 import ReactDataGrid from '@inovua/reactdatagrid-community';
 import '@inovua/reactdatagrid-community/index.css';

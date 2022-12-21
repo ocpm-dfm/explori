@@ -16,7 +16,7 @@ import './EventLogList.css';
 import '../DefaultLayout/DefaultLayout.css';
 import {ExploriNavbar} from "../ExploriNavbar/ExploriNavbar";
 import {Link} from "react-router-dom";
-import {getURI} from "../../api";
+import {getURI} from "../../hooks";
 import ReactDataGrid from '@inovua/reactdatagrid-community';
 import '@inovua/reactdatagrid-community/index.css';
 import '@inovua/reactdatagrid-community/theme/blue-light.css';

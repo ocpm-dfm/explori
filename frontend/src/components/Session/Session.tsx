@@ -1,6 +1,6 @@
 import './Session.css';
 import {Dispatch, RefObject, SetStateAction, useEffect, useState} from 'react';
-import { getURI } from '../../api';
+import { getURI } from '../../hooks';
 import { Button, TextField, Stack, CircularProgress } from "@mui/material";
 import {RootState} from "../../redux/store";
 import {ThunkDispatch} from "@reduxjs/toolkit";

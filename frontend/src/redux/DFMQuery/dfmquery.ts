@@ -1,4 +1,4 @@
-import {AsyncApiState} from "../../api";
+import {AsyncApiState} from "../../hooks";
 import {DirectlyFollowsMultigraph} from "../../components/cytoscape-dfm/cytodfm";
 import {QueryReducer, ResetQueryState, SetQueryState} from "../QueryState";
 

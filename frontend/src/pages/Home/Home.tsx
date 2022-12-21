@@ -4,7 +4,7 @@ import { ObjectSelection } from "../../components/ObjectSelection/ObjectSelectio
 import {ExploriNavbar} from "../../components/ExploriNavbar/ExploriNavbar";
 
 import "./Home.css";
-import {AsyncApiState, useAsyncAPI} from "../../api";
+import {AsyncApiState, useAsyncAPI} from "../../hooks";
 import {CytoDFMMethods, DirectlyFollowsMultigraph, FilteredCytoDFM} from '../../components/cytoscape-dfm/cytodfm';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {faSnowflake} from "@fortawesome/free-regular-svg-icons";
