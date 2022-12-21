@@ -6,7 +6,7 @@ import {
     faCaretDown,
     faCaretUp,
 } from "@fortawesome/free-solid-svg-icons";
-import {useState} from "react";
+import {useEffect, useState} from "react";
 import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
 import {faCircle} from "@fortawesome/free-regular-svg-icons";
 import {useDelayedExecution} from "../../hooks";
@@ -27,9 +27,15 @@ export const NewObjectSelection = (props: ObjectSelectionProps) => {
     const [open, setOpen] = useState<boolean>(false);
     const delayedClose = useDelayedExecution(() => setOpen(false), 300);
 
-    const selectionCount = props.selectedObjectTypes.length;
-    const countIcon = selectionCount === 0 ? faCircle : (selectionCount === 1 ? faBox : faBoxesStacked);
-    const dropdownIcon = open ? faCaretUp : faCaretDown;
+    useEffect(() => {
+        if (
+            !props.alreadySelectedAllObjectTypesInitially
+            && props.availableObjectTypes.length > 0
+            && props.selectAllObjectTypesInitially
+        ) {
+            props.setSelectedObjectTypes(props.availableObjectTypes);
+        }
+    });
 
     const toggleObjectType = (objectType: string) => {
         const newSelection = props.selectedObjectTypes.map((x) => x);
@@ -40,6 +46,10 @@ export const NewObjectSelection = (props: ObjectSelectionProps) => {
             newSelection.push(objectType);
         props.setSelectedObjectTypes(newSelection);
     }
+
+    const selectionCount = props.selectedObjectTypes.length;
+    const countIcon = selectionCount === 0 ? faCircle : (selectionCount === 1 ? faBox : faBoxesStacked);
+    const dropdownIcon = open ? faCaretUp : faCaretDown;
 
     return (
         <div className="NOS-Container"
