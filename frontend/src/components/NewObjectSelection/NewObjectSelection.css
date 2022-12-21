@@ -6,7 +6,7 @@
     position: relative;
     height: 100%;
 
-    margin-left: 1rem;
+    margin-left: -1rem;
     margin-right: -1rem;
 }
 
@@ -26,7 +26,7 @@
     z-index: 10;
     position: absolute;
     bottom: 0;
-    transform: translateY(calc(100%));
+    transform: translateY(calc(100% - var(--border-width)));
     right: 0;
 
     --dropdown-side-padding: 1rem;

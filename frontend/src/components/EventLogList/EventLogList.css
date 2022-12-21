@@ -1,8 +1,9 @@
 .EventLogList {
     position: relative;
     margin: auto;
-    width: 85vw;
-    height: 50vh;
+    width: 100%;
+    min-width: 30cm;
+    /*height: 50vh;*/
     top: 20%;
     bottom: 20%;
 }
