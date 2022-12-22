@@ -6,7 +6,7 @@ PORT = 8080
 if __name__ == '__main__':
     if EMULATE_SERVER:
         import subprocess
-        subprocess.run(f"PYTHONPATH=\"src/\" uvicorn server.main:app --host {HOSTNAME}", shell=True)
+        subprocess.run(f"PYTHONPATH=\"src/\" uvicorn server.main:app --host {HOSTNAME} --port {PORT}", shell=True)
     else:
         import uvicorn
         import main

@@ -60,15 +60,15 @@ class TaskManager:
         self.__short_term_cache[TaskManager.__task_cache_key(ocel, task.task_name)] = task_result.id
         return TaskStatus(status="running")
 
-    def cached_group(self, tasks: Dict[str, TaskDefinition], ignore_cache: bool = False) -> TaskStatus:
-        task_statuses: Dict[str, TaskStatus] = {key: self.cached_task(task, ignore_cache) for (key, task) in tasks.items()}
+    def cached_group(self, tasks: Dict[Any, TaskDefinition], ignore_cache: bool = False) -> TaskStatus:
+        task_statuses: Dict[Any, TaskStatus] = {key: self.cached_task(task, ignore_cache) for (key, task) in tasks.items()}
 
-        assembled_result: Dict[str, Any] = {}
+        assembled_result: Dict[Any, Any] = {}
         is_preliminary: bool = False
 
         for (key, task) in task_statuses.items():
             if task.status == "failed":
-                print("Failed because of task " + key)
+                print(f"Failed because of task {key}")
                 return TaskStatus(status="failed", result=None, preliminary=None)
 
             if task.status == "done":
