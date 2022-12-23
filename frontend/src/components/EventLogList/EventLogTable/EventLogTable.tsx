@@ -50,7 +50,7 @@ export const EventLogTable = (props: EventLogTableProps) => {
                 displayName,
                 type: eventLog.type,
                 size: eventLog.size,
-                deleteButton
+                deleteButton: isUploaded ? deleteButton : null
             }
         });
     }, [props.eventLogs])
