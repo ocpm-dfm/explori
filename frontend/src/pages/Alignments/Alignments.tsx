@@ -81,7 +81,7 @@ export const Alignments = connect<StateProps, DispatchProps, AlignmentProps, Roo
     return (
         <div className="DefaultLayout-Container">
             <ExploriNavbar />
-            <div>
+            <div style={{position: "relative"}}>
                 {!alignmentsQuery.result && !alignmentsQuery.preliminary && (
                     <Box sx={{
                         display: 'flex',
@@ -107,10 +107,8 @@ export const Alignments = connect<StateProps, DispatchProps, AlignmentProps, Roo
                     <Box sx={{
                         display: 'flex',
                         position: 'absolute',
-                        top: '14%',
-                        left: '98%',
-                        'margin-right': '-50%',
-                        transform: 'translate(-50%, -50%)'
+                        top: '2rem',
+                        right: '2rem'
                     }}>
                         <CircularProgress />
                     </Box>
