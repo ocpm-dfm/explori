@@ -1,11 +1,5 @@
-import React, {useCallback, useEffect, useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import Stack from '@mui/material/Stack';
-import Button from '@mui/material/Button';
-import Dialog from '@mui/material/Dialog';
-import DialogActions from '@mui/material/DialogActions';
-import DialogContent from '@mui/material/DialogContent';
-import DialogContentText from '@mui/material/DialogContentText';
-import DialogTitle from '@mui/material/DialogTitle';
 import Select, {SelectChangeEvent} from '@mui/material/Select';
 import MenuItem from '@mui/material/MenuItem';
 import Checkbox from '@mui/material/Checkbox';
@@ -14,18 +8,12 @@ import OutlinedInput from '@mui/material/OutlinedInput';
 import InputLabel from '@mui/material/InputLabel';
 import './EventLogList.css';
 import '../DefaultLayout/DefaultLayout.css';
-import {ExploriNavbar} from "../ExploriNavbar/ExploriNavbar";
-import {Link} from "react-router-dom";
 import {getURI} from "../../hooks";
 import ReactDataGrid from '@inovua/reactdatagrid-community';
 import '@inovua/reactdatagrid-community/index.css';
 import '@inovua/reactdatagrid-community/theme/blue-light.css';
-import {FontAwesomeIcon} from '@fortawesome/react-fontawesome';
-import {faCheck, faMultiply, faTrash} from "@fortawesome/free-solid-svg-icons";
 import {TypeDataSource} from '@inovua/reactdatagrid-community/types';
-import {Session} from '../Session/Session';
 import {SwitchOcelsCallback} from "../../App";
-import getUuid from "uuid-by-string";
 import {EventLogMetadata} from "../../redux/EventLogs/eventLogs.types";
 import {RootState} from "../../redux/store";
 import {ThunkDispatch} from "@reduxjs/toolkit";
@@ -33,6 +21,9 @@ import {loadEventLogs} from "../../redux/EventLogs/eventLogs.actions";
 import {connect} from "react-redux";
 import {EventLogTable} from "./EventLogTable/EventLogTable";
 import {DeleteEventLogModal} from "./DeleteEventLogModal/DeleteEventLogModal";
+import {UploadLogButton} from "./UploadLogButton/UploadLogButton";
+import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
+import {faCircleCheck} from "@fortawesome/free-solid-svg-icons";
 
 interface columnType {
     name: string,
@@ -49,7 +40,9 @@ export type CSVState = {
 }
 
 interface EventLogListProps {
-    switchOcelsCallback: SwitchOcelsCallback,
+    onSelect: SwitchOcelsCallback,
+
+    selectText?: string
 }
 
 interface StateProps {
@@ -74,7 +67,7 @@ type Props = StateProps & DispatchProps & EventLogListProps;
 
 export const EventLogList = connect<StateProps, DispatchProps, EventLogListProps, RootState>(mapStateToProps, mapDispatchToProps)(
     (props: Props) => {
-        const switchOcelsCallback = props.switchOcelsCallback;
+        const switchOcelsCallback = props.onSelect;
 
         // const [dataSource, setDataSource] = useState(initialDataSource);
 
@@ -314,7 +307,7 @@ export const EventLogList = connect<StateProps, DispatchProps, EventLogListProps
                 }
             }
             return (
-                <FormControl size="small" sx={{m: 1, width: '80vw'}}>
+                <FormControl size="small" sx={{width: '100%', marginTop: 2}}>
                     <InputLabel id={label + "_InputLabel"}>{label}</InputLabel>
                     <Select
                         labelId={label}
@@ -412,24 +405,22 @@ export const EventLogList = connect<StateProps, DispatchProps, EventLogListProps
                                selection={selected}
                                setSelection={onSelection}
                                deleteLog={(eventLog) => setEventLogToBeDeleted(eventLog)} />
-                <Stack spacing={1} direction="row" justifyContent="flex-end">
-                    <Session setSelected={setSelected}/>
-                    <Button component={Link} to={"/"} variant="outlined" onClick={onSelect}
-                            className="SelectButton" sx={
-                        {
-                            'top': '10px',
-                            'margin-top': '10px',
-                            'color': 'rgb(var(--color1))',
-                            'border-color': 'rgb(var(--color1))'
-                        }
-                    }>
-                        Select
-                    </Button>
-                </Stack>
+                <div className="EventLogList-Buttons">
+                    <UploadLogButton onUpload={(eventLog) => {
+                        if (eventLog.id)
+                            setSelected(eventLog.id);
+                    }
+                    }/>
+                    <div className="EventLogList-SelectButton" onClick={onSelect}>
+                        <FontAwesomeIcon icon={faCircleCheck} />
+                        {props.selectText ? props.selectText : "Select" }
+                    </div>
+                </div>
                 {
                     // TODO: get rid of error messages on restoring csv column data
                     csvSelected && (
                         <React.Fragment>
+                            <h3>CSV Settings</h3>
                             <div style={{'marginTop': '20px'}}>
                                 <ReactDataGrid
                                     idProperty={"id"}
@@ -439,12 +430,12 @@ export const EventLogList = connect<StateProps, DispatchProps, EventLogListProps
                                     style={gridStyle}
                                 ></ReactDataGrid>
                             </div>
-                            <Stack justifyContent="center" sx={{width: '85vw'}}>
+                            <Stack justifyContent="center" sx={{width: '100%'}}>
                                 {generateSelect("Objects", objectTypes, columnsCSV, handleObjectTypeChange, true, setObjectTypes, "type:")}
                                 {generateSelect("Activity", activityName, columnsCSV, handleActivityNameChange, false, setActivityName, "activity")}
                                 {generateSelect("Timestamp", timestampName, columnsCSV, handleTimestampNameChange, false, setTimestampName, "timestamp")}
                                 {generateSelect("ID", ocelID, columnsCSV, handleIDNameChange, false, setOcelID, "id")}
-                                <FormControl size="small" sx={{m: 1, width: '80vw'}}>
+                                <FormControl size="small" sx={{width: '100%', marginTop: 2}}>
                                     <InputLabel id="Separator_InputLabel">Separator</InputLabel>
                                     <Select
                                         labelId="Separator"
@@ -474,7 +465,3 @@ export const EventLogList = connect<StateProps, DispatchProps, EventLogListProps
             </div>
         );
     });
-
-interface EventLogListProps {
-    switchOcelsCallback: SwitchOcelsCallback,
-}

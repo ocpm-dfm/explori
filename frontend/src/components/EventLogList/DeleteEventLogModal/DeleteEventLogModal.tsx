@@ -42,13 +42,17 @@ export const DeleteEventLogModal = (props: DeleteModalProps) => {
             aria-describedby="alert-dialog-description"
         >
             <DialogTitle id="alert-dialog-title">
-                {"Do you really want to delete the selected OCEL?"}
+                {"Do you really want to delete the OCEL?"}
             </DialogTitle>
             <DialogContent>
                 <DialogContentText id="alert-dialog-description">
-                    If you decide to delete the selected OCEL, also all corresponding data like
-                    caches, autosaves, etc. will be deleted.
-                    Only press yes, if you know what you are doing.
+                    <p>
+                        If you decide to delete the OCEL "{props.selectedEventLog?.name}", all corresponding data like
+                        caches, autosaves, etc. will also be deleted.
+                    </p>
+                    <p>
+                        Only press yes, if you know what you are doing.
+                    </p>
                 </DialogContentText>
             </DialogContent>
             <DialogActions>
