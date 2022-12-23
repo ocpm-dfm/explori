@@ -4,12 +4,13 @@ import {
     faBox,
     faBoxesStacked,
     faCaretDown,
-    faCaretUp,
+    faCaretUp, faCircleCheck,
 } from "@fortawesome/free-solid-svg-icons";
 import {useEffect, useState} from "react";
 import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
 import {faCircle} from "@fortawesome/free-regular-svg-icons";
 import {useDelayedExecution} from "../../hooks";
+import {getObjectTypeColor} from "../../utils";
 
 type ObjectSelectionProps = {
     // all available object types in the currently visualized dfm (empty list means object types have not been determined  yet)
@@ -47,9 +48,15 @@ export const NewObjectSelection = (props: ObjectSelectionProps) => {
         props.setSelectedObjectTypes(newSelection);
     }
 
+    const selectAllObjectTypes = () => {
+        props.setSelectedObjectTypes(props.availableObjectTypes);
+    }
+
     const selectionCount = props.selectedObjectTypes.length;
     const countIcon = selectionCount === 0 ? faCircle : (selectionCount === 1 ? faBox : faBoxesStacked);
     const dropdownIcon = open ? faCaretUp : faCaretDown;
+
+    const totalNumberOfObjectTypes = props.availableObjectTypes.length;
 
     return (
         <div className="NOS-Container"
@@ -66,18 +73,20 @@ export const NewObjectSelection = (props: ObjectSelectionProps) => {
 
             {open && (
                 <div className="NOS-Dropdown">
-                    {props.availableObjectTypes.map((objectType) => (
-                        <label key={`SelectionToggle-${objectType}`}
-                               className="NOS-ObjectType"
-                               htmlFor={`SelectionToggle-${objectType}`}>
-                            <input type="checkbox"
-                                   id={`SelectionToggle-${objectType}`}
-                                   checked={props.selectedObjectTypes.includes(objectType)}
-                                   onChange={() => toggleObjectType(objectType)}
-                            />
-                            {objectType}
-                        </label>
-                    ))}
+                    <div className="NOS-ObjectType NOS-ObjectType-SelectAll" onClick={() => selectAllObjectTypes()}>
+                        Select all
+                    </div>
+                    {props.availableObjectTypes.map((objectType, index) => {
+                        const otColor = getObjectTypeColor(totalNumberOfObjectTypes, index);
+                        return (
+                            <div key={`SelectionToggle-${objectType}`}
+                                 onClick={() => toggleObjectType(objectType)}
+                                   className="NOS-ObjectType">
+                                <FontAwesomeIcon icon={props.selectedObjectTypes.includes(objectType) ? faCircleCheck : faCircle}
+                                                 className="NOS-ObjectType-Check" style={{color: otColor}} />
+                                {objectType}
+                            </div>
+                    )})}
                 </div>
             )}
         </div>

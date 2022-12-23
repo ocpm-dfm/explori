@@ -11,7 +11,7 @@ import {
     useState
 } from "react";
 import cytoscape, {EventObject} from "cytoscape";
-import {getMaterialColor} from "../../utils";
+import {getObjectTypeColor} from "../../utils";
 
 const fileSaver = require('file-saver');
 
@@ -332,7 +332,7 @@ export const FilteredCytoDFM = forwardRef ((props: CytoDFMProps, ref: ForwardedR
 
         Object.keys(dfm.subgraphs).forEach((objectType, i) => {
             if (selectedObjectTypes.includes(objectType)) {
-                const objectTypeColor = getMaterialColor(numberOfColorsNeeded, i);
+                const objectTypeColor = getObjectTypeColor(numberOfColorsNeeded, i);
 
                 const edges = dfm.subgraphs[objectType];
                 let hasDisplayedEdge = false;

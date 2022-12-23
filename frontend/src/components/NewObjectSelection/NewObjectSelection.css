@@ -55,15 +55,23 @@
     align-items: center;
 
     padding: 0.5rem var(--dropdown-side-padding);
+
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
 }
 
-.NOS-ObjectType>input {
-    margin: 0 0.5rem 0 0;
+.NOS-ObjectType-Check {
+    margin-right: 0.5rem;
     height: 1rem;
     aspect-ratio: 1/1;
-    color: black;
 }
 
 .NOS-ObjectType:hover {
     background-color: rgba(var(--color1), 0.1);
+}
+
+.NOS-ObjectType-SelectAll {
+    padding-left: 2.5rem;
 }

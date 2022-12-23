@@ -34,7 +34,7 @@ function generateColors(numColors: number, colorIndex: number) {
 // Note that we cannot mix these two approaches and give back preselected colors until we don't have enough and then use
 // the color generation as we currently can't make sure we don't generate a color that's identical (or too close) to a
 // preselected (and already returned and therefore used) color.
-export function getMaterialColor(numberOfColorsNeeded: number, indexOfCurrentColor: number) {
+export function getObjectTypeColor(numberOfColorsNeeded: number, indexOfCurrentColor: number) {
     console.assert(indexOfCurrentColor >= 0 && indexOfCurrentColor < numberOfColorsNeeded);
 
     if(numberOfColorsNeeded <= preselectedColors.length) {

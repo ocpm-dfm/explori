@@ -15,22 +15,20 @@ import {ThunkDispatch} from "@reduxjs/toolkit";
 import {setAlignmentQueryState} from "../../redux/AlignmentsQuery/alingmentsquery";
 
 import './Alignments.css';
-import {getMaterialColor} from "../../utils";
+import {getObjectTypeColor} from "../../utils";
 import {TraceAlignment, TraceAlignments} from "../../redux/AlignmentsQuery/alignmentsquery.types";
 import { AlignmentTable } from '../../components/AlignmentsTable/AlignmentsTable';
-
-const SKIP_MOVE = ">>";
 
 type AlignmentProps = {
 }
 
-const mapStateToProps = (state: RootState, props: AlignmentProps) => ({
+const mapStateToProps = (state: RootState, _: AlignmentProps) => ({
     modelOcel: state.session.ocel,
     threshold: state.session.threshold,
     queryState: state.alignmentsQuery
 });
 
-const mapDispatchToProps = (dispatch: ThunkDispatch<any, any, any>, props: AlignmentProps) => ({
+const mapDispatchToProps = (dispatch: ThunkDispatch<any, any, any>, _: AlignmentProps) => ({
     setQueryState: (state: AsyncApiState<TraceAlignments>) => {
         dispatch(setAlignmentQueryState(state));
     }
@@ -99,7 +97,7 @@ export const Alignments = connect<StateProps, DispatchProps, AlignmentProps, Roo
                 {Object.keys(object_type_alignments).map((objectType, index) => (
                     <div className="DefaultLayout-Content Alignments-Card" key={`alignments=${objectType}`}>
                         <h2 className="Alignments-Card-Title">
-                            <div className="Alignments-Card-Title-Circle" style={{backgroundColor: getMaterialColor(totalMaterialCount, index)}} />
+                            <div className="Alignments-Card-Title-Circle" style={{backgroundColor: getObjectTypeColor(totalMaterialCount, index)}} />
                             {objectType}
                         </h2>
                         <AlignmentTable objectType={objectType} traces={object_type_alignments[objectType]}  />
