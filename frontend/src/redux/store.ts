@@ -14,7 +14,7 @@ import eventLogsReducer from "./EventLogs/eventLogs.reducer";
 import {DfmQueryInitialState, DfmQueryReducer} from "./DFMQuery/dfmquery";
 import {AsyncApiState} from "../hooks";
 import {AlignementQueryReduce, AlignmentsInitialState} from "./AlignmentsQuery/alingmentsquery";
-import {TraceAlignments} from "../pages/Alignments/Alignments";
+import {TraceAlignments} from "./AlignmentsQuery/alignmentsquery.types";
 
 /*
 TODO:
