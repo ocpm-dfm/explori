@@ -11,6 +11,7 @@ import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
 import {faCircle} from "@fortawesome/free-regular-svg-icons";
 import {useDelayedExecution} from "../../hooks";
 import {getObjectTypeColor} from "../../utils";
+import {NavbarDropdown} from "../ExploriNavbar/NavbarDropdown/NavbarDropdown";
 
 type ObjectSelectionProps = {
     // all available object types in the currently visualized dfm (empty list means object types have not been determined  yet)
@@ -68,42 +69,27 @@ export const NewObjectSelection = (props: ObjectSelectionProps) => {
     const totalNumberOfObjectTypes = props.availableObjectTypes.length;
 
     return (
-        <div className="NOS-Container"
-             onMouseLeave={() => delayedClose.execute()}
-             onMouseEnter={() => delayedClose.cancel()}>
-            <div className={`NOS-ButtonWrapper ${open ? 'NOS-ButtonWrapper--open' : ''}`}>
-                <NavbarButton icon={countIcon}
-                              active={open}
-                              onClick={() => setOpen(!open)}>
-                    Object Types
-                    <FontAwesomeIcon icon={dropdownIcon} className="NOS-Button-DropdownIcon"/>
-                </NavbarButton>
+        <NavbarDropdown buttonIcon={countIcon} buttonText="Object types">
+            <div className="NOS-ObjectType NOS-ObjectType-SelectAll" onClick={() => selectAllObjectTypes()}>
+                Select all
             </div>
-
-            {open && (
-                <div className="NOS-Dropdown">
-                    <div className="NOS-ObjectType NOS-ObjectType-SelectAll" onClick={() => selectAllObjectTypes()}>
-                        Select all
+            {props.availableObjectTypes.map((objectType, index) => {
+                const otColor = getObjectTypeColor(totalNumberOfObjectTypes, index);
+                const onlyOT = isOnlyObjectType(objectType);
+                return (
+                    <div key={`SelectionToggle-${objectType}`}
+                         onClick={() => toggleObjectType(objectType)}
+                         onDoubleClick={() => selectOnlyObjectType(objectType)}
+                         className={`NOS-ObjectType ${onlyOT ? 'NOS-ObjectType--disabled' : ''}`}
+                         title={onlyOT ? "At least one object type has to be selected at all times. Please select another object type first to unselect this object time." : ""}
+                    >
+                        <FontAwesomeIcon
+                            icon={props.selectedObjectTypes.includes(objectType) ? faCircleCheck : faCircle}
+                            className="NOS-ObjectType-Check" style={{color: otColor}}/>
+                        {objectType}
                     </div>
-                    {props.availableObjectTypes.map((objectType, index) => {
-                        const otColor = getObjectTypeColor(totalNumberOfObjectTypes, index);
-                        const onlyOT = isOnlyObjectType(objectType);
-                        return (
-                            <div key={`SelectionToggle-${objectType}`}
-                                 onClick={() => toggleObjectType(objectType)}
-                                 onDoubleClick={() => selectOnlyObjectType(objectType)}
-                                 className={`NOS-ObjectType ${onlyOT ? 'NOS-ObjectType--disabled' : ''}`}
-                                 title={onlyOT ? "At least one object type has to be selected at all times. Please select another object type first to unselect this object time." : ""}
-                            >
-                                <FontAwesomeIcon
-                                    icon={props.selectedObjectTypes.includes(objectType) ? faCircleCheck : faCircle}
-                                    className="NOS-ObjectType-Check" style={{color: otColor}}/>
-                                {objectType}
-                            </div>
-                        )
-                    })}
-                </div>
-            )}
-        </div>
+                )
+            })}
+        </NavbarDropdown>
     )
 }
