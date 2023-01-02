@@ -4,7 +4,7 @@ import {
     CREATE_USER_SESSION,
     NO_CHANGE_USER_SESSION,
     RESTORE_USER_SESSION,
-    SAVE_USER_SESSION, SessionState, SET_HIGHLIGHTING_MODE, SET_SELECTED_OBJECT_TYPES,
+    SAVE_USER_SESSION, SessionState, SET_GRAPH_HORIZONTAL, SET_HIGHLIGHTING_MODE, SET_SELECTED_OBJECT_TYPES,
     SET_THRESHOLD,
     UPDATE_USER_SESSION
 } from "./userSession.types";
@@ -52,6 +52,11 @@ const sessionStateReducer = (session = USER_SESSION_INITIAL_STATE, action: AnyAc
             return {
                 ...session,
                 highlightingMode: action.payload
+            }
+        case SET_GRAPH_HORIZONTAL:
+            return {
+                ...session,
+                graphHorizontal: action.payload
             }
         case NO_CHANGE_USER_SESSION:
             return session

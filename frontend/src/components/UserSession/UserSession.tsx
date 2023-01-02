@@ -15,6 +15,7 @@ type BackendSession = {
     threshold: number,
     object_types: string[],
     highlighting_mode: string | null
+    graph_horizontal: boolean
 }
 
 export function UserSession(props: {storeOrRestore: string, userSessionState?: SessionState, stateChangeCallback?: any}) {
@@ -197,7 +198,8 @@ function translateToBackend(session: SessionState): BackendSession{
         base_ocel: session.ocel,
         threshold: session.threshold,
         object_types: session.selectedObjectTypes,
-        highlighting_mode: session.highlightingMode
+        highlighting_mode: session.highlightingMode,
+        graph_horizontal: session.graphHorizontal
     }
 }
 
@@ -209,6 +211,7 @@ function translateToFrontend(session: BackendSession): SessionState {
         // Set `alreadySelectedAllObjectTypesInitially` to true as we're in the process of restoring a session
         // which implies an existing object type selection which we don't want to overwrite!
         alreadySelectedAllObjectTypesInitially: true,
-        highlightingMode: session.highlighting_mode
+        highlightingMode: session.highlighting_mode,
+        graphHorizontal: session.graph_horizontal
     }
 }

@@ -47,7 +47,8 @@ export type CytoDFMProps = {
     threshold: number,
     selectedObjectTypes: string[],
     positionsFrozen: boolean,
-    highlightingMode: EdgeHighlightingMode
+    highlightingMode: EdgeHighlightingMode,
+    graphHorizontal: boolean
 }
 
 export interface CytoDFMMethods {
@@ -539,9 +540,12 @@ export const FilteredCytoDFM = forwardRef ((props: CytoDFMProps, ref: ForwardedR
 
         elk: {
             'algorithm': 'layered',
-            'elk.direction': 'DOWN',
+            'elk.direction': props.graphHorizontal ? 'RIGHT' : 'DOWN',
             'spacing.portsSurrounding': 20,
-            "spacing.nodeNodeBetweenLayers": 100
+            "spacing.nodeNodeBetweenLayers": 100,
+            // ...(props.graphHorizontal ? {
+            //     "spacing.nodeNode": 2000
+            // }: {})
         }
     };
 

@@ -13,7 +13,12 @@ import Alert from '@mui/material/Alert';
 import {RootState} from "../../redux/store";
 import {ThunkDispatch} from "@reduxjs/toolkit";
 import {connect} from "react-redux";
-import {setHighlightedMode, setSelectedObjectTypes, setThreshold} from "../../redux/UserSession/userSession.actions";
+import {
+    setGraphHorizontal,
+    setHighlightedMode,
+    setSelectedObjectTypes,
+    setThreshold
+} from "../../redux/UserSession/userSession.actions";
 import {setDfmQueryState} from "../../redux/DFMQuery/dfmquery";
 import {resetAlignmentQueryState} from "../../redux/AlignmentsQuery/alingmentsquery";
 import {NavbarButton} from "../../components/ExploriNavbar/NavbarButton/NavbarButton";
@@ -49,6 +54,9 @@ const mapDispatchToProps = (dispatch: ThunkDispatch<any, any, any>, props: HomeP
     },
     setHighlightingMode: async (mode: HighlightingModeName) => {
         dispatch(setHighlightedMode(mode))
+    },
+    setGraphHorizontal: async (horizontal: boolean) => {
+        dispatch(setGraphHorizontal(horizontal))
     },
     setDfmQuery: (state: AsyncApiState<DirectlyFollowsMultigraph>) => {
         dispatch(setDfmQueryState(state));
@@ -102,8 +110,11 @@ export const Home = connect<StateProps, DispatchProps, HomeProps, RootState>(map
                           title="Freeze or unfreeze the node positions.">
                 Freeze
             </NavbarButton>
-            <VizSettings selectedHighlightingMode={(props.session.highlightingMode as HighlightingModeName) || HighlightingModeName.NoHighlighting}
-                         setSelectedHighlightingMode={props.setHighlightingMode} />
+            <VizSettings
+                selectedHighlightingMode={(props.session.highlightingMode as HighlightingModeName) || HighlightingModeName.NoHighlighting}
+                setSelectedHighlightingMode={props.setHighlightingMode}
+                graphHorizontal={props.session.graphHorizontal}
+                setGraphHorizontal={props.setGraphHorizontal}/>
             <NewObjectSelection
                 availableObjectTypes={availableObjectTypes}
                 selectedObjectTypes={props.session.selectedObjectTypes}
@@ -121,6 +132,7 @@ export const Home = connect<StateProps, DispatchProps, HomeProps, RootState>(map
                                  selectedObjectTypes={props.session.selectedObjectTypes}
                                  positionsFrozen={frozen}
                                  highlightingMode={highlightingModeInstance}
+                                 graphHorizontal={props.session.graphHorizontal}
                                  ref={graphRef}/>
                 {!dfm_query.result && !dfm_query.failed && (
                     <Box sx={{
@@ -165,7 +177,10 @@ export const Home = connect<StateProps, DispatchProps, HomeProps, RootState>(map
 
 type VizSettingsProps = {
     selectedHighlightingMode: HighlightingModeName,
-    setSelectedHighlightingMode: ((mode: HighlightingModeName) => void) | ((mode: HighlightingModeName) => Promise<void>)
+    setSelectedHighlightingMode: ((mode: HighlightingModeName) => void) | ((mode: HighlightingModeName) => Promise<void>),
+
+    graphHorizontal: boolean,
+    setGraphHorizontal: ((mode: boolean) => void) | ((mode: boolean) => Promise<void>)
 }
 
 const VizSettings = (props: VizSettingsProps) => {
@@ -184,6 +199,15 @@ const VizSettings = (props: VizSettingsProps) => {
                 selected={props.selectedHighlightingMode === HighlightingModeName.LogarithmicCount}
                 label="Logarithmic count"
                 onClick={() => props.setSelectedHighlightingMode(HighlightingModeName.LogarithmicCount)}/>
+            <div className="VizSettings-Label">Graph direction</div>
+            <DropdownCheckbox
+                selected={!props.graphHorizontal}
+                label="Top to down"
+                onClick={() => props.setGraphHorizontal(false)}/>
+            <DropdownCheckbox
+                selected={props.graphHorizontal}
+                label="Left to right"
+                onClick={() => props.setGraphHorizontal(true)}/>
         </NavbarDropdown>
     )
 }

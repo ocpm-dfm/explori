@@ -92,7 +92,8 @@ export function App(props: Props) {
                 threshold: 75,
                 selectedObjectTypes: [],
                 alreadySelectedAllObjectTypesInitially: false,
-                highlightingMode: "none"
+                highlightingMode: "none",
+                graphHorizontal: false
             });
         }
         localStorage.setItem("explori-currentOcel", newOcel);

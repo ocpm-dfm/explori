@@ -7,7 +7,8 @@ const USER_SESSION_INITIAL_STATE = {
     threshold: 100.0,
     selectedObjectTypes: [],
     alreadySelectedAllObjectTypesInitially: false,
-    highlightingMode: "none"
+    highlightingMode: "none",
+    graphHorizontal: false
 } as SessionState
 
 export default USER_SESSION_INITIAL_STATE

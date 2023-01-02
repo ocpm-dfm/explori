@@ -10,7 +10,8 @@ export const testUserSession = (store: any) => {
         threshold: 50,
         selectedObjectTypes: ["Object1", "Object2"],
         alreadySelectedAllObjectTypesInitially: true,
-        highlightingMode: "none"
+        highlightingMode: "none",
+        graphHorizontal: false
     }))
 
     store.dispatch(saveUserSession(store.getState().session))
