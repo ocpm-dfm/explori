@@ -1,12 +1,10 @@
 import React, {useRef, useState} from 'react';
 import '../../App.css';
-import { ObjectSelection } from "../../components/ObjectSelection/ObjectSelection";
 import {ExploriNavbar} from "../../components/ExploriNavbar/ExploriNavbar";
 
 import "./Home.css";
 import {AsyncApiState, useAsyncAPI} from "../../hooks";
 import {CytoDFMMethods, DirectlyFollowsMultigraph, FilteredCytoDFM} from '../../components/cytoscape-dfm/cytodfm';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {faSnowflake} from "@fortawesome/free-regular-svg-icons";
 import {faShareFromSquare} from "@fortawesome/free-solid-svg-icons";
 import CircularProgress from '@mui/material/CircularProgress';
@@ -80,13 +78,6 @@ export const Home = connect<StateProps, DispatchProps, HomeProps, RootState>(map
                 setSelectedObjectTypes={props.setSelectedObjectTypes}
                 alreadySelectedAllObjectTypesInitially={alreadySelectedAllObjectTypesInitially}
                 selectAllObjectTypesInitially={true} />
-
-            {/*<ObjectSelection*/}
-            {/*    availableObjectTypes={availableObjectTypes}*/}
-            {/*    selectedObjectTypes={props.session.selectedObjectTypes}*/}
-            {/*    setSelectedObjectTypes={props.setSelectedObjectTypes}*/}
-            {/*    alreadySelectedAllObjectTypesInitially={alreadySelectedAllObjectTypesInitially}*/}
-            {/*    selectAllObjectTypesInitially={true} />*/}
         </React.Fragment>);
 
     return (
