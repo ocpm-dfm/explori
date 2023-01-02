@@ -13,12 +13,12 @@ import Alert from '@mui/material/Alert';
 import {RootState} from "../../redux/store";
 import {ThunkDispatch} from "@reduxjs/toolkit";
 import {connect} from "react-redux";
-import {setSelectedObjectTypes, setThreshold} from "../../redux/UserSession/userSession.actions";
+import {setHighlightedMode, setSelectedObjectTypes, setThreshold} from "../../redux/UserSession/userSession.actions";
 import {setDfmQueryState} from "../../redux/DFMQuery/dfmquery";
 import {resetAlignmentQueryState} from "../../redux/AlignmentsQuery/alingmentsquery";
 import {NavbarButton} from "../../components/ExploriNavbar/NavbarButton/NavbarButton";
 import {NewObjectSelection} from "../../components/NewObjectSelection/NewObjectSelection";
-import {NO_HIGHLIGHTING, TRACE_COUNT_HIGHLIGHTING} from "../../components/cytoscape-dfm/edge_highlighters";
+import {NO_HIGHLIGHTING, EDGE_COUNT_HIGHLIGHTING} from "../../components/cytoscape-dfm/edge_highlighters";
 import {NavbarDropdown} from "../../components/ExploriNavbar/NavbarDropdown/NavbarDropdown";
 import {DropdownCheckbox} from "../../components/ExploriNavbar/NavbarDropdown/DropdownCheckbox/DropdownCheckbox";
 
@@ -33,7 +33,7 @@ interface HomeProps {
 
 const mapStateToProps = (state: RootState, props: HomeProps) => ({
     session: state.session,
-    dfmQuery: state.dfmQuery
+    dfmQuery: state.dfmQuery,
 });
 const mapDispatchToProps = (dispatch: ThunkDispatch<any, any, any>, props: HomeProps) => ({
     setThreshold: async (threshold: number) => {
@@ -41,6 +41,9 @@ const mapDispatchToProps = (dispatch: ThunkDispatch<any, any, any>, props: HomeP
     },
     setSelectedObjectTypes: async (selectedObjectTypes: string[]) => {
         dispatch(setSelectedObjectTypes(selectedObjectTypes))
+    },
+    setHighlightingMode: async (mode: HighlightingModeName) => {
+        dispatch(setHighlightedMode(mode))
     },
     setDfmQuery: (state: AsyncApiState<DirectlyFollowsMultigraph>) => {
         dispatch(setDfmQueryState(state));
@@ -61,7 +64,6 @@ export const Home = connect<StateProps, DispatchProps, HomeProps, RootState>(map
     const alreadySelectedAllObjectTypesInitially = props.session.alreadySelectedAllObjectTypesInitially;
 
     const [frozen, setFrozen] = useState<boolean>(false);
-    const [highlightingMode, setHighlightingMode] = useState<HighlightingModeName>(HighlightingModeName.NoHighlighting);
 
     const dfm_query = useAsyncAPI<DirectlyFollowsMultigraph>("/pm/dfm", {ocel: selectedOcel},
         {state: props.dfmQuery, setState: props.setDfmQuery});
@@ -70,15 +72,16 @@ export const Home = connect<StateProps, DispatchProps, HomeProps, RootState>(map
     const availableObjectTypes: string[] = dfm_query.result ? Object.keys(dfm_query.result.subgraphs) : [];
 
     const highlightingModeInstance = useMemo(() => {
-        switch (highlightingMode) {
+        switch (props.session.highlightingMode) {
             case HighlightingModeName.NoHighlighting:
                 return NO_HIGHLIGHTING
             case HighlightingModeName.CountBased:
-                return TRACE_COUNT_HIGHLIGHTING
+                return EDGE_COUNT_HIGHLIGHTING
+            case null:
             default:
                 return NO_HIGHLIGHTING
         }
-    }, [highlightingMode]);
+    }, [props.session.highlightingMode]);
 
     const navbarItems = (
         <React.Fragment>
@@ -92,8 +95,8 @@ export const Home = connect<StateProps, DispatchProps, HomeProps, RootState>(map
                           title="Freeze or unfreeze the node positions.">
                 Freeze
             </NavbarButton>
-            <VizSettings selectedHighlightingMode={highlightingMode}
-                         setSelectedHighlightingMode={(mode) => setHighlightingMode(mode)} />
+            <VizSettings selectedHighlightingMode={(props.session.highlightingMode as HighlightingModeName) || HighlightingModeName.NoHighlighting}
+                         setSelectedHighlightingMode={props.setHighlightingMode} />
             <NewObjectSelection
                 availableObjectTypes={availableObjectTypes}
                 selectedObjectTypes={props.session.selectedObjectTypes}

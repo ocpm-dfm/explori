@@ -22,7 +22,7 @@ type TraceCountInitialData = {
     edgeCounts: EdgeDict<number>
 }
 
-export const TRACE_COUNT_HIGHLIGHTING = clampOutput({
+export const EDGE_COUNT_HIGHLIGHTING = clampOutput({
     createInitialData(dfm: DirectlyFollowsMultigraph, props: CytoDFMProps): any {
         let maxCount = 0;
         let edgeCounts: EdgeDict<number> = {};
@@ -33,8 +33,6 @@ export const TRACE_COUNT_HIGHLIGHTING = clampOutput({
 
             dfm.subgraphs[objectType].forEach((edge) => {
                 let count = getCountAtThreshold(edge.counts, props.threshold);
-                if (count > 0)
-                    count = Math.log2(count) / Math.log2(1.05);
 
                 if (!edgeCounts[edge.source])
                     edgeCounts[edge.source] = {};
@@ -58,7 +56,7 @@ export const TRACE_COUNT_HIGHLIGHTING = clampOutput({
         const data = initialData as TraceCountInitialData;
         return data.edgeCounts[source][target][objectType] / data.maxCount;
     }
-}, 0.2, 1.5)
+}, 0.2, 1.5);
 
 function clampOutput(mode: EdgeHighlightingMode, clampMin: number = 0.2, clampMax: number = 1): EdgeHighlightingMode {
     return {
