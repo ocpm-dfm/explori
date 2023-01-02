@@ -12,7 +12,7 @@ import {
 } from "react";
 import cytoscape, {EventObject} from "cytoscape";
 import {getObjectTypeColor} from "../../utils";
-import {EdgeHighlightingMode} from "./edge_highlighters";
+import {EdgeHighlightingMode} from "./EdgeHighlighters";
 
 const fileSaver = require('file-saver');
 

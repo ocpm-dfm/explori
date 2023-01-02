@@ -18,13 +18,18 @@ import {setDfmQueryState} from "../../redux/DFMQuery/dfmquery";
 import {resetAlignmentQueryState} from "../../redux/AlignmentsQuery/alingmentsquery";
 import {NavbarButton} from "../../components/ExploriNavbar/NavbarButton/NavbarButton";
 import {NewObjectSelection} from "../../components/NewObjectSelection/NewObjectSelection";
-import {NO_HIGHLIGHTING, EDGE_COUNT_HIGHLIGHTING} from "../../components/cytoscape-dfm/edge_highlighters";
+import {
+    NO_HIGHLIGHTING,
+    EDGE_COUNT_HIGHLIGHTING,
+    LOGARITHMIC_EDGE_COUNT_HIGHLIGHTING
+} from "../../components/cytoscape-dfm/EdgeHighlighters";
 import {NavbarDropdown} from "../../components/ExploriNavbar/NavbarDropdown/NavbarDropdown";
 import {DropdownCheckbox} from "../../components/ExploriNavbar/NavbarDropdown/DropdownCheckbox/DropdownCheckbox";
 
 enum HighlightingModeName {
     NoHighlighting = "none",
-    CountBased = "edgeCounts"
+    CountBased = "edgeCounts",
+    LogarithmicCount = "logarithmicEdgeCounts"
 }
 
 interface HomeProps {
@@ -77,6 +82,8 @@ export const Home = connect<StateProps, DispatchProps, HomeProps, RootState>(map
                 return NO_HIGHLIGHTING
             case HighlightingModeName.CountBased:
                 return EDGE_COUNT_HIGHLIGHTING
+            case HighlightingModeName.LogarithmicCount:
+                return LOGARITHMIC_EDGE_COUNT_HIGHLIGHTING
             case null:
             default:
                 return NO_HIGHLIGHTING
@@ -164,14 +171,19 @@ type VizSettingsProps = {
 const VizSettings = (props: VizSettingsProps) => {
     return (
         <NavbarDropdown buttonIcon={faBrush} buttonText="Settings">
+            <div className="VizSettings-Label">Highlighting</div>
             <DropdownCheckbox
                 selected={props.selectedHighlightingMode === HighlightingModeName.NoHighlighting}
-                label="No highlighting"
+                label="None"
                 onClick={() => props.setSelectedHighlightingMode(HighlightingModeName.NoHighlighting)}/>
             <DropdownCheckbox
                 selected={props.selectedHighlightingMode === HighlightingModeName.CountBased}
-                label="Count highlighting"
+                label="Count"
                 onClick={() => props.setSelectedHighlightingMode(HighlightingModeName.CountBased)}/>
+            <DropdownCheckbox
+                selected={props.selectedHighlightingMode === HighlightingModeName.LogarithmicCount}
+                label="Logarithmic count"
+                onClick={() => props.setSelectedHighlightingMode(HighlightingModeName.LogarithmicCount)}/>
         </NavbarDropdown>
     )
 }
