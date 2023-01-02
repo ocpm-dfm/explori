@@ -12,6 +12,7 @@ import {
 } from "react";
 import cytoscape, {EventObject} from "cytoscape";
 import {getObjectTypeColor} from "../../utils";
+import {NO_HIGHLIGHTING, TRACE_COUNT_HIGHLIGHTING} from "./edge_highlighters";
 
 const fileSaver = require('file-saver');
 
@@ -208,6 +209,7 @@ const graphStylesheet: cytoscape.Stylesheet[] = [
         "selector": 'edge',  // For all edges
         "style":
             {
+                "width": "data(width)",
                 "target-arrow-color": "data(color)",  // Arrow color
                 "target-arrow-shape": "triangle",  // Arrow shape
                 "line-color": "data(color)",  // edge color
@@ -321,6 +323,8 @@ export const FilteredCytoDFM = forwardRef ((props: CytoDFMProps, ref: ForwardedR
 
         console.log("Filtering", dfm, selectedObjectTypes, thresh);
 
+        const edgeHighlightingMode = TRACE_COUNT_HIGHLIGHTING;
+
         if (!dfm)
             return [[], []];
 
@@ -329,6 +333,8 @@ export const FilteredCytoDFM = forwardRef ((props: CytoDFMProps, ref: ForwardedR
 
         let allNodesOfSelectedObjectTypes = new Set<number>();
         const numberOfColorsNeeded = Object.keys(dfm.subgraphs).length;
+
+        const highlightingInitialData = edgeHighlightingMode.createInitialData(dfm, props);
 
         Object.keys(dfm.subgraphs).forEach((objectType, i) => {
             if (selectedObjectTypes.includes(objectType)) {
@@ -351,6 +357,7 @@ export const FilteredCytoDFM = forwardRef ((props: CytoDFMProps, ref: ForwardedR
                         classes = "loop";
                     }
 
+                    const width = `${0.2 * edgeHighlightingMode.edgeWidth(edge.source, edge.target, objectType, highlightingInitialData)}em`
                     links.push(
                         {
                             data:
@@ -359,6 +366,7 @@ export const FilteredCytoDFM = forwardRef ((props: CytoDFMProps, ref: ForwardedR
                                     target: `${edge.target}`,
                                     label: `${count}`,
                                     color: objectTypeColor,
+                                    width,
 
                                     objectType,
                                     sourceAsNumber: edge.source,
@@ -644,7 +652,7 @@ export const FilteredCytoDFM = forwardRef ((props: CytoDFMProps, ref: ForwardedR
     ;
 });
 
-function getCountAtThreshold(counts: [number, number][], threshold: number): number {
+export function getCountAtThreshold(counts: [number, number][], threshold: number): number {
     let rangeStart = 0;
     for (const [rangeEnd, count] of counts) {
         if (rangeStart <= threshold && threshold < rangeEnd)
