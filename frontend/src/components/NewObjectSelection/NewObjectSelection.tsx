@@ -1,17 +1,14 @@
 import "./NewObjectSelection.css"
-import {NavbarButton} from "../ExploriNavbar/NavbarButton/NavbarButton";
 import {
     faBox,
     faBoxesStacked,
-    faCaretDown,
-    faCaretUp, faCircleCheck,
+
 } from "@fortawesome/free-solid-svg-icons";
-import {useEffect, useState} from "react";
-import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
+import {useEffect} from "react";
 import {faCircle} from "@fortawesome/free-regular-svg-icons";
-import {useDelayedExecution} from "../../hooks";
 import {getObjectTypeColor} from "../../utils";
 import {NavbarDropdown} from "../ExploriNavbar/NavbarDropdown/NavbarDropdown";
+import {DropdownCheckbox} from "../ExploriNavbar/NavbarDropdown/DropdownCheckbox/DropdownCheckbox";
 
 type ObjectSelectionProps = {
     // all available object types in the currently visualized dfm (empty list means object types have not been determined  yet)
@@ -26,9 +23,6 @@ type ObjectSelectionProps = {
 }
 
 export const NewObjectSelection = (props: ObjectSelectionProps) => {
-    const [open, setOpen] = useState<boolean>(false);
-    const delayedClose = useDelayedExecution(() => setOpen(false), 300);
-
     useEffect(() => {
         if (
             !props.alreadySelectedAllObjectTypesInitially
@@ -64,7 +58,6 @@ export const NewObjectSelection = (props: ObjectSelectionProps) => {
 
     const selectionCount = props.selectedObjectTypes.length;
     const countIcon = selectionCount === 0 ? faCircle : (selectionCount === 1 ? faBox : faBoxesStacked);
-    const dropdownIcon = open ? faCaretUp : faCaretDown;
 
     const totalNumberOfObjectTypes = props.availableObjectTypes.length;
 
@@ -77,17 +70,15 @@ export const NewObjectSelection = (props: ObjectSelectionProps) => {
                 const otColor = getObjectTypeColor(totalNumberOfObjectTypes, index);
                 const onlyOT = isOnlyObjectType(objectType);
                 return (
-                    <div key={`SelectionToggle-${objectType}`}
-                         onClick={() => toggleObjectType(objectType)}
-                         onDoubleClick={() => selectOnlyObjectType(objectType)}
-                         className={`NOS-ObjectType ${onlyOT ? 'NOS-ObjectType--disabled' : ''}`}
-                         title={onlyOT ? "At least one object type has to be selected at all times. Please select another object type first to unselect this object time." : ""}
-                    >
-                        <FontAwesomeIcon
-                            icon={props.selectedObjectTypes.includes(objectType) ? faCircleCheck : faCircle}
-                            className="NOS-ObjectType-Check" style={{color: otColor}}/>
-                        {objectType}
-                    </div>
+                    <DropdownCheckbox key={`SelectionToggle-${objectType}`}
+                                      label={objectType}
+                                      selected={props.selectedObjectTypes.includes(objectType)}
+                                      checkColor={otColor}
+                                      disabled={onlyOT}
+                                      title={onlyOT ? "At least one object type has to be selected at all times. Please select another object type first to unselect this object time." : ""}
+
+                                      onClick={() => toggleObjectType(objectType)}
+                                      onDoubleClick={() => selectOnlyObjectType(objectType)}/>
                 )
             })}
         </NavbarDropdown>

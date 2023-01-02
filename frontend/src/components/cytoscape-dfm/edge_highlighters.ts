@@ -32,7 +32,9 @@ export const TRACE_COUNT_HIGHLIGHTING = clampOutput({
                 return;
 
             dfm.subgraphs[objectType].forEach((edge) => {
-                const count = getCountAtThreshold(edge.counts, props.threshold);
+                let count = getCountAtThreshold(edge.counts, props.threshold);
+                if (count > 0)
+                    count = Math.log2(count) / Math.log2(1.05);
 
                 if (!edgeCounts[edge.source])
                     edgeCounts[edge.source] = {};

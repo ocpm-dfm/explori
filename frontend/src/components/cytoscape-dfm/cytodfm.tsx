@@ -12,7 +12,7 @@ import {
 } from "react";
 import cytoscape, {EventObject} from "cytoscape";
 import {getObjectTypeColor} from "../../utils";
-import {NO_HIGHLIGHTING, TRACE_COUNT_HIGHLIGHTING} from "./edge_highlighters";
+import {EdgeHighlightingMode} from "./edge_highlighters";
 
 const fileSaver = require('file-saver');
 
@@ -46,7 +46,8 @@ export type CytoDFMProps = {
     dfm: DirectlyFollowsMultigraph | null,
     threshold: number,
     selectedObjectTypes: string[],
-    positionsFrozen: boolean
+    positionsFrozen: boolean,
+    highlightingMode: EdgeHighlightingMode
 }
 
 export interface CytoDFMMethods {
@@ -237,9 +238,6 @@ const graphStylesheet: cytoscape.Stylesheet[] = [
             }
     }];
 
-// https://stackoverflow.com/questions/1484506/random-color-generator/7419630#7419630
-
-
 interface NodeState {
     x: number | null
     y: number | null
@@ -320,10 +318,10 @@ export const FilteredCytoDFM = forwardRef ((props: CytoDFMProps, ref: ForwardedR
         const dfm = props.dfm;
         const thresh = boxedThreshold;
         const selectedObjectTypes = props.selectedObjectTypes;
+        const edgeHighlightingMode = props.highlightingMode;
 
         console.log("Filtering", dfm, selectedObjectTypes, thresh);
 
-        const edgeHighlightingMode = TRACE_COUNT_HIGHLIGHTING;
 
         if (!dfm)
             return [[], []];
@@ -441,7 +439,7 @@ export const FilteredCytoDFM = forwardRef ((props: CytoDFMProps, ref: ForwardedR
         const elements: cytoscape.ElementDefinition[] = filteredNodes.concat(links);
 
         return [elements, legendObjectTypeColors];
-    }, [props.dfm, boxedThreshold, props.selectedObjectTypes]);
+    }, [props.dfm, boxedThreshold, props.selectedObjectTypes, props.highlightingMode]);
 
 
     const selectedTraces = useMemo(() => {
