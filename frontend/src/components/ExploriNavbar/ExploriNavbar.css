@@ -2,11 +2,14 @@
     width: 100vw;
     display: grid;
     grid-template-rows: auto auto;
+
+    /** For some reason, the explori logo is 39px high (at least on my machine) **/
+    height: var(--navbar-height);
 }
 
 .ENAV-Row {
     background-color: white;
-    z-index: 1;
+    /*z-index: 1;*/
 }
 
 .ENAV-Row1 {
@@ -36,7 +39,8 @@
 .ENAV-logo>span {
     font-size: 1.8rem;
     font-family: "Nunito", sans-serif;
-    font-weight: 600;
+    font-weight: bold;
+    line-height: 2rem;
 }
 
 .ENAV-new-session {
@@ -75,6 +79,7 @@
     flex-direction: row;
     align-items: center;
     height: 100%;
+    gap: 2rem;
 }
 
 .ENAV-link {
@@ -83,7 +88,7 @@
 
     --padding: 0.7rem;
 
-    margin-right: 2rem;
+    /*margin-right: 2rem;*/
     padding: var(--padding) 0;
     height: calc(100% - 2 * var(--padding));
 
@@ -102,6 +107,8 @@
 
 .ENAV-link>svg {
     margin-right: 0.5rem;
+    width: 1.1rem;
+    height: 1.1rem;
 }
 
 .ENAV-link:hover {
@@ -122,4 +129,9 @@
     display: flex;
     flex-direction: row;
     align-items: center;
+    gap: 2rem;
+}
+
+.ENAV-props>* {
+    /*margin-left: 2rem;*/
 }

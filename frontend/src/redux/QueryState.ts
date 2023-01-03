@@ -1,4 +1,4 @@
-import {AsyncApiState} from "../api";
+import {AsyncApiState} from "../hooks";
 import {AnyAction} from "redux";
 
 export function QueryReducer<DataType>(initialState: DataType, setStateType: any, resetStateType: any): (state: AsyncApiState<DataType>, action: AnyAction) => AsyncApiState<DataType> {

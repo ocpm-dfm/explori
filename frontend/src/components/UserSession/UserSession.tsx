@@ -1,7 +1,7 @@
 import React, {useCallback, useEffect, useState} from 'react';
 import './UserSession.css';
 import  "../DefaultLayout/DefaultLayout.css";
-import {getURI} from "../../api";
+import {getURI} from "../../hooks";
 import {Button, TextField, Stack} from "@mui/material";
 import {ExploriNavbar} from "../ExploriNavbar/ExploriNavbar";
 import ReactDataGrid from '@inovua/reactdatagrid-community';

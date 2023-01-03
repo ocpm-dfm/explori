@@ -34,6 +34,32 @@ export function useInterval(callback: () => any, delay: number | null) {
     }, [callback, delay]);
 }
 
+export const useDelayedExecution = (func: (() => void), delay: number, executeBeforeUnmount: boolean = false) => {
+    const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+    useEffect(() => {
+        return () => {
+            if (timeoutRef.current) {
+                if (executeBeforeUnmount)
+                    func()
+                clearTimeout(timeoutRef.current);
+            }
+        }
+    }, []);
+
+    const cancel = () => {
+        if (timeoutRef.current)
+            clearTimeout(timeoutRef.current);
+    }
+
+    const execute = () => {
+        cancel();
+        timeoutRef.current = setTimeout(func, delay);
+    }
+
+    return { execute, cancel }
+}
+
 export type AsyncApiState<DataType> = {
     preliminary: DataType | null
     result: DataType | null

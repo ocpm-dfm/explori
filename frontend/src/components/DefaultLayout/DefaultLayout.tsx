@@ -1,12 +1,20 @@
 import "./DefaultLayout.css"
 import {ExploriNavbar} from "../ExploriNavbar/ExploriNavbar";
 
-export function DefaultLayout(props: { content: any, navbarSlot?: any }) {
+type LayoutProps = {
+    content?: any
+    navbarSlot?: any
+
+    children?: any
+}
+
+export function DefaultLayout(props: LayoutProps) {
     return (
         <div className="DefaultLayout-Container">
             <ExploriNavbar lowerRowSlot={props.navbarSlot} />
             <div className="DefaultLayout-Content">
-                { props.content }
+                { props.content ? props.content : null }
+                { props.children ? props.children : null}
             </div>
         </div>
     )

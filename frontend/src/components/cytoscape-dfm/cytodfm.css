@@ -14,7 +14,7 @@
 }
 
 .CytoDFM-Legend {
-    top: 2rem;
+    top: 1rem;
     left: 1rem;
 
     list-style: none;
@@ -37,7 +37,7 @@
 
 .CytoDFM-Infobox {
     top: 2rem;
-    right: 1rem;
+    right: 2rem;
 
     padding: 0.5rem 1rem;
 

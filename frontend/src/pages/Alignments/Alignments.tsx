@@ -1,8 +1,7 @@
 import React from 'react';
 import  "../../components/DefaultLayout/DefaultLayout.css";
-import {AsyncApiState, useAsyncAPI} from "../../api";
+import {AsyncApiState, useAsyncAPI} from "../../hooks";
 import {ExploriNavbar} from "../../components/ExploriNavbar/ExploriNavbar";
-import ReactDataGrid from '@inovua/reactdatagrid-community';
 import '@inovua/reactdatagrid-community/index.css';
 import '@inovua/reactdatagrid-community/theme/blue-light.css';
 import "@inovua/reactdatagrid-community/theme/blue-light.css";
@@ -15,29 +14,21 @@ import {connect} from "react-redux";
 import {ThunkDispatch} from "@reduxjs/toolkit";
 import {setAlignmentQueryState} from "../../redux/AlignmentsQuery/alingmentsquery";
 
-
-const SKIP_MOVE = ">>";
-type AlignElement = {
-    activity: string
-};
-
-type TraceAlignment = {
-    log_alignment: AlignElement[],
-    model_alignment: AlignElement[],
-}
-
-export type TraceAlignments = {[key: string]: TraceAlignment | null}[];
+import './Alignments.css';
+import {getObjectTypeColor} from "../../utils";
+import {TraceAlignment, TraceAlignments} from "../../redux/AlignmentsQuery/alignmentsquery.types";
+import { AlignmentTable } from '../../components/AlignmentsTable/AlignmentsTable';
 
 type AlignmentProps = {
 }
 
-const mapStateToProps = (state: RootState, props: AlignmentProps) => ({
+const mapStateToProps = (state: RootState, _: AlignmentProps) => ({
     modelOcel: state.session.ocel,
     threshold: state.session.threshold,
     queryState: state.alignmentsQuery
 });
 
-const mapDispatchToProps = (dispatch: ThunkDispatch<any, any, any>, props: AlignmentProps) => ({
+const mapDispatchToProps = (dispatch: ThunkDispatch<any, any, any>, _: AlignmentProps) => ({
     setQueryState: (state: AsyncApiState<TraceAlignments>) => {
         dispatch(setAlignmentQueryState(state));
     }
@@ -85,11 +76,12 @@ export const Alignments = connect<StateProps, DispatchProps, AlignmentProps, Roo
         }
     }
 
+    const totalMaterialCount = Object.keys(object_type_alignments).length;
 
     return (
         <div className="DefaultLayout-Container">
             <ExploriNavbar />
-            <div className="DefaultLayout-Content">
+            <div style={{position: "relative"}}>
                 {!alignmentsQuery.result && !alignmentsQuery.preliminary && (
                     <Box sx={{
                         display: 'flex',
@@ -102,17 +94,21 @@ export const Alignments = connect<StateProps, DispatchProps, AlignmentProps, Roo
                         <CircularProgress />
                     </Box>
                 )}
-                {Object.keys(object_type_alignments).map((objectType) => (
-                    <AlignmentTable objectType={objectType} traces={object_type_alignments[objectType]} key={`alignments=${objectType}`} />
+                {Object.keys(object_type_alignments).map((objectType, index) => (
+                    <div className="DefaultLayout-Content Alignments-Card" key={`alignments=${objectType}`}>
+                        <h2 className="Alignments-Card-Title">
+                            <div className="Alignments-Card-Title-Circle" style={{backgroundColor: getObjectTypeColor(totalMaterialCount, index)}} />
+                            {objectType}
+                        </h2>
+                        <AlignmentTable objectType={objectType} traces={object_type_alignments[objectType]}  />
+                    </div>
                 ))}
                 {!alignmentsQuery.result && alignmentsQuery.preliminary && (
                     <Box sx={{
                         display: 'flex',
                         position: 'absolute',
-                        top: '14%',
-                        left: '98%',
-                        'margin-right': '-50%',
-                        transform: 'translate(-50%, -50%)'
+                        top: '2rem',
+                        right: '2rem'
                     }}>
                         <CircularProgress />
                     </Box>
@@ -121,79 +117,3 @@ export const Alignments = connect<StateProps, DispatchProps, AlignmentProps, Roo
         </div>
     )
 });
-
-export function AlignmentTable(props: {objectType: string, traces: TraceAlignment[]}) {
-    const objectType = props.objectType;
-    const traces = props.traces;
-
-    const createColumns = (objectType: string, numColumns: number) => {
-        let columns = new Array(numColumns);
-        columns[0] = {
-            name: 0, header: objectType,
-        };
-        for(let i = 1; i < numColumns; i++) {
-            columns[i] = {
-                name: i, header: "",
-            };
-        }
-        return columns;
-    };
-
-    const createRows = (traces: TraceAlignment[]) => {
-        let rows = [];
-        let uniqueId = 1;
-        for (let traceIdx = 0; traceIdx < traces.length; traceIdx++) {
-            const trace = traces[traceIdx];
-            let row: any = {
-                uniqueId: uniqueId++,
-                0: "Trace " + traceIdx,
-                1: "[Log Alignment]",
-            };
-            for(let i = 0; i < trace.log_alignment.length; i++) {
-                row[i + 2] = trace.log_alignment[i]['activity'];
-            }
-            rows.push(row);
-
-            row = {
-                uniqueId: uniqueId++,
-                1: "[Model Alignment]",
-            };
-            for(let i = 0; i < trace.model_alignment.length; i++) {
-                row[i + 2] = trace.model_alignment[i]['activity'];
-            }
-            rows.push(row);
-        }
-
-        return rows;
-    };
-
-    // max alignment width + 2 for trace index and log/model alignment prefix columns
-    const numColumns = Math.max(...traces.map((alignment) => alignment.log_alignment.length)) + 2;
-    const columns = createColumns(objectType, numColumns);
-    const rows = createRows(traces);
-
-    return (
-        <div className="DefaultLayout-Container">
-            <div className="DefaultLayout-Content">
-                <ReactDataGrid
-                    style={{
-                        minHeight: 500,
-                        marginTop: 16
-                    }}
-                    rowHeight={50}
-                    theme="blue-light"
-                    idProperty="uniqueId"
-                    dataSource={rows}
-                    columns={columns}
-                    editable={false}
-                    pagination
-                    showColumnMenuTool={false}
-                    showZebraRows={false}
-                    // autosizing columns only available in enterprise edition
-                    // enableColumnAutosize={true}
-                    defaultShowEmptyRows={false}
-                />
-            </div>
-        </div>
-    )
-}

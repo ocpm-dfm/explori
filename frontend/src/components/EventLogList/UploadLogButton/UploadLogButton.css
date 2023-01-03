@@ -1,0 +1,35 @@
+.LogUploader-FileSelect {
+    display: block;
+    border-style: none;
+
+    padding-bottom: 0.2rem;
+
+    cursor: pointer;
+
+    box-shadow: 0 .25rem 0 0 rgba(var(--color1), 0.5);
+    transition: box-shadow 100ms ease-in;
+}
+
+.LogUploader-FileSelect:hover {
+    box-shadow: 0 .25rem 0 0 rgba(var(--color1), 0.8);
+}
+
+.LogUploader-FileSelect>label {
+    --size: 1rem;
+
+    line-height: var(--size);
+    font-size: var(--size);
+
+    cursor: pointer;
+
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+.LogUploader-FileSelect>label>svg {
+    height: var(--size);
+    width: var(--size);
+    margin-right: 0.5rem;
+}

@@ -1,12 +1,10 @@
 import React, {useRef, useState} from 'react';
 import '../../App.css';
-import { ObjectSelection } from "../../components/ObjectSelection/ObjectSelection";
 import {ExploriNavbar} from "../../components/ExploriNavbar/ExploriNavbar";
 
 import "./Home.css";
-import {AsyncApiState, useAsyncAPI} from "../../api";
+import {AsyncApiState, useAsyncAPI} from "../../hooks";
 import {CytoDFMMethods, DirectlyFollowsMultigraph, FilteredCytoDFM} from '../../components/cytoscape-dfm/cytodfm';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {faSnowflake} from "@fortawesome/free-regular-svg-icons";
 import {faShareFromSquare} from "@fortawesome/free-solid-svg-icons";
 import CircularProgress from '@mui/material/CircularProgress';
@@ -18,6 +16,8 @@ import {connect} from "react-redux";
 import {setSelectedObjectTypes, setThreshold} from "../../redux/UserSession/userSession.actions";
 import {setDfmQueryState} from "../../redux/DFMQuery/dfmquery";
 import {resetAlignmentQueryState} from "../../redux/AlignmentsQuery/alingmentsquery";
+import {NavbarButton} from "../../components/ExploriNavbar/NavbarButton/NavbarButton";
+import {NewObjectSelection} from "../../components/NewObjectSelection/NewObjectSelection";
 
 interface HomeProps {
 
@@ -62,16 +62,17 @@ export const Home = connect<StateProps, DispatchProps, HomeProps, RootState>(map
 
     const navbarItems = (
         <React.Fragment>
-            <button className="Home-NavbarButton Home-NavbarButton--icon"
-                    onClick={() => graphRef.current?.exportAsJpg()} title="Export the graph as image.">
-                <FontAwesomeIcon icon={faShareFromSquare} />
-            </button>
-            <button className={`Home-NavbarButton Home-NavbarButton--icon ${frozen ? 'Home-NavbarButton--active' : ''}`}
-                    onClick={() => setFrozen(!frozen)}
-                    title="Freezes all node positions so that they are not changed when the threshold is changed.">
-                <FontAwesomeIcon icon={faSnowflake} />
-            </button>
-            <ObjectSelection
+            <NavbarButton icon={faShareFromSquare}
+                          onClick={() => graphRef.current?.exportAsJpg()}
+                          title="Export the graph as JPG.">
+                Export
+            </NavbarButton>
+            <NavbarButton icon={faSnowflake} active={frozen}
+                          onClick={() => setFrozen(!frozen)}
+                          title="Freeze or unfreeze the node positions.">
+                Freeze
+            </NavbarButton>
+            <NewObjectSelection
                 availableObjectTypes={availableObjectTypes}
                 selectedObjectTypes={props.session.selectedObjectTypes}
                 setSelectedObjectTypes={props.setSelectedObjectTypes}

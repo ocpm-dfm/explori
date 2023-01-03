@@ -1,5 +1,5 @@
 import getUuid from 'uuid-by-string'
-import { getURI } from '../../api'
+import { getURI } from '../../hooks'
 import USER_SESSION_INITIAL_STATE from './userSession.initialState'
 import {
     CREATE_USER_SESSION,
