@@ -432,6 +432,8 @@ export const FilteredCytoDFM = forwardRef ((props: CytoDFMProps, ref: ForwardedR
             .filter((x) => x !== null) as cytoscape.ElementDefinition[];
         const elements: cytoscape.ElementDefinition[] = filteredNodes.concat(links);
 
+        console.log(elements)
+
         return [elements, legendObjectTypeColors];
     }, [props.dfm, boxedThreshold, props.selectedObjectTypes]);
 

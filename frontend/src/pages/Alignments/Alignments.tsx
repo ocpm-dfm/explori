@@ -54,16 +54,47 @@ export const Alignments = connect<StateProps, DispatchProps, AlignmentProps, Roo
 
     let object_type_alignments: {[key:string]: TraceAlignment[]} = {}
 
+    let object_type_misalignments: {[key:string]: TraceAlignment[]} = {}
+
     const alignmentData = alignmentsQuery.preliminary ? alignmentsQuery.preliminary : alignmentsQuery.result;
     if (alignmentData) {
         try {
-            alignmentData.forEach((traceWithAlignments) => {
+            alignmentData.forEach((traceWithAlignments : any) => {
                 Object.keys(traceWithAlignments).forEach((objectType) => {
                     const alignment = traceWithAlignments[objectType];
                     if (alignment) {
                         if (!object_type_alignments[objectType])
                             object_type_alignments[objectType] = [];
+                        console.log(alignment)
                         object_type_alignments[objectType].push(alignment);
+                        if(alignment['log_alignment'].length === alignment['model_alignment'].length){
+                            let alignment_copy = JSON.parse(JSON.stringify(alignment));
+                            let misalignments: {[key:string]: string} = {}
+                            const log_indices = alignment_copy['log_alignment'].map((item: any, index: number) => (item['activity'] === ">>" ? index : null)).filter((item: number | null) => item !== null);
+                            const model_indices = alignment_copy['model_alignment'].map((item: any, index: number) => (item['activity'] === ">>" ? index : null)).filter((item: number | null) => item !== null);
+                            log_indices.forEach((index: number) => {
+                                if(index === 0){
+                                    console.log("something went wrong? Explori start should always be in the log")
+                                } else if(index === alignment['log_alignment'].length-1){
+                                    console.log("something went wrong? Explori end should always be in the log")
+                                } else {
+                                    // need edge from edge between last activity before to skipped activity and edge between skipped activity and next activity
+                                    // search in model alignment for last activity and next activity (so go to start and use first activity that is not ">>")
+                                }
+                            })
+                            model_indices.forEach((index: number) => {
+                                if(index === 0){
+                                    // loop on start node
+                                } else if(index === alignment['log_alignment'].length-1){
+                                    // loop on end node
+                                } else {
+                                    // loop on edge between last and next activity in model
+                                }
+                            })
+                            console.log(alignment_copy)
+                            console.log(log_indices)
+                            console.log(model_indices)
+                        }
                     }
                 })
             });
