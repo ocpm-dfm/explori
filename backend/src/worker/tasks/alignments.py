@@ -97,7 +97,8 @@ def compute_alignments(process_ocel: str, threshold: float, object_type: str, tr
     dfg = filter_threshold_of_graph_notation(dfm, object_type, threshold)
 
     projected_log = build_trace_event_log(trace)
-    petrinet, initial_marking, final_marking = build_petrinet(dfg)
+    # petrinet, initial_marking, final_marking = build_petrinet(dfg)
+    petrinet, initial_marking, final_marking = build_pm4py_dfg(dfg)
 
     aligned_traces = conformance_diagnostics_alignments(projected_log, petrinet, initial_marking, final_marking)
 
@@ -132,6 +133,12 @@ def build_trace_event_log(trace: List[str]) -> EventLog:
     })
 
     return log_conv_factory.apply(df)
+
+
+def build_pm4py_dfg(dfg: FilteredDFG):
+    edges = {(dfg.nodes[edge.source], dfg.nodes[edge.target]): 1 for edge in dfg.edges}
+    return edges, {START_TOKEN: 1}, {STOP_TOKEN: 1}
+
 
 def build_petrinet(dfg):
     net = PetriNet()

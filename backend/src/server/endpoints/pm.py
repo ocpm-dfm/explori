@@ -90,6 +90,7 @@ def compute_alignments(process_ocel: str = Query(example="uploaded/p2p-normal.js
             base_ocel=process_ocel,
             task_name=TaskName.COMPUTE_ALIGNMENTS.with_attributes(conformance_ocel=conformance_ocel,
                                                                   base_threshold=base_threshold,
+                                                                  object_type=object_type,
                                                                   trace_id=trace_id),
             task=alignment_task,
             args=[process_ocel, base_threshold, object_type,
