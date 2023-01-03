@@ -45,12 +45,21 @@ export const NewObjectSelection = (props: ObjectSelectionProps) => {
             newSelection.splice(index, 1);
         else
             newSelection.push(objectType);
-        props.setSelectedObjectTypes(newSelection);
+
+        if (newSelection.length > 0)
+            props.setSelectedObjectTypes(newSelection);
+    }
+
+    const selectOnlyObjectType = (objectType: string) => {
+        props.setSelectedObjectTypes([objectType]);
     }
 
     const selectAllObjectTypes = () => {
         props.setSelectedObjectTypes(props.availableObjectTypes);
     }
+
+    const isOnlyObjectType = (objectType: string) =>
+        props.selectedObjectTypes.length === 1 && props.selectedObjectTypes[0] === objectType;
 
     const selectionCount = props.selectedObjectTypes.length;
     const countIcon = selectionCount === 0 ? faCircle : (selectionCount === 1 ? faBox : faBoxesStacked);
@@ -78,15 +87,21 @@ export const NewObjectSelection = (props: ObjectSelectionProps) => {
                     </div>
                     {props.availableObjectTypes.map((objectType, index) => {
                         const otColor = getObjectTypeColor(totalNumberOfObjectTypes, index);
+                        const onlyOT = isOnlyObjectType(objectType);
                         return (
                             <div key={`SelectionToggle-${objectType}`}
                                  onClick={() => toggleObjectType(objectType)}
-                                   className="NOS-ObjectType">
-                                <FontAwesomeIcon icon={props.selectedObjectTypes.includes(objectType) ? faCircleCheck : faCircle}
-                                                 className="NOS-ObjectType-Check" style={{color: otColor}} />
+                                 onDoubleClick={() => selectOnlyObjectType(objectType)}
+                                 className={`NOS-ObjectType ${onlyOT ? 'NOS-ObjectType--disabled' : ''}`}
+                                 title={onlyOT ? "At least one object type has to be selected at all times. Please select another object type first to unselect this object time." : ""}
+                            >
+                                <FontAwesomeIcon
+                                    icon={props.selectedObjectTypes.includes(objectType) ? faCircleCheck : faCircle}
+                                    className="NOS-ObjectType-Check" style={{color: otColor}}/>
                                 {objectType}
                             </div>
-                    )})}
+                        )
+                    })}
                 </div>
             )}
         </div>

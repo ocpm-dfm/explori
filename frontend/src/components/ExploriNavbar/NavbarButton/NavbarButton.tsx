@@ -18,7 +18,7 @@ export const NavbarButton = (props: NavbarButtonProps) => {
         <div className={`NavbarButton ${props.active ? 'NavbarButton--active' : ''} ${props.className ? props.className : ''}`}
                 onClick={() => props.onClick && props.onClick()}
                 title={props.title}>
-            {props.icon ? <FontAwesomeIcon icon={props.icon} /> : null}
+            {props.icon ? <FontAwesomeIcon icon={props.icon} className="NavbarButton-Icon"/> : null}
             {props.children}
         </div>);
 }
