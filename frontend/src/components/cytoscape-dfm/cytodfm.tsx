@@ -12,6 +12,7 @@ import {
 } from "react";
 import cytoscape, {EventObject} from "cytoscape";
 import {getObjectTypeColor} from "../../utils";
+import {EdgeHighlightingMode} from "./EdgeHighlighters";
 
 const fileSaver = require('file-saver');
 
@@ -45,7 +46,9 @@ export type CytoDFMProps = {
     dfm: DirectlyFollowsMultigraph | null,
     threshold: number,
     selectedObjectTypes: string[],
-    positionsFrozen: boolean
+    positionsFrozen: boolean,
+    highlightingMode: EdgeHighlightingMode,
+    graphHorizontal: boolean
 }
 
 export interface CytoDFMMethods {
@@ -208,6 +211,7 @@ const graphStylesheet: cytoscape.Stylesheet[] = [
         "selector": 'edge',  // For all edges
         "style":
             {
+                "width": "data(width)",
                 "target-arrow-color": "data(color)",  // Arrow color
                 "target-arrow-shape": "triangle",  // Arrow shape
                 "line-color": "data(color)",  // edge color
@@ -234,9 +238,6 @@ const graphStylesheet: cytoscape.Stylesheet[] = [
                 // 'source-endpoint': 'outside-to-line',
             }
     }];
-
-// https://stackoverflow.com/questions/1484506/random-color-generator/7419630#7419630
-
 
 interface NodeState {
     x: number | null
@@ -318,8 +319,10 @@ export const FilteredCytoDFM = forwardRef ((props: CytoDFMProps, ref: ForwardedR
         const dfm = props.dfm;
         const thresh = boxedThreshold;
         const selectedObjectTypes = props.selectedObjectTypes;
+        const edgeHighlightingMode = props.highlightingMode;
 
         console.log("Filtering", dfm, selectedObjectTypes, thresh);
+
 
         if (!dfm)
             return [[], []];
@@ -329,6 +332,8 @@ export const FilteredCytoDFM = forwardRef ((props: CytoDFMProps, ref: ForwardedR
 
         let allNodesOfSelectedObjectTypes = new Set<number>();
         const numberOfColorsNeeded = Object.keys(dfm.subgraphs).length;
+
+        const highlightingInitialData = edgeHighlightingMode.createInitialData(dfm, props);
 
         Object.keys(dfm.subgraphs).forEach((objectType, i) => {
             if (selectedObjectTypes.includes(objectType)) {
@@ -351,6 +356,7 @@ export const FilteredCytoDFM = forwardRef ((props: CytoDFMProps, ref: ForwardedR
                         classes = "loop";
                     }
 
+                    const width = `${0.2 * edgeHighlightingMode.edgeWidth(edge.source, edge.target, objectType, highlightingInitialData)}em`
                     links.push(
                         {
                             data:
@@ -359,6 +365,7 @@ export const FilteredCytoDFM = forwardRef ((props: CytoDFMProps, ref: ForwardedR
                                     target: `${edge.target}`,
                                     label: `${count}`,
                                     color: objectTypeColor,
+                                    width,
 
                                     objectType,
                                     sourceAsNumber: edge.source,
@@ -435,7 +442,7 @@ export const FilteredCytoDFM = forwardRef ((props: CytoDFMProps, ref: ForwardedR
         console.log(elements)
 
         return [elements, legendObjectTypeColors];
-    }, [props.dfm, boxedThreshold, props.selectedObjectTypes]);
+    }, [props.dfm, boxedThreshold, props.selectedObjectTypes, props.highlightingMode]);
 
 
     const selectedTraces = useMemo(() => {
@@ -535,9 +542,12 @@ export const FilteredCytoDFM = forwardRef ((props: CytoDFMProps, ref: ForwardedR
 
         elk: {
             'algorithm': 'layered',
-            'elk.direction': 'DOWN',
+            'elk.direction': props.graphHorizontal ? 'RIGHT' : 'DOWN',
             'spacing.portsSurrounding': 20,
-            "spacing.nodeNodeBetweenLayers": 100
+            "spacing.nodeNodeBetweenLayers": 100,
+            // ...(props.graphHorizontal ? {
+            //     "spacing.nodeNode": 2000
+            // }: {})
         }
     };
 
@@ -646,7 +656,7 @@ export const FilteredCytoDFM = forwardRef ((props: CytoDFMProps, ref: ForwardedR
     ;
 });
 
-function getCountAtThreshold(counts: [number, number][], threshold: number): number {
+export function getCountAtThreshold(counts: [number, number][], threshold: number): number {
     let rangeStart = 0;
     for (const [rangeEnd, count] of counts) {
         if (rangeStart <= threshold && threshold < rangeEnd)

@@ -6,7 +6,9 @@ const USER_SESSION_INITIAL_STATE = {
     ocel: currentOcel,
     threshold: 100.0,
     selectedObjectTypes: [],
-    alreadySelectedAllObjectTypesInitially: false
+    alreadySelectedAllObjectTypesInitially: false,
+    highlightingMode: "none",
+    graphHorizontal: false
 } as SessionState
 
 export default USER_SESSION_INITIAL_STATE

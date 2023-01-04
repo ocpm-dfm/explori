@@ -5,7 +5,12 @@ import {
     CREATE_USER_SESSION,
     RESTORE_USER_SESSION,
     NO_CHANGE_USER_SESSION,
-    UPDATE_USER_SESSION, SessionState, SET_THRESHOLD, SET_SELECTED_OBJECT_TYPES
+    UPDATE_USER_SESSION,
+    SessionState,
+    SET_THRESHOLD,
+    SET_SELECTED_OBJECT_TYPES,
+    SET_HIGHLIGHTING_MODE,
+    SET_GRAPH_HORIZONTAL
 } from './userSession.types'
 import {ThunkDispatch} from "@reduxjs/toolkit";
 import {RootState} from "../store";
@@ -18,7 +23,9 @@ export const saveUserSession = (session: SessionState) => async (dispatch: Thunk
     const sessionState = {
         base_ocel: session.ocel,
         threshold: session.threshold,
-        object_types: session.selectedObjectTypes
+        object_types: session.selectedObjectTypes,
+        highlighting_mode: session.highlightingMode,
+        graph_horizontal: session.graphHorizontal
     }
 
     await fetch(uri, {
@@ -87,7 +94,9 @@ export const restoreUserSession = (fullOcelPath: string) =>
                     selectedObjectTypes: result.object_types,
                     // Set `alreadySelectedAllObjectTypesInitially` to true as we're in the process of restoring a session
                     // which implies an existing object type selection which we don't want to overwrite!
-                    alreadySelectedAllObjectTypesInitially: true
+                    alreadySelectedAllObjectTypesInitially: true,
+                    highlightingMode: result.highlighting_mode || "none",
+                    graphHorizontal: result.graph_horizontal
                 } as SessionState
             });
         }
@@ -109,5 +118,19 @@ export const setSelectedObjectTypes = (selectedObjectTypes: string[]) => (dispat
         type: SET_SELECTED_OBJECT_TYPES,
         payload: selectedObjectTypes,
         alreadySelectedAllObjectTypesInitially: true
+    });
+}
+
+export const setHighlightedMode = (mode: string) => (dispatch: Function) => {
+    dispatch({
+        type: SET_HIGHLIGHTING_MODE,
+        payload: mode,
+    });
+}
+
+export const setGraphHorizontal = (horizontal: boolean) => (dispatch: Function) => {
+    dispatch({
+        type: SET_GRAPH_HORIZONTAL,
+        payload: horizontal,
     });
 }

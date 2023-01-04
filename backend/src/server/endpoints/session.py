@@ -18,6 +18,8 @@ class Session(BaseModel):
     base_ocel: str
     threshold: float
     object_types: List[str]
+    highlighting_mode: str | None = None
+    graph_horizontal: bool = False
 
     class Config:
         schema_extra = {
