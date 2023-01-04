@@ -451,198 +451,204 @@ export const FilteredCytoDFM = forwardRef ((props: CytoDFMProps, ref: ForwardedR
         console.log(dfm)
 
         let alignmentNodes = []
-        for (const [objectType, lastActivity, intermediateActivity, nextActivity] of logAlignments) {
-            if (selectedObjectTypes.includes(objectType)) {
-                const objectTypeColor = getObjectTypeColor(numberOfColorsNeeded, 0);
+        let alignmentEdges = []
 
-                let lastNodeIndex: number = -1, intermediateNodeIndex: number = -1, nextNodeIndex: number = -1;
-                const nodes = dfm.nodes
+        if(props.showAlignments) {
 
-                for (let i = 0; i<nodes.length; i++){
-                    switch(nodes[i].label){
-                        case lastActivity.activity:
-                            lastNodeIndex = i
-                            break;
-                        case intermediateActivity.activity:
-                            intermediateNodeIndex = i
-                            break;
-                        case nextActivity.activity:
-                            nextNodeIndex = i
-                            break;
+
+            for (const [objectType, lastActivity, intermediateActivity, nextActivity] of logAlignments) {
+                if (selectedObjectTypes.includes(objectType)) {
+                    const objectTypeColor = getObjectTypeColor(numberOfColorsNeeded, 0);
+
+                    let lastNodeIndex: number = -1, intermediateNodeIndex: number = -1, nextNodeIndex: number = -1;
+                    const nodes = dfm.nodes
+
+                    for (let i = 0; i < nodes.length; i++) {
+                        switch (nodes[i].label) {
+                            case lastActivity.activity:
+                                lastNodeIndex = i
+                                break;
+                            case intermediateActivity.activity:
+                                intermediateNodeIndex = i
+                                break;
+                            case nextActivity.activity:
+                                nextNodeIndex = i
+                                break;
+                        }
+                    }
+                    /*console.log(lastNodeIndex)
+                    console.log(intermediateNodeIndex)
+                    console.log(nextNodeIndex) */
+                    const nodeIndices = [lastNodeIndex, intermediateNodeIndex, nextNodeIndex]
+
+                    if (nodeIndices.indexOf(-1) > -1) {
+                        break
+                    }
+
+                    const nodeLength: number = dfm.nodes.length + alignmentNodes.length
+                    const sourceNodeIndex: number = nodeLength + 1
+                    const targetNodeIndex: number = nodeLength + 2
+                    const count: number = 0
+
+                    // need node between lastNode and intermediateNode
+                    alignmentNodes.push({
+                        data: {
+                            id: `${sourceNodeIndex}`,
+                            //label: `${lastActivity.activity + "_" + intermediateActivity.activity} (${count})`,
+                            label: ".",
+                            numberId: sourceNodeIndex
+                        },
+                        classes: "activity",
+                        position: {
+                            x: 10,
+                            y: 10
+                        }
+                    })
+
+                    // need node between intermediateNode and nextNode
+                    alignmentNodes.push({
+                        data: {
+                            id: `${targetNodeIndex}`,
+                            label: ".",
+                            numberId: targetNodeIndex
+                        },
+                        classes: "activity",
+                        position: {
+                            x: 10,
+                            y: 10
+                        }
+                    })
+
+                    const neededEdges: number[][] = [
+                        // need edge between these two nodes
+                        [sourceNodeIndex, targetNodeIndex],
+                        // need edge between lastNode and sourceNode
+                        [lastNodeIndex, sourceNodeIndex],
+                        // need edge between sourceNode and intermediateNode
+                        [sourceNodeIndex, intermediateNodeIndex],
+                        // need edge between intermediateNode and targetNode
+                        [intermediateNodeIndex, targetNodeIndex],
+                        // need edge between targetNode and nextNode
+                        [targetNodeIndex, nextNodeIndex]
+                    ]
+
+                    for (const [source, target] of neededEdges) {
+                        const classes = ""
+
+                        const width = `${0.2 * edgeHighlightingMode.edgeWidth(source, target, objectType, highlightingInitialData)}em`
+                        alignmentEdges.push(
+                            {
+                                data:
+                                    {
+                                        source: `${source}`,
+                                        target: `${target}`,
+                                        label: `${count}`,
+                                        color: objectTypeColor,
+                                        width,
+
+                                        objectType,
+                                        sourceAsNumber: source,
+                                        targetAsNumber: target
+                                    },
+                                classes
+                            });
+
+                        allNodesOfSelectedObjectTypes.add(source);
+                        allNodesOfSelectedObjectTypes.add(target);
                     }
                 }
-                /*console.log(lastNodeIndex)
-                console.log(intermediateNodeIndex)
-                console.log(nextNodeIndex) */
-                const nodeIndices = [lastNodeIndex, intermediateNodeIndex, nextNodeIndex]
+            }
 
-                if(nodeIndices.indexOf(-1) > -1){
-                    break
-                }
+            for (const [objectType, lastActivity, nextActivity] of logAlignments) {
+                if (selectedObjectTypes.includes(objectType)) {
+                    const objectTypeColor = getObjectTypeColor(numberOfColorsNeeded, 0);
 
-                const nodeLength: number = dfm.nodes.length + alignmentNodes.length
-                const sourceNodeIndex: number = nodeLength+1
-                const targetNodeIndex: number = nodeLength+2
-                const count: number = 0
+                    let lastNodeIndex: number = -1, nextNodeIndex: number = -1;
+                    const nodes = dfm.nodes
 
-                // need node between lastNode and intermediateNode
-                alignmentNodes.push( {
-                    data: {
-                        id: `${sourceNodeIndex}`,
-                        //label: `${lastActivity.activity + "_" + intermediateActivity.activity} (${count})`,
-                        label: ".",
-                        numberId: sourceNodeIndex
-                    },
-                    classes: "activity",
-                    position: {
-                        x: 10,
-                        y: 10
+                    for (let i = 0; i < nodes.length; i++) {
+                        switch (nodes[i].label) {
+                            case lastActivity.activity:
+                                lastNodeIndex = i
+                                break;
+                            case nextActivity.activity:
+                                nextNodeIndex = i
+                                break;
+                        }
                     }
-                })
+                    //console.log(lastNodeIndex)
+                    //console.log(nextNodeIndex)
+                    const nodeIndices = [lastNodeIndex, nextNodeIndex]
 
-                // need node between intermediateNode and nextNode
-                alignmentNodes.push( {
-                    data: {
-                        id: `${targetNodeIndex}`,
-                        label: ".",
-                        numberId: targetNodeIndex
-                    },
-                    classes: "activity",
-                    position: {
-                        x: 10,
-                        y: 10
+                    if (nodeIndices.indexOf(-1) > -1) {
+                        break
                     }
-                })
 
-                const neededEdges: number[][] = [
-                    // need edge between these two nodes
-                    [sourceNodeIndex, targetNodeIndex],
-                    // need edge between lastNode and sourceNode
-                    [lastNodeIndex, sourceNodeIndex],
-                    // need edge between sourceNode and intermediateNode
-                    [sourceNodeIndex, intermediateNodeIndex],
-                    // need edge between intermediateNode and targetNode
-                    [intermediateNodeIndex, targetNodeIndex],
-                    // need edge between targetNode and nextNode
-                    [targetNodeIndex, nextNodeIndex]
-                ]
+                    const nodeLength: number = dfm.nodes.length + alignmentNodes.length
+                    const sourceNodeIndex: number = nodeLength + 1
+                    const count: number = 0
 
-                for (const [source, target] of neededEdges){
-                    const classes = ""
+                    // need node between lastNode and nextNode
+                    alignmentNodes.push({
+                        data: {
+                            id: `${sourceNodeIndex}`,
+                            //label: `${lastActivity.activity + "_" + intermediateActivity.activity} (${count})`,
+                            label: ".",
+                            numberId: sourceNodeIndex
+                        },
+                        classes: "activity",
+                        position: {
+                            x: 10,
+                            y: 10
+                        }
+                    })
 
-                    const width = `${0.2 * edgeHighlightingMode.edgeWidth(source, target, objectType, highlightingInitialData)}em`
-                    links.push(
-                        {
-                            data:
-                                {
-                                    source: `${source}`,
-                                    target: `${target}`,
-                                    label: `${count}`,
-                                    color: objectTypeColor,
-                                    width,
+                    const neededEdges: number[][] = [
+                        // need loop on new node
+                        [sourceNodeIndex, sourceNodeIndex],
+                        // need edge between lastNode and sourceNode
+                        [lastNodeIndex, sourceNodeIndex],
+                        // need edge between sourceNode and nextNode
+                        [sourceNodeIndex, nextNodeIndex]
+                    ]
 
-                                    objectType,
-                                    sourceAsNumber: source,
-                                    targetAsNumber: target
-                                },
-                            classes
-                        });
+                    for (const [source, target] of neededEdges) {
+                        let classes = ""
+                        if (source === target) {
+                            classes = "loop";
+                        }
 
-                    allNodesOfSelectedObjectTypes.add(source);
-                    allNodesOfSelectedObjectTypes.add(target);
+                        const width = `${0.2 * edgeHighlightingMode.edgeWidth(source, target, objectType, highlightingInitialData)}em`
+                        alignmentEdges.push(
+                            {
+                                data:
+                                    {
+                                        source: `${source}`,
+                                        target: `${target}`,
+                                        label: `${count}`,
+                                        color: objectTypeColor,
+                                        width,
+
+                                        objectType,
+                                        sourceAsNumber: source,
+                                        targetAsNumber: target
+                                    },
+                                classes
+                            });
+
+                        allNodesOfSelectedObjectTypes.add(source);
+                        allNodesOfSelectedObjectTypes.add(target);
+                    }
                 }
             }
         }
 
-        for (const [objectType, lastActivity, nextActivity] of logAlignments) {
-            if (selectedObjectTypes.includes(objectType)) {
-                const objectTypeColor = getObjectTypeColor(numberOfColorsNeeded, 0);
-
-                let lastNodeIndex: number = -1, nextNodeIndex: number = -1;
-                const nodes = dfm.nodes
-
-                for (let i = 0; i < nodes.length; i++) {
-                    switch (nodes[i].label) {
-                        case lastActivity.activity:
-                            lastNodeIndex = i
-                            break;
-                        case nextActivity.activity:
-                            nextNodeIndex = i
-                            break;
-                    }
-                }
-                //console.log(lastNodeIndex)
-                //console.log(nextNodeIndex)
-                const nodeIndices = [lastNodeIndex, nextNodeIndex]
-
-                if (nodeIndices.indexOf(-1) > -1) {
-                    break
-                }
-
-                const nodeLength: number = dfm.nodes.length + alignmentNodes.length
-                const sourceNodeIndex: number = nodeLength+1
-                const count: number = 0
-
-                // need node between lastNode and nextNode
-                alignmentNodes.push({
-                    data: {
-                        id: `${sourceNodeIndex}`,
-                        //label: `${lastActivity.activity + "_" + intermediateActivity.activity} (${count})`,
-                        label: ".",
-                        numberId: sourceNodeIndex
-                    },
-                    classes: "activity",
-                    position: {
-                        x: 10,
-                        y: 10
-                    }
-                })
-
-                const neededEdges: number[][] = [
-                    // need loop on new node
-                    [sourceNodeIndex, sourceNodeIndex],
-                    // need edge between lastNode and sourceNode
-                    [lastNodeIndex, sourceNodeIndex],
-                    // need edge between sourceNode and nextNode
-                    [sourceNodeIndex, nextNodeIndex]
-                ]
-
-                for (const [source, target] of neededEdges) {
-                    let classes = ""
-                    if (source === target) {
-                        classes = "loop";
-                    }
-
-                    const width = `${0.2 * edgeHighlightingMode.edgeWidth(source, target, objectType, highlightingInitialData)}em`
-                    links.push(
-                        {
-                            data:
-                                {
-                                    source: `${source}`,
-                                    target: `${target}`,
-                                    label: `${count}`,
-                                    color: objectTypeColor,
-                                    width,
-
-                                    objectType,
-                                    sourceAsNumber: source,
-                                    targetAsNumber: target
-                                },
-                            classes
-                        });
-
-                    allNodesOfSelectedObjectTypes.add(source);
-                    allNodesOfSelectedObjectTypes.add(target);
-                }
-            }
-        }
-
-        const elements: cytoscape.ElementDefinition[] = filteredNodes.concat(alignmentNodes).concat(links);
+        const elements: cytoscape.ElementDefinition[] = filteredNodes.concat(alignmentNodes).concat(links).concat(alignmentEdges);
 
         console.log(elements)
 
         return [elements, legendObjectTypeColors];
-    }, [props.dfm, boxedThreshold, props.selectedObjectTypes, props.highlightingMode, modelAlignments, logAlignments]);
+    }, [props.dfm, boxedThreshold, props.selectedObjectTypes, props.highlightingMode, modelAlignments, logAlignments, props.showAlignments]);
 
 
     const selectedTraces = useMemo(() => {
