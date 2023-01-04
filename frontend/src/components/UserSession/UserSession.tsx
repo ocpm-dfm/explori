@@ -15,7 +15,8 @@ type BackendSession = {
     threshold: number,
     object_types: string[],
     highlighting_mode: string | null
-    graph_horizontal: boolean
+    graph_horizontal: boolean,
+    show_alignments: boolean,
 }
 
 export function UserSession(props: {storeOrRestore: string, userSessionState?: SessionState, stateChangeCallback?: any}) {
@@ -199,7 +200,8 @@ function translateToBackend(session: SessionState): BackendSession{
         threshold: session.threshold,
         object_types: session.selectedObjectTypes,
         highlighting_mode: session.highlightingMode,
-        graph_horizontal: session.graphHorizontal
+        graph_horizontal: session.graphHorizontal,
+        show_alignments: session.showAlignments,
     }
 }
 
@@ -212,6 +214,7 @@ function translateToFrontend(session: BackendSession): SessionState {
         // which implies an existing object type selection which we don't want to overwrite!
         alreadySelectedAllObjectTypesInitially: true,
         highlightingMode: session.highlighting_mode,
-        graphHorizontal: session.graph_horizontal
+        graphHorizontal: session.graph_horizontal,
+        showAlignments: session.show_alignments,
     }
 }

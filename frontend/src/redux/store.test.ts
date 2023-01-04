@@ -11,7 +11,8 @@ export const testUserSession = (store: any) => {
         selectedObjectTypes: ["Object1", "Object2"],
         alreadySelectedAllObjectTypesInitially: true,
         highlightingMode: "none",
-        graphHorizontal: false
+        graphHorizontal: false,
+        showAlignments: false,
     }))
 
     store.dispatch(saveUserSession(store.getState().session))

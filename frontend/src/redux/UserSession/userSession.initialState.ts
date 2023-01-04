@@ -8,7 +8,8 @@ const USER_SESSION_INITIAL_STATE = {
     selectedObjectTypes: [],
     alreadySelectedAllObjectTypesInitially: false,
     highlightingMode: "none",
-    graphHorizontal: false
+    graphHorizontal: false,
+    showAlignments: false,
 } as SessionState
 
 export default USER_SESSION_INITIAL_STATE

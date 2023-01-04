@@ -17,7 +17,8 @@ import {
     setGraphHorizontal,
     setHighlightedMode,
     setSelectedObjectTypes,
-    setThreshold
+    setThreshold,
+    setAlignmentToggle
 } from "../../redux/UserSession/userSession.actions";
 import {setDfmQueryState} from "../../redux/DFMQuery/dfmquery";
 import {resetAlignmentQueryState} from "../../redux/AlignmentsQuery/alingmentsquery";
@@ -57,6 +58,9 @@ const mapDispatchToProps = (dispatch: ThunkDispatch<any, any, any>, props: HomeP
     },
     setGraphHorizontal: async (horizontal: boolean) => {
         dispatch(setGraphHorizontal(horizontal))
+    },
+    setAlignmentToggle: async(show: boolean) => {
+        dispatch(setAlignmentToggle(show))
     },
     setDfmQuery: (state: AsyncApiState<DirectlyFollowsMultigraph>) => {
         dispatch(setDfmQueryState(state));
@@ -114,7 +118,10 @@ export const Home = connect<StateProps, DispatchProps, HomeProps, RootState>(map
                 selectedHighlightingMode={(props.session.highlightingMode as HighlightingModeName) || HighlightingModeName.NoHighlighting}
                 setSelectedHighlightingMode={props.setHighlightingMode}
                 graphHorizontal={props.session.graphHorizontal}
-                setGraphHorizontal={props.setGraphHorizontal}/>
+                setGraphHorizontal={props.setGraphHorizontal}
+                showAlignments={props.session.showAlignments}
+                setAlignmentToggle={props.setAlignmentToggle}
+            />
             <NewObjectSelection
                 availableObjectTypes={availableObjectTypes}
                 selectedObjectTypes={props.session.selectedObjectTypes}
@@ -180,7 +187,9 @@ type VizSettingsProps = {
     setSelectedHighlightingMode: ((mode: HighlightingModeName) => void) | ((mode: HighlightingModeName) => Promise<void>),
 
     graphHorizontal: boolean,
-    setGraphHorizontal: ((mode: boolean) => void) | ((mode: boolean) => Promise<void>)
+    setGraphHorizontal: ((mode: boolean) => void) | ((mode: boolean) => Promise<void>),
+    showAlignments: boolean,
+    setAlignmentToggle: (show: boolean) => void,
 }
 
 const VizSettings = (props: VizSettingsProps) => {
@@ -208,6 +217,15 @@ const VizSettings = (props: VizSettingsProps) => {
                 selected={props.graphHorizontal}
                 label="Left to right"
                 onClick={() => props.setGraphHorizontal(true)}/>
+            <div className="VizSettings-Label">Show alignments</div>
+            <DropdownCheckbox
+                selected={!props.showAlignments}
+                label="Don't show"
+                onClick={() => props.setAlignmentToggle(false)}/>
+            <DropdownCheckbox
+                selected={props.showAlignments}
+                label="Show"
+                onClick={() => props.setAlignmentToggle(true)}/>
         </NavbarDropdown>
     )
 }

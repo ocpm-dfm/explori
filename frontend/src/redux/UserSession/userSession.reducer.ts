@@ -6,7 +6,8 @@ import {
     RESTORE_USER_SESSION,
     SAVE_USER_SESSION, SessionState, SET_GRAPH_HORIZONTAL, SET_HIGHLIGHTING_MODE, SET_SELECTED_OBJECT_TYPES,
     SET_THRESHOLD,
-    UPDATE_USER_SESSION
+    UPDATE_USER_SESSION,
+    SHOW_ALIGNMENTS
 } from "./userSession.types";
 
 const sessionStateReducer = (session = USER_SESSION_INITIAL_STATE, action: AnyAction): SessionState => {
@@ -57,6 +58,11 @@ const sessionStateReducer = (session = USER_SESSION_INITIAL_STATE, action: AnyAc
             return {
                 ...session,
                 graphHorizontal: action.payload
+            }
+        case SHOW_ALIGNMENTS:
+            return {
+                ...session,
+                showAlignments: action.payload
             }
         case NO_CHANGE_USER_SESSION:
             return session
