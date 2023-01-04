@@ -14,6 +14,10 @@ import cytoscape, {EventObject} from "cytoscape";
 import {getObjectTypeColor} from "../../utils";
 import {EdgeHighlightingMode} from "./EdgeHighlighters";
 
+import {AlignmentsData} from "../../pages/Alignments/Alignments";
+import {AlignElement} from "../../redux/AlignmentsQuery/alignmentsquery.types";
+import {log} from "util";
+
 const fileSaver = require('file-saver');
 
 
@@ -48,7 +52,8 @@ export type CytoDFMProps = {
     selectedObjectTypes: string[],
     positionsFrozen: boolean,
     highlightingMode: EdgeHighlightingMode,
-    graphHorizontal: boolean
+    graphHorizontal: boolean,
+    showAlignments: boolean,
 }
 
 export interface CytoDFMMethods {
@@ -293,6 +298,8 @@ export const FilteredCytoDFM = forwardRef ((props: CytoDFMProps, ref: ForwardedR
         selectedNode: null,
         selectedEdge: null
     });
+    const [logAlignments, setLogAlignments] = useState<[string, AlignElement, AlignElement, AlignElement][]>([]);
+    const [modelAlignments, setModelAlignments] = useState<[string, AlignElement, AlignElement][]>([]);
     const cytoscapeRef = useRef<cytoscape.Core | null>(null);
 
     useImperativeHandle(ref, () => ({
@@ -326,6 +333,9 @@ export const FilteredCytoDFM = forwardRef ((props: CytoDFMProps, ref: ForwardedR
 
         if (!dfm)
             return [[], []];
+
+        console.log(logAlignments)
+        console.log(modelAlignments)
 
         const links: any[] = [];
         const legendObjectTypeColors: [string, string][] = [];
@@ -437,12 +447,120 @@ export const FilteredCytoDFM = forwardRef ((props: CytoDFMProps, ref: ForwardedR
             })
             // Filter out all nodes that are below the threshold. The cast is needed to tell TypeScript that all "null" nodes are removed.
             .filter((x) => x !== null) as cytoscape.ElementDefinition[];
-        const elements: cytoscape.ElementDefinition[] = filteredNodes.concat(links);
+
+        console.log(dfm)
+
+        let alignmentNodes = []
+        for (const [objectType, lastActivity, intermediateActivity, nextActivity] of logAlignments) {
+            if (selectedObjectTypes.includes(objectType)) {
+                const objectTypeColor = getObjectTypeColor(numberOfColorsNeeded, 0);
+
+                let lastNodeIndex: number = -1, intermediateNodeIndex: number = -1, nextNodeIndex: number = -1;
+                const nodes = dfm.nodes
+
+                for (let i = 0; i<nodes.length; i++){
+                    switch(nodes[i].label){
+                        case lastActivity.activity:
+                            lastNodeIndex = i
+                            break;
+                        case intermediateActivity.activity:
+                            intermediateNodeIndex = i
+                            break;
+                        case nextActivity.activity:
+                            nextNodeIndex = i
+                            break;
+                    }
+                }
+                console.log(lastNodeIndex)
+                console.log(intermediateNodeIndex)
+                console.log(nextNodeIndex)
+                const nodeIndices = [lastNodeIndex, intermediateNodeIndex, nextNodeIndex]
+
+                if(nodeIndices.indexOf(-1) > -1){
+                    break
+                }
+
+                const nodeLength = dfm.nodes.length
+                const sourceNodeIndex = nodeLength+1
+                const targetNodeIndex = nodeLength+2
+                const count = 0
+
+                // need node between lastNode and intermediateNode
+                alignmentNodes.push( {
+                    data: {
+                        id: `${sourceNodeIndex}`,
+                        //label: `${lastActivity.activity + "_" + intermediateActivity.activity} (${count})`,
+                        label: ".",
+                        numberId: sourceNodeIndex
+                    },
+                    classes: "activity",
+                    position: {
+                        x: 10,
+                        y: 10
+                    }
+                })
+
+                // need node between intermediateNode and nextNode
+                alignmentNodes.push( {
+                    data: {
+                        id: `${targetNodeIndex}`,
+                        label: ".",
+                        numberId: targetNodeIndex
+                    },
+                    classes: "activity",
+                    position: {
+                        x: 10,
+                        y: 10
+                    }
+                })
+
+                const neededEdges: number[][] = [
+                    // need edge between these two nodes
+                    [sourceNodeIndex, targetNodeIndex],
+                    // need edge between lastNode and sourceNode
+                    [lastNodeIndex, sourceNodeIndex],
+                    // need edge between sourceNode and intermediateNode
+                    [sourceNodeIndex, intermediateNodeIndex],
+                    // need edge between intermediateNode and targetNode
+                    [intermediateNodeIndex, targetNodeIndex],
+                    // need edge between targetNode and nextNode
+                    [targetNodeIndex, nextNodeIndex]
+                ]
+
+                for (const [source, target] of neededEdges){
+                    const classes = ""
+
+                    const width = `${0.2 * edgeHighlightingMode.edgeWidth(source, target, objectType, highlightingInitialData)}em`
+                    links.push(
+                        {
+                            data:
+                                {
+                                    source: `${source}`,
+                                    target: `${target}`,
+                                    label: `${count}`,
+                                    color: objectTypeColor,
+                                    width,
+
+                                    objectType,
+                                    sourceAsNumber: source,
+                                    targetAsNumber: target
+                                },
+                            classes
+                        });
+
+                    allNodesOfSelectedObjectTypes.add(source);
+                    allNodesOfSelectedObjectTypes.add(target);
+                }
+
+
+            }
+        }
+        const elements: cytoscape.ElementDefinition[] = filteredNodes.concat(alignmentNodes).concat(links);
 
         console.log(elements)
 
         return [elements, legendObjectTypeColors];
-    }, [props.dfm, boxedThreshold, props.selectedObjectTypes, props.highlightingMode]);
+    }, [props.dfm, boxedThreshold, props.selectedObjectTypes, props.highlightingMode, modelAlignments, logAlignments]);
 
 
     const selectedTraces = useMemo(() => {
@@ -602,6 +720,12 @@ export const FilteredCytoDFM = forwardRef ((props: CytoDFMProps, ref: ForwardedR
                 wheelSensitivity={0.2}
                 cy={registerEvents}
             />
+            { props.showAlignments && (
+                <AlignmentsData
+                    setLogAlignments={setLogAlignments}
+                    setModelAlignments={setModelAlignments}
+                ></AlignmentsData>
+            )}
             { legendObjectTypeColors.length > 0 &&
                 <ul className="CytoDFM-Overlay CytoDFM-Legend">
                     {

@@ -140,6 +140,7 @@ export const Home = connect<StateProps, DispatchProps, HomeProps, RootState>(map
                                  positionsFrozen={frozen}
                                  highlightingMode={highlightingModeInstance}
                                  graphHorizontal={props.session.graphHorizontal}
+                                 showAlignments={props.session.showAlignments}
                                  ref={graphRef}/>
                 {!dfm_query.result && !dfm_query.failed && (
                     <Box sx={{
