@@ -198,8 +198,9 @@ export const AlignmentsData = connect<StateProps, DispatchProps, AlignmentsDataP
                                     let [last_activity, next_activity] = getLastAndNextActivity(alignment, index);
                                     console.log("edge from " + last_activity.activity + " to " + model_activity.activity)
                                     console.log("and edge from " + model_activity.activity + " to " + next_activity.activity)
-                                    log_misalignments.push([objectType, last_activity, model_activity, next_activity])
-
+                                    if(!logEqualityChecker(log_misalignments, [objectType, last_activity, model_activity, next_activity])){
+                                        log_misalignments.push([objectType, last_activity, model_activity, next_activity])
+                                    }
                                 }
                             })
                             model_indices.forEach((index: number) => {
@@ -211,7 +212,9 @@ export const AlignmentsData = connect<StateProps, DispatchProps, AlignmentsDataP
                                     // loop on edge between last and next activity in model
                                     let [last_activity, next_activity] = getLastAndNextActivity(alignment, index);
                                     console.log("loop on edge from " + last_activity.activity + " to " + next_activity.activity)
-                                    model_misalignments.push([objectType, last_activity, next_activity])
+                                    if(!modelEqualityChecker(model_misalignments, [objectType, last_activity, next_activity])){
+                                        model_misalignments.push([objectType, last_activity, next_activity])
+                                    }
                                 }
                             })
                             //console.log(log_misalignments)
@@ -221,6 +224,8 @@ export const AlignmentsData = connect<StateProps, DispatchProps, AlignmentsDataP
                     }
                 })
             });
+            console.log(log_misalignments)
+            console.log(model_misalignments)
             props.setLogAlignments(log_misalignments)
             props.setModelAlignments(model_misalignments)
             //console.log(object_type_alignments['MATERIAL']);
@@ -257,4 +262,26 @@ function getLastAndNextActivity(alignment: TraceAlignment, index: number): Align
     }
 
     return [first_activity, second_activity];
+}
+
+function logEqualityChecker(alignments: [string, AlignElement, AlignElement, AlignElement][],
+                         new_entry: [string, AlignElement, AlignElement, AlignElement])
+{
+    for (const [s, a1, a2, a3] of alignments){
+        if(s === new_entry[0] && a1 === new_entry[1] && a2 === new_entry[2] && a3 === new_entry[3]){
+            return true
+        }
+    }
+    return false
+}
+
+function modelEqualityChecker(alignments: [string, AlignElement, AlignElement][],
+                            new_entry: [string, AlignElement, AlignElement])
+{
+    for (const [s, a1, a2] of alignments){
+        if(s === new_entry[0] && a1 === new_entry[1] && a2 === new_entry[2]){
+            return true
+        }
+    }
+    return false
 }

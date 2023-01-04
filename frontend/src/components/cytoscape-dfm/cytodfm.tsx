@@ -471,9 +471,9 @@ export const FilteredCytoDFM = forwardRef ((props: CytoDFMProps, ref: ForwardedR
                             break;
                     }
                 }
-                console.log(lastNodeIndex)
+                /*console.log(lastNodeIndex)
                 console.log(intermediateNodeIndex)
-                console.log(nextNodeIndex)
+                console.log(nextNodeIndex) */
                 const nodeIndices = [lastNodeIndex, intermediateNodeIndex, nextNodeIndex]
 
                 if(nodeIndices.indexOf(-1) > -1){
@@ -571,8 +571,8 @@ export const FilteredCytoDFM = forwardRef ((props: CytoDFMProps, ref: ForwardedR
                             break;
                     }
                 }
-                console.log(lastNodeIndex)
-                console.log(nextNodeIndex)
+                //console.log(lastNodeIndex)
+                //console.log(nextNodeIndex)
                 const nodeIndices = [lastNodeIndex, nextNodeIndex]
 
                 if (nodeIndices.indexOf(-1) > -1) {
