@@ -16,7 +16,7 @@ import {setAlignmentQueryState} from "../../redux/AlignmentsQuery/alingmentsquer
 
 import './Alignments.css';
 import {getObjectTypeColor} from "../../utils";
-import {TraceAlignment, TraceAlignments} from "../../redux/AlignmentsQuery/alignmentsquery.types";
+import {TraceAlignment, TraceAlignments, AlignElement} from "../../redux/AlignmentsQuery/alignmentsquery.types";
 import { AlignmentTable } from '../../components/AlignmentsTable/AlignmentsTable';
 
 type AlignmentProps = {
@@ -72,6 +72,8 @@ export const Alignments = connect<StateProps, DispatchProps, AlignmentProps, Roo
                             let misalignments: {[key:string]: string} = {}
                             const log_indices = alignment_copy['log_alignment'].map((item: any, index: number) => (item['activity'] === ">>" ? index : null)).filter((item: number | null) => item !== null);
                             const model_indices = alignment_copy['model_alignment'].map((item: any, index: number) => (item['activity'] === ">>" ? index : null)).filter((item: number | null) => item !== null);
+                            console.log(log_indices)
+                            console.log(model_indices)
                             log_indices.forEach((index: number) => {
                                 if(index === 0){
                                     console.log("something went wrong? Explori start should always be in the log")
@@ -80,6 +82,33 @@ export const Alignments = connect<StateProps, DispatchProps, AlignmentProps, Roo
                                 } else {
                                     // need edge from edge between last activity before to skipped activity and edge between skipped activity and next activity
                                     // search in model alignment for last activity and next activity (so go to start and use first activity that is not ">>")
+                                    // e.g: have index 7 where >> is seen in log, then go to model index 7 and go to start until we find first activity that is not >>
+                                    //      then same with going till end
+                                    //      create edge between these two found ones and the activity at index 7 (is never >> since we have log move)
+                                    const model_activity = alignment['model_alignment'][index];
+                                    let first_activity: AlignElement = {activity: ""};
+                                    for (let i = index-1; i >= 0; i--){
+                                        if (alignment['model_alignment'][i] !== ">>"){
+                                            first_activity = alignment['model_alignment'][i];
+                                            break;
+                                        }
+                                    }
+                                    if(first_activity.activity === ""){
+                                        console.log("something went wrong? Explori start should always be in the log")
+                                    }
+                                    let second_activity: AlignElement = {activity: ""};
+                                    for (let i = index+1; i <= alignment['log_alignment'].length; i++){
+                                        if (alignment['model_alignment'][i] !== ">>"){
+                                            second_activity = alignment['model_alignment'][i];
+                                            break;
+                                        }
+                                    }
+                                    if(second_activity.activity === ""){
+                                        console.log("something went wrong? Explori end should always be in the log")
+                                    }
+                                    console.log("edge from " + first_activity.activity + " to " + model_activity.activity)
+                                    console.log("and edge from " + model_activity.activity + " to " + second_activity.activity)
+
                                 }
                             })
                             model_indices.forEach((index: number) => {
@@ -89,11 +118,32 @@ export const Alignments = connect<StateProps, DispatchProps, AlignmentProps, Roo
                                     // loop on end node
                                 } else {
                                     // loop on edge between last and next activity in model
+                                    let first_activity: AlignElement = {activity: ""};
+                                    for (let i = index-1; i >= 0; i--){
+                                        if (alignment['model_alignment'][i] !== ">>"){
+                                            first_activity = alignment['model_alignment'][i];
+                                            break;
+                                        }
+                                    }
+                                    if(first_activity.activity === ""){
+                                        console.log("something went wrong? Explori start should always be in the log")
+                                    }
+                                    let second_activity: AlignElement = {activity: ""};
+                                    for (let i = index+1; i <= alignment['log_alignment'].length; i++){
+                                        if (alignment['model_alignment'][i] !== ">>"){
+                                            second_activity = alignment['model_alignment'][i];
+                                            break;
+                                        }
+                                    }
+                                    if(second_activity.activity === ""){
+                                        console.log("something went wrong? Explori end should always be in the log")
+                                    }
+                                    console.log("loop on edge from " + first_activity.activity + " to " + second_activity.activity)
                                 }
                             })
-                            console.log(alignment_copy)
-                            console.log(log_indices)
-                            console.log(model_indices)
+                            //console.log(alignment_copy)
+                            //console.log(log_indices)
+                            //console.log(model_indices)
                         }
                     }
                 })
