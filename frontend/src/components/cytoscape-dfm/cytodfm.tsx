@@ -480,10 +480,10 @@ export const FilteredCytoDFM = forwardRef ((props: CytoDFMProps, ref: ForwardedR
                     break
                 }
 
-                const nodeLength = dfm.nodes.length
-                const sourceNodeIndex = nodeLength+1
-                const targetNodeIndex = nodeLength+2
-                const count = 0
+                const nodeLength: number = dfm.nodes.length + alignmentNodes.length
+                const sourceNodeIndex: number = nodeLength+1
+                const targetNodeIndex: number = nodeLength+2
+                const count: number = 0
 
                 // need node between lastNode and intermediateNode
                 alignmentNodes.push( {
@@ -551,10 +551,92 @@ export const FilteredCytoDFM = forwardRef ((props: CytoDFMProps, ref: ForwardedR
                     allNodesOfSelectedObjectTypes.add(source);
                     allNodesOfSelectedObjectTypes.add(target);
                 }
-
-
             }
         }
+
+        for (const [objectType, lastActivity, nextActivity] of logAlignments) {
+            if (selectedObjectTypes.includes(objectType)) {
+                const objectTypeColor = getObjectTypeColor(numberOfColorsNeeded, 0);
+
+                let lastNodeIndex: number = -1, nextNodeIndex: number = -1;
+                const nodes = dfm.nodes
+
+                for (let i = 0; i < nodes.length; i++) {
+                    switch (nodes[i].label) {
+                        case lastActivity.activity:
+                            lastNodeIndex = i
+                            break;
+                        case nextActivity.activity:
+                            nextNodeIndex = i
+                            break;
+                    }
+                }
+                console.log(lastNodeIndex)
+                console.log(nextNodeIndex)
+                const nodeIndices = [lastNodeIndex, nextNodeIndex]
+
+                if (nodeIndices.indexOf(-1) > -1) {
+                    break
+                }
+
+                const nodeLength: number = dfm.nodes.length + alignmentNodes.length
+                const sourceNodeIndex: number = nodeLength+1
+                const count: number = 0
+
+                // need node between lastNode and nextNode
+                alignmentNodes.push({
+                    data: {
+                        id: `${sourceNodeIndex}`,
+                        //label: `${lastActivity.activity + "_" + intermediateActivity.activity} (${count})`,
+                        label: ".",
+                        numberId: sourceNodeIndex
+                    },
+                    classes: "activity",
+                    position: {
+                        x: 10,
+                        y: 10
+                    }
+                })
+
+                const neededEdges: number[][] = [
+                    // need loop on new node
+                    [sourceNodeIndex, sourceNodeIndex],
+                    // need edge between lastNode and sourceNode
+                    [lastNodeIndex, sourceNodeIndex],
+                    // need edge between sourceNode and nextNode
+                    [sourceNodeIndex, nextNodeIndex]
+                ]
+
+                for (const [source, target] of neededEdges) {
+                    let classes = ""
+                    if (source === target) {
+                        classes = "loop";
+                    }
+
+                    const width = `${0.2 * edgeHighlightingMode.edgeWidth(source, target, objectType, highlightingInitialData)}em`
+                    links.push(
+                        {
+                            data:
+                                {
+                                    source: `${source}`,
+                                    target: `${target}`,
+                                    label: `${count}`,
+                                    color: objectTypeColor,
+                                    width,
+
+                                    objectType,
+                                    sourceAsNumber: source,
+                                    targetAsNumber: target
+                                },
+                            classes
+                        });
+
+                    allNodesOfSelectedObjectTypes.add(source);
+                    allNodesOfSelectedObjectTypes.add(target);
+                }
+            }
+        }
+
         const elements: cytoscape.ElementDefinition[] = filteredNodes.concat(alignmentNodes).concat(links);
 
         console.log(elements)
