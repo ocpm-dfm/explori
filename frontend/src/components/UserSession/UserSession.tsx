@@ -16,7 +16,7 @@ type BackendSession = {
     object_types: string[],
     highlighting_mode: string | null
     graph_horizontal: boolean,
-    show_alignments: boolean,
+    alignment_mode: string,
 }
 
 export function UserSession(props: {storeOrRestore: string, userSessionState?: SessionState, stateChangeCallback?: any}) {
@@ -201,7 +201,7 @@ function translateToBackend(session: SessionState): BackendSession{
         object_types: session.selectedObjectTypes,
         highlighting_mode: session.highlightingMode,
         graph_horizontal: session.graphHorizontal,
-        show_alignments: session.showAlignments,
+        alignment_mode: session.alignmentMode,
     }
 }
 
@@ -215,6 +215,6 @@ function translateToFrontend(session: BackendSession): SessionState {
         alreadySelectedAllObjectTypesInitially: true,
         highlightingMode: session.highlighting_mode,
         graphHorizontal: session.graph_horizontal,
-        showAlignments: session.show_alignments,
+        alignmentMode: session.alignment_mode,
     }
 }

@@ -11,7 +11,7 @@ import {
     SET_SELECTED_OBJECT_TYPES,
     SET_HIGHLIGHTING_MODE,
     SET_GRAPH_HORIZONTAL,
-    SHOW_ALIGNMENTS
+    SET_ALIGNMENT_MODE
 } from './userSession.types'
 import {ThunkDispatch} from "@reduxjs/toolkit";
 import {RootState} from "../store";
@@ -27,7 +27,7 @@ export const saveUserSession = (session: SessionState) => async (dispatch: Thunk
         object_types: session.selectedObjectTypes,
         highlighting_mode: session.highlightingMode,
         graph_horizontal: session.graphHorizontal,
-        show_alignments: session.showAlignments,
+        alignment_mode: session.alignmentMode,
     }
 
     await fetch(uri, {
@@ -137,9 +137,9 @@ export const setGraphHorizontal = (horizontal: boolean) => (dispatch: Function) 
     });
 }
 
-export const setAlignmentToggle = (show: boolean) => (dispatch: Function) => {
+export const setAlignmentMode = (mode: string) => (dispatch: Function) => {
     dispatch({
-        type: SHOW_ALIGNMENTS,
-        payload: show,
+        type: SET_ALIGNMENT_MODE,
+        payload: mode,
     })
 }

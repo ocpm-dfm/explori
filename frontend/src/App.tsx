@@ -94,7 +94,7 @@ export function App(props: Props) {
                 alreadySelectedAllObjectTypesInitially: false,
                 highlightingMode: "none",
                 graphHorizontal: false,
-                showAlignments: false,
+                alignmentMode: "none",
             });
         }
         localStorage.setItem("explori-currentOcel", newOcel);

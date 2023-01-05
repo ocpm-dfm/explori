@@ -53,7 +53,7 @@ export type CytoDFMProps = {
     positionsFrozen: boolean,
     highlightingMode: EdgeHighlightingMode,
     graphHorizontal: boolean,
-    showAlignments: boolean,
+    alignmentMode: string,
 }
 
 export interface CytoDFMMethods {
@@ -490,7 +490,8 @@ export const FilteredCytoDFM = forwardRef ((props: CytoDFMProps, ref: ForwardedR
         let alignmentEdges = []
         let objectTypesList = Object.keys(dfm.subgraphs)
 
-        if(props.showAlignments) {
+        console.log(props.alignmentMode)
+        if(props.alignmentMode !== "none") {
             for (const [objectType, lastActivity, intermediateActivity, nextActivity] of logAlignments) {
                 if (selectedObjectTypes.includes(objectType)) {
                     const objectTypeColor = getObjectTypeColor(numberOfColorsNeeded, objectTypesList.indexOf(objectType));
@@ -525,34 +526,36 @@ export const FilteredCytoDFM = forwardRef ((props: CytoDFMProps, ref: ForwardedR
                     const targetNodeIndex: number = nodeLength + 2
                     const count: number = 0
 
-                    // need node between lastNode and intermediateNode
-                    alignmentNodes.push({
-                        data: {
-                            id: `${sourceNodeIndex}`,
-                            //label: `${lastActivity.activity + "_" + intermediateActivity.activity} (${count})`,
-                            label: ".",
-                            numberId: sourceNodeIndex
-                        },
-                        classes: "activity",
-                        position: {
-                            x: 10,
-                            y: 10
-                        }
-                    })
+                    if(props.alignmentMode === "expansive"){
+                        // need node between lastNode and intermediateNode
+                        alignmentNodes.push({
+                            data: {
+                                id: `${sourceNodeIndex}`,
+                                //label: `${lastActivity.activity + "_" + intermediateActivity.activity} (${count})`,
+                                label: ".",
+                                numberId: sourceNodeIndex
+                            },
+                            classes: "activity",
+                            position: {
+                                x: 10,
+                                y: 10
+                            }
+                        })
 
-                    // need node between intermediateNode and nextNode
-                    alignmentNodes.push({
-                        data: {
-                            id: `${targetNodeIndex}`,
-                            label: ">>",
-                            numberId: targetNodeIndex
-                        },
-                        classes: "activity",
-                        position: {
-                            x: 10,
-                            y: 10
-                        }
-                    })
+                        // need node between intermediateNode and nextNode
+                        alignmentNodes.push({
+                            data: {
+                                id: `${targetNodeIndex}`,
+                                label: ">>",
+                                numberId: targetNodeIndex
+                            },
+                            classes: "activity",
+                            position: {
+                                x: 10,
+                                y: 10
+                            }
+                        })
+                    }
 
                     const neededEdgesExpansive: number[][] = [
                         // need edge between these two nodes
@@ -567,9 +570,16 @@ export const FilteredCytoDFM = forwardRef ((props: CytoDFMProps, ref: ForwardedR
                         [targetNodeIndex, nextNodeIndex]
                     ]
 
-                    const neededEdges: number[][] = [
+                    const neededEdgesSimple: number[][] = [
                         [lastNodeIndex, nextNodeIndex]
                     ]
+
+                    let neededEdges;
+                    if(props.alignmentMode === "simple"){
+                        neededEdges = neededEdgesSimple
+                    } else {
+                        neededEdges = neededEdgesExpansive
+                    }
 
                     for (const [source, target] of neededEdges) {
                         const classes = "log-move"
@@ -627,20 +637,22 @@ export const FilteredCytoDFM = forwardRef ((props: CytoDFMProps, ref: ForwardedR
                     const sourceNodeIndex: number = nodeLength + 1
                     const count: number = 0
 
-                    // need node between lastNode and nextNode
-                    alignmentNodes.push({
-                        data: {
-                            id: `${sourceNodeIndex}`,
-                            //label: `${lastActivity.activity + "_" + intermediateActivity.activity} (${count})`,
-                            label: ">>",
-                            numberId: sourceNodeIndex
-                        },
-                        classes: "activity",
-                        position: {
-                            x: 10,
-                            y: 10
-                        }
-                    })
+                    if(props.alignmentMode === "expansive") {
+                        // need node between lastNode and nextNode
+                        alignmentNodes.push({
+                            data: {
+                                id: `${sourceNodeIndex}`,
+                                //label: `${lastActivity.activity + "_" + intermediateActivity.activity} (${count})`,
+                                label: ">>",
+                                numberId: sourceNodeIndex
+                            },
+                            classes: "activity",
+                            position: {
+                                x: 10,
+                                y: 10
+                            }
+                        })
+                    }
 
                     const neededEdgesExpansive: number[][] = [
                         // need loop on new node
@@ -651,9 +663,16 @@ export const FilteredCytoDFM = forwardRef ((props: CytoDFMProps, ref: ForwardedR
                         [sourceNodeIndex, nextNodeIndex]
                     ]
 
-                    const neededEdges: number[][] = [
+                    const neededEdgesSimple: number[][] = [
                         [lastNodeIndex, nextNodeIndex]
                     ]
+
+                    let neededEdges;
+                    if(props.alignmentMode === "simple"){
+                        neededEdges = neededEdgesSimple
+                    } else {
+                        neededEdges = neededEdgesExpansive
+                    }
 
                     for (const [source, target] of neededEdges) {
                         let classes = ""
@@ -693,7 +712,7 @@ export const FilteredCytoDFM = forwardRef ((props: CytoDFMProps, ref: ForwardedR
         console.log(elements)
 
         return [elements, legendObjectTypeColors];
-    }, [props.dfm, boxedThreshold, props.selectedObjectTypes, props.highlightingMode, modelAlignments, logAlignments, props.showAlignments]);
+    }, [props.dfm, boxedThreshold, props.selectedObjectTypes, props.highlightingMode, modelAlignments, logAlignments, props.alignmentMode]);
 
 
     const selectedTraces = useMemo(() => {
@@ -853,7 +872,7 @@ export const FilteredCytoDFM = forwardRef ((props: CytoDFMProps, ref: ForwardedR
                 wheelSensitivity={0.2}
                 cy={registerEvents}
             />
-            { props.showAlignments && (
+            { props.alignmentMode !== "none" && (
                 <AlignmentsData
                     setLogAlignments={setLogAlignments}
                     setModelAlignments={setModelAlignments}

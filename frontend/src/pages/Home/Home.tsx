@@ -18,7 +18,7 @@ import {
     setHighlightedMode,
     setSelectedObjectTypes,
     setThreshold,
-    setAlignmentToggle
+    setAlignmentMode
 } from "../../redux/UserSession/userSession.actions";
 import {setDfmQueryState} from "../../redux/DFMQuery/dfmquery";
 import {resetAlignmentQueryState} from "../../redux/AlignmentsQuery/alingmentsquery";
@@ -36,6 +36,12 @@ enum HighlightingModeName {
     NoHighlighting = "none",
     CountBased = "edgeCounts",
     LogarithmicCount = "logarithmicEdgeCounts"
+}
+
+enum AlignmentModeName {
+    NoAlignments = "none",
+    Simple = "simple",
+    Expansive = "expansive"
 }
 
 interface HomeProps {
@@ -59,8 +65,8 @@ const mapDispatchToProps = (dispatch: ThunkDispatch<any, any, any>, props: HomeP
     setGraphHorizontal: async (horizontal: boolean) => {
         dispatch(setGraphHorizontal(horizontal))
     },
-    setAlignmentToggle: async(show: boolean) => {
-        dispatch(setAlignmentToggle(show))
+    setAlignmentMode: async(mode: string) => {
+        dispatch(setAlignmentMode(mode))
     },
     setDfmQuery: (state: AsyncApiState<DirectlyFollowsMultigraph>) => {
         dispatch(setDfmQueryState(state));
@@ -119,8 +125,8 @@ export const Home = connect<StateProps, DispatchProps, HomeProps, RootState>(map
                 setSelectedHighlightingMode={props.setHighlightingMode}
                 graphHorizontal={props.session.graphHorizontal}
                 setGraphHorizontal={props.setGraphHorizontal}
-                showAlignments={props.session.showAlignments}
-                setAlignmentToggle={props.setAlignmentToggle}
+                selectedAlignmentMode={(props.session.alignmentMode as AlignmentModeName) || AlignmentModeName.NoAlignments}
+                setAlignmentMode={props.setAlignmentMode}
             />
             <NewObjectSelection
                 availableObjectTypes={availableObjectTypes}
@@ -140,7 +146,7 @@ export const Home = connect<StateProps, DispatchProps, HomeProps, RootState>(map
                                  positionsFrozen={frozen}
                                  highlightingMode={highlightingModeInstance}
                                  graphHorizontal={props.session.graphHorizontal}
-                                 showAlignments={props.session.showAlignments}
+                                 alignmentMode={props.session.alignmentMode}
                                  ref={graphRef}/>
                 {!dfm_query.result && !dfm_query.failed && (
                     <Box sx={{
@@ -189,8 +195,8 @@ type VizSettingsProps = {
 
     graphHorizontal: boolean,
     setGraphHorizontal: ((mode: boolean) => void) | ((mode: boolean) => Promise<void>),
-    showAlignments: boolean,
-    setAlignmentToggle: (show: boolean) => void,
+    selectedAlignmentMode: AlignmentModeName,
+    setAlignmentMode: (mode: string) => void,
 }
 
 const VizSettings = (props: VizSettingsProps) => {
@@ -220,13 +226,17 @@ const VizSettings = (props: VizSettingsProps) => {
                 onClick={() => props.setGraphHorizontal(true)}/>
             <div className="VizSettings-Label">Show alignments</div>
             <DropdownCheckbox
-                selected={!props.showAlignments}
-                label="Don't show"
-                onClick={() => props.setAlignmentToggle(false)}/>
+                selected={props.selectedAlignmentMode === AlignmentModeName.NoAlignments}
+                label="None"
+                onClick={() => props.setAlignmentMode(AlignmentModeName.NoAlignments)}/>
             <DropdownCheckbox
-                selected={props.showAlignments}
-                label="Show"
-                onClick={() => props.setAlignmentToggle(true)}/>
+                selected={props.selectedAlignmentMode === AlignmentModeName.Simple}
+                label="Simple"
+                onClick={() => props.setAlignmentMode(AlignmentModeName.Simple)}/>
+            <DropdownCheckbox
+                selected={props.selectedAlignmentMode === AlignmentModeName.Expansive}
+                label="Expansive"
+                onClick={() => props.setAlignmentMode(AlignmentModeName.Expansive)}/>
         </NavbarDropdown>
     )
 }

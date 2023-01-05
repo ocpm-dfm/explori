@@ -12,7 +12,7 @@ export const testUserSession = (store: any) => {
         alreadySelectedAllObjectTypesInitially: true,
         highlightingMode: "none",
         graphHorizontal: false,
-        showAlignments: false,
+        alignmentMode: "none",
     }))
 
     store.dispatch(saveUserSession(store.getState().session))
