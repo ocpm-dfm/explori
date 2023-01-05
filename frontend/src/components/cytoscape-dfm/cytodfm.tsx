@@ -224,6 +224,41 @@ const graphStylesheet: cytoscape.Stylesheet[] = [
                 // Default curve-If it is style, the arrow will not be displayed, so specify it
                 'curve-style': 'bezier',
                 'label': 'data(label)',
+                "line-style": "solid",
+                'text-wrap': 'wrap',
+                'color': 'black',
+            }
+    },
+    {
+        "selector": '.log-move',  // For all edges
+        "style":
+            {
+                "width": "data(width)",
+                "target-arrow-color": "data(color)",  // Arrow color
+                "target-arrow-shape": "triangle",  // Arrow shape
+                "line-color": "data(color)",  // edge color
+                'arrow-scale': 2,  // Arrow size
+                // Default curve-If it is style, the arrow will not be displayed, so specify it
+                'curve-style': 'bezier',
+                'label': 'data(label)',
+                "line-style": "dashed",
+                'text-wrap': 'wrap',
+                'color': 'black',
+            }
+    },
+    {
+        "selector": '.model-move',  // For all edges
+        "style":
+            {
+                "width": "data(width)",
+                "target-arrow-color": "data(color)",  // Arrow color
+                "target-arrow-shape": "triangle",  // Arrow shape
+                "line-color": "data(color)",  // edge color
+                'arrow-scale': 2,  // Arrow size
+                // Default curve-If it is style, the arrow will not be displayed, so specify it
+                'curve-style': 'bezier',
+                'label': 'data(label)',
+                "line-style": "dotted",
                 'text-wrap': 'wrap',
                 'color': 'black',
             }
@@ -374,6 +409,7 @@ export const FilteredCytoDFM = forwardRef ((props: CytoDFMProps, ref: ForwardedR
                                     source: `${edge.source}`,
                                     target: `${edge.target}`,
                                     label: `${count}`,
+                                    style: 'solid',
                                     color: objectTypeColor,
                                     width,
 
@@ -508,7 +544,7 @@ export const FilteredCytoDFM = forwardRef ((props: CytoDFMProps, ref: ForwardedR
                     alignmentNodes.push({
                         data: {
                             id: `${targetNodeIndex}`,
-                            label: ".",
+                            label: ">>",
                             numberId: targetNodeIndex
                         },
                         classes: "activity",
@@ -518,7 +554,7 @@ export const FilteredCytoDFM = forwardRef ((props: CytoDFMProps, ref: ForwardedR
                         }
                     })
 
-                    const neededEdges: number[][] = [
+                    const neededEdgesExpansive: number[][] = [
                         // need edge between these two nodes
                         [sourceNodeIndex, targetNodeIndex],
                         // need edge between lastNode and sourceNode
@@ -531,8 +567,12 @@ export const FilteredCytoDFM = forwardRef ((props: CytoDFMProps, ref: ForwardedR
                         [targetNodeIndex, nextNodeIndex]
                     ]
 
+                    const neededEdges: number[][] = [
+                        [lastNodeIndex, nextNodeIndex]
+                    ]
+
                     for (const [source, target] of neededEdges) {
-                        const classes = ""
+                        const classes = "log-move"
 
                         const width = `${0.2 * edgeHighlightingMode.edgeWidth(source, target, objectType, highlightingInitialData)}em`
                         alignmentEdges.push(
@@ -558,7 +598,7 @@ export const FilteredCytoDFM = forwardRef ((props: CytoDFMProps, ref: ForwardedR
                 }
             }
 
-            for (const [objectType, lastActivity, nextActivity] of logAlignments) {
+            for (const [objectType, lastActivity, nextActivity] of modelAlignments) {
                 if (selectedObjectTypes.includes(objectType)) {
                     const objectTypeColor = getObjectTypeColor(numberOfColorsNeeded, objectTypesList.indexOf(objectType));
 
@@ -592,7 +632,7 @@ export const FilteredCytoDFM = forwardRef ((props: CytoDFMProps, ref: ForwardedR
                         data: {
                             id: `${sourceNodeIndex}`,
                             //label: `${lastActivity.activity + "_" + intermediateActivity.activity} (${count})`,
-                            label: ".",
+                            label: ">>",
                             numberId: sourceNodeIndex
                         },
                         classes: "activity",
@@ -602,13 +642,17 @@ export const FilteredCytoDFM = forwardRef ((props: CytoDFMProps, ref: ForwardedR
                         }
                     })
 
-                    const neededEdges: number[][] = [
+                    const neededEdgesExpansive: number[][] = [
                         // need loop on new node
-                        [sourceNodeIndex, sourceNodeIndex],
+                        //[sourceNodeIndex, sourceNodeIndex],
                         // need edge between lastNode and sourceNode
                         [lastNodeIndex, sourceNodeIndex],
                         // need edge between sourceNode and nextNode
                         [sourceNodeIndex, nextNodeIndex]
+                    ]
+
+                    const neededEdges: number[][] = [
+                        [lastNodeIndex, nextNodeIndex]
                     ]
 
                     for (const [source, target] of neededEdges) {
@@ -616,6 +660,7 @@ export const FilteredCytoDFM = forwardRef ((props: CytoDFMProps, ref: ForwardedR
                         if (source === target) {
                             classes = "loop";
                         }
+                        classes = 'model-move'
 
                         const width = `${0.2 * edgeHighlightingMode.edgeWidth(source, target, objectType, highlightingInitialData)}em`
                         alignmentEdges.push(
@@ -625,6 +670,7 @@ export const FilteredCytoDFM = forwardRef ((props: CytoDFMProps, ref: ForwardedR
                                         source: `${source}`,
                                         target: `${target}`,
                                         label: `${count}`,
+                                        style: 'dotted',
                                         color: objectTypeColor,
                                         width,
 
