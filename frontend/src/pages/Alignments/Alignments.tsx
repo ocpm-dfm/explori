@@ -268,7 +268,7 @@ function logEqualityChecker(alignments: [string, AlignElement, AlignElement, Ali
                          new_entry: [string, AlignElement, AlignElement, AlignElement])
 {
     for (const [s, a1, a2, a3] of alignments){
-        if(s === new_entry[0] && a1 === new_entry[1] && a2 === new_entry[2] && a3 === new_entry[3]){
+        if(s === new_entry[0] && a1.activity === new_entry[1].activity && a2.activity === new_entry[2].activity && a3.activity === new_entry[3].activity){
             return true
         }
     }
@@ -279,7 +279,7 @@ function modelEqualityChecker(alignments: [string, AlignElement, AlignElement][]
                             new_entry: [string, AlignElement, AlignElement])
 {
     for (const [s, a1, a2] of alignments){
-        if(s === new_entry[0] && a1 === new_entry[1] && a2 === new_entry[2]){
+        if(s === new_entry[0] && a1.activity === new_entry[1].activity && a2.activity === new_entry[2].activity){
             return true
         }
     }

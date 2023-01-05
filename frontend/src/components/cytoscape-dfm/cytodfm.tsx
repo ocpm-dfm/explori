@@ -454,8 +454,6 @@ export const FilteredCytoDFM = forwardRef ((props: CytoDFMProps, ref: ForwardedR
         let alignmentEdges = []
 
         if(props.showAlignments) {
-
-
             for (const [objectType, lastActivity, intermediateActivity, nextActivity] of logAlignments) {
                 if (selectedObjectTypes.includes(objectType)) {
                     const objectTypeColor = getObjectTypeColor(numberOfColorsNeeded, 0);
