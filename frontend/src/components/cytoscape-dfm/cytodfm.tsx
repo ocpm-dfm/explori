@@ -452,11 +452,12 @@ export const FilteredCytoDFM = forwardRef ((props: CytoDFMProps, ref: ForwardedR
 
         let alignmentNodes = []
         let alignmentEdges = []
+        let objectTypesList = Object.keys(dfm.subgraphs)
 
         if(props.showAlignments) {
             for (const [objectType, lastActivity, intermediateActivity, nextActivity] of logAlignments) {
                 if (selectedObjectTypes.includes(objectType)) {
-                    const objectTypeColor = getObjectTypeColor(numberOfColorsNeeded, 0);
+                    const objectTypeColor = getObjectTypeColor(numberOfColorsNeeded, objectTypesList.indexOf(objectType));
 
                     let lastNodeIndex: number = -1, intermediateNodeIndex: number = -1, nextNodeIndex: number = -1;
                     const nodes = dfm.nodes
@@ -559,7 +560,7 @@ export const FilteredCytoDFM = forwardRef ((props: CytoDFMProps, ref: ForwardedR
 
             for (const [objectType, lastActivity, nextActivity] of logAlignments) {
                 if (selectedObjectTypes.includes(objectType)) {
-                    const objectTypeColor = getObjectTypeColor(numberOfColorsNeeded, 0);
+                    const objectTypeColor = getObjectTypeColor(numberOfColorsNeeded, objectTypesList.indexOf(objectType));
 
                     let lastNodeIndex: number = -1, nextNodeIndex: number = -1;
                     const nodes = dfm.nodes
