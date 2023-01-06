@@ -13,6 +13,7 @@ export const testUserSession = (store: any) => {
         highlightingMode: "none",
         graphHorizontal: false,
         alignmentMode: "none",
+        legendPosition: "none",
     }))
 
     store.dispatch(saveUserSession(store.getState().session))

@@ -13,10 +13,27 @@
     background-color: white;
 }
 
-.CytoDFM-Legend {
+.CytoDFM-top-left {
     top: 1rem;
     left: 1rem;
+}
 
+.CytoDFM-top-right {
+    top: 1rem;
+    right: 1rem;
+}
+
+.CytoDFM-bottom-left {
+    bottom: 1rem;
+    left: 1rem;
+}
+
+.CytoDFM-bottom-right {
+    bottom: 1rem;
+    right: 1rem;
+}
+
+.CytoDFM-Legend {
     list-style: none;
     padding: 0.5rem 1rem;
 }

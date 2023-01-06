@@ -17,6 +17,7 @@ type BackendSession = {
     highlighting_mode: string | null
     graph_horizontal: boolean,
     alignment_mode: string,
+    legend_position: string,
 }
 
 export function UserSession(props: {storeOrRestore: string, userSessionState?: SessionState, stateChangeCallback?: any}) {
@@ -202,6 +203,7 @@ function translateToBackend(session: SessionState): BackendSession{
         highlighting_mode: session.highlightingMode,
         graph_horizontal: session.graphHorizontal,
         alignment_mode: session.alignmentMode,
+        legend_position: session.legendPosition,
     }
 }
 
@@ -216,5 +218,6 @@ function translateToFrontend(session: BackendSession): SessionState {
         highlightingMode: session.highlighting_mode,
         graphHorizontal: session.graph_horizontal,
         alignmentMode: session.alignment_mode,
+        legendPosition: session.legend_position,
     }
 }

@@ -11,7 +11,8 @@ import {
     SET_SELECTED_OBJECT_TYPES,
     SET_HIGHLIGHTING_MODE,
     SET_GRAPH_HORIZONTAL,
-    SET_ALIGNMENT_MODE
+    SET_ALIGNMENT_MODE,
+    SET_LEGEND_POSITION
 } from './userSession.types'
 import {ThunkDispatch} from "@reduxjs/toolkit";
 import {RootState} from "../store";
@@ -141,5 +142,12 @@ export const setAlignmentMode = (mode: string) => (dispatch: Function) => {
     dispatch({
         type: SET_ALIGNMENT_MODE,
         payload: mode,
+    })
+}
+
+export const setLegendPosition = (position: string) => (dispatch: Function) => {
+    dispatch({
+        type: SET_LEGEND_POSITION,
+        payload: position,
     })
 }

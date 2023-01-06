@@ -10,6 +10,7 @@ const USER_SESSION_INITIAL_STATE = {
     highlightingMode: "none",
     graphHorizontal: false,
     alignmentMode: "none",
+    legendPosition: "top-left",
 } as SessionState
 
 export default USER_SESSION_INITIAL_STATE

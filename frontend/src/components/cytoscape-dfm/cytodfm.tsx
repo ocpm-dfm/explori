@@ -54,6 +54,7 @@ export type CytoDFMProps = {
     highlightingMode: EdgeHighlightingMode,
     graphHorizontal: boolean,
     alignmentMode: string,
+    legendPosition: string,
 }
 
 export interface CytoDFMMethods {
@@ -877,8 +878,8 @@ export const FilteredCytoDFM = forwardRef ((props: CytoDFMProps, ref: ForwardedR
                     setModelAlignments={setModelAlignments}
                 ></AlignmentsData>
             )}
-            { legendObjectTypeColors.length > 0 &&
-                <ul className="CytoDFM-Overlay CytoDFM-Legend">
+            { legendObjectTypeColors.length > 0 && props.legendPosition !== "none" &&
+                <ul className={`CytoDFM-Overlay CytoDFM-Legend CytoDFM-${props.legendPosition}`}>
                     {
                         legendObjectTypeColors.map(([type, color]) => (
                             <li key={type}>
@@ -903,7 +904,6 @@ export const FilteredCytoDFM = forwardRef ((props: CytoDFMProps, ref: ForwardedR
                     }
                     {
                         selection.selectedEdge !== null &&
-                        // temporary fix for clicking on edges
                         props.dfm.nodes[selection.selectedEdge[1]] !== undefined &&
                         props.dfm.nodes[selection.selectedEdge[2]] !== undefined &&
                         <h3 className="CytoDFM-Infobox-Header">

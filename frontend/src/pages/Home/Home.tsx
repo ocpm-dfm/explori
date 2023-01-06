@@ -18,7 +18,8 @@ import {
     setHighlightedMode,
     setSelectedObjectTypes,
     setThreshold,
-    setAlignmentMode
+    setAlignmentMode,
+    setLegendPosition,
 } from "../../redux/UserSession/userSession.actions";
 import {setDfmQueryState} from "../../redux/DFMQuery/dfmquery";
 import {resetAlignmentQueryState} from "../../redux/AlignmentsQuery/alingmentsquery";
@@ -44,6 +45,15 @@ enum AlignmentModeName {
     Expansive = "expansive"
 }
 
+enum LegendPositionName {
+    None = "none",
+    TopLeft = "top-left",
+    TopRight = "top-right",
+    BottomLeft = "bottom-left",
+    BottomRight = "bottom-right",
+
+}
+
 interface HomeProps {
 
 }
@@ -67,6 +77,9 @@ const mapDispatchToProps = (dispatch: ThunkDispatch<any, any, any>, props: HomeP
     },
     setAlignmentMode: async(mode: string) => {
         dispatch(setAlignmentMode(mode))
+    },
+    setLegendPosition: async(position: string) => {
+        dispatch(setLegendPosition(position))
     },
     setDfmQuery: (state: AsyncApiState<DirectlyFollowsMultigraph>) => {
         dispatch(setDfmQueryState(state));
@@ -127,6 +140,8 @@ export const Home = connect<StateProps, DispatchProps, HomeProps, RootState>(map
                 setGraphHorizontal={props.setGraphHorizontal}
                 selectedAlignmentMode={(props.session.alignmentMode as AlignmentModeName) || AlignmentModeName.NoAlignments}
                 setAlignmentMode={props.setAlignmentMode}
+                selectedLegendPosition={(props.session.legendPosition as LegendPositionName) || LegendPositionName.None}
+                setLegendPosition={props.setLegendPosition}
             />
             <NewObjectSelection
                 availableObjectTypes={availableObjectTypes}
@@ -147,6 +162,7 @@ export const Home = connect<StateProps, DispatchProps, HomeProps, RootState>(map
                                  highlightingMode={highlightingModeInstance}
                                  graphHorizontal={props.session.graphHorizontal}
                                  alignmentMode={props.session.alignmentMode}
+                                 legendPosition={props.session.legendPosition}
                                  ref={graphRef}/>
                 {!dfm_query.result && !dfm_query.failed && (
                     <Box sx={{
@@ -197,6 +213,8 @@ type VizSettingsProps = {
     setGraphHorizontal: ((mode: boolean) => void) | ((mode: boolean) => Promise<void>),
     selectedAlignmentMode: AlignmentModeName,
     setAlignmentMode: (mode: string) => void,
+    selectedLegendPosition: LegendPositionName,
+    setLegendPosition: (position: string) => void,
 }
 
 const VizSettings = (props: VizSettingsProps) => {
@@ -237,6 +255,27 @@ const VizSettings = (props: VizSettingsProps) => {
                 selected={props.selectedAlignmentMode === AlignmentModeName.Expansive}
                 label="Expansive"
                 onClick={() => props.setAlignmentMode(AlignmentModeName.Expansive)}/>
+            <div className="VizSettings-Label">Legend position</div>
+            <DropdownCheckbox
+                selected={props.selectedLegendPosition === LegendPositionName.None}
+                label="None"
+                onClick={() => props.setLegendPosition(LegendPositionName.None)}/>
+            <DropdownCheckbox
+                selected={props.selectedLegendPosition === LegendPositionName.TopLeft}
+                label="Top left"
+                onClick={() => props.setLegendPosition(LegendPositionName.TopLeft)}/>
+            <DropdownCheckbox
+                selected={props.selectedLegendPosition === LegendPositionName.TopRight}
+                label="Top right"
+                onClick={() => props.setLegendPosition(LegendPositionName.TopRight)}/>
+            <DropdownCheckbox
+                selected={props.selectedLegendPosition === LegendPositionName.BottomLeft}
+                label="Bottom left"
+                onClick={() => props.setLegendPosition(LegendPositionName.BottomLeft)}/>
+            <DropdownCheckbox
+                selected={props.selectedLegendPosition === LegendPositionName.BottomRight}
+                label="Bottom right"
+                onClick={() => props.setLegendPosition(LegendPositionName.BottomRight)}/>
         </NavbarDropdown>
     )
 }
