@@ -176,13 +176,10 @@ export const AlignmentsData = connect<StateProps, DispatchProps, AlignmentsDataP
                 Object.keys(traceWithAlignments).forEach((objectType) => {
                     const alignment = traceWithAlignments[objectType];
                     if (alignment) {
-                        //console.log(alignment)
                         if(alignment['log_alignment'].length === alignment['model_alignment'].length){
                             let alignment_copy = JSON.parse(JSON.stringify(alignment));
                             const log_indices = alignment_copy['log_alignment'].map((item: any, index: number) => (item['activity'] === ">>" ? index : null)).filter((item: number | null) => item !== null);
                             const model_indices = alignment_copy['model_alignment'].map((item: any, index: number) => (item['activity'] === ">>" ? index : null)).filter((item: number | null) => item !== null);
-                            //console.log(log_indices)
-                            //console.log(model_indices)
                             log_indices.forEach((index: number) => {
                                 if(index === 0){
                                     console.log("something went wrong? Explori start should always be in the log")
@@ -212,7 +209,6 @@ export const AlignmentsData = connect<StateProps, DispatchProps, AlignmentsDataP
                                 } else {
                                     // loop on edge between last and next activity in model
                                     let [last_activity, next_activity] = getLastAndNextActivity(alignment, index);
-                                    console.log(alignment)
                                     let element = modelEqualityChecker(model_misalignments, [objectType, last_activity, next_activity])
                                     if(element === null){
                                         model_misalignments.push([objectType, last_activity, next_activity, [clearAndCutAlignment(alignment_copy)]])

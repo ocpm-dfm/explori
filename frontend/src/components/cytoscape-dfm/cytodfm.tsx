@@ -333,8 +333,8 @@ export const FilteredCytoDFM = forwardRef ((props: CytoDFMProps, ref: ForwardedR
         selectedNode: null,
         selectedEdge: null
     });
-    const [logAlignments, setLogAlignments] = useState<[string, AlignElement, AlignElement, AlignElement][]>([]);
-    const [modelAlignments, setModelAlignments] = useState<[string, AlignElement, AlignElement][]>([]);
+    const [logAlignments, setLogAlignments] = useState<[string, AlignElement, AlignElement, AlignElement, string[][]][]>([]);
+    const [modelAlignments, setModelAlignments] = useState<[string, AlignElement, AlignElement, string[][]][]>([]);
     const cytoscapeRef = useRef<cytoscape.Core | null>(null);
 
     useImperativeHandle(ref, () => ({
@@ -368,9 +368,6 @@ export const FilteredCytoDFM = forwardRef ((props: CytoDFMProps, ref: ForwardedR
 
         if (!dfm)
             return [[], []];
-
-        console.log(logAlignments)
-        console.log(modelAlignments)
 
         const links: any[] = [];
         const legendObjectTypeColors: [string, string][] = [];
@@ -490,8 +487,9 @@ export const FilteredCytoDFM = forwardRef ((props: CytoDFMProps, ref: ForwardedR
 
         if(props.alignmentMode !== "none") {
             const nodeIndexDict = createNodeIndexDict(dfm.nodes)
-            for (const [objectType, lastActivity, intermediateActivity, nextActivity] of logAlignments) {
+            for (const [objectType, lastActivity, intermediateActivity, nextActivity, alignments] of logAlignments) {
                 if (selectedObjectTypes.includes(objectType)) {
+                    let traceNodeIndices = translateTracesToNodeIndex(alignments, nodeIndexDict)
                     const objectTypeColor = getObjectTypeColor(numberOfColorsNeeded, objectTypesList.indexOf(objectType));
 
                     let lastNodeIndex: number = nodeIndexDict[lastActivity.activity],
@@ -507,7 +505,7 @@ export const FilteredCytoDFM = forwardRef ((props: CytoDFMProps, ref: ForwardedR
                     const nodeLength: number = dfm.nodes.length + alignmentNodes.length
                     const sourceNodeIndex: number = nodeLength + 1
                     const targetNodeIndex: number = nodeLength + 2
-                    let count: number = 0
+                    let count: number = findMatchingTracesCount(traceNodeIndices, objectType, dfm.traces)
 
                     if(props.alignmentMode === "expansive"){
                         // need node between lastNode and intermediateNode
@@ -618,8 +616,9 @@ export const FilteredCytoDFM = forwardRef ((props: CytoDFMProps, ref: ForwardedR
                 }
             }
 
-            for (const [objectType, lastActivity, nextActivity] of modelAlignments) {
+            for (const [objectType, lastActivity, nextActivity, alignments] of modelAlignments) {
                 if (selectedObjectTypes.includes(objectType)) {
+                    let traceNodeIndices = translateTracesToNodeIndex(alignments, nodeIndexDict)
                     const objectTypeColor = getObjectTypeColor(numberOfColorsNeeded, objectTypesList.indexOf(objectType));
 
                     let lastNodeIndex: number = nodeIndexDict[lastActivity.activity],
@@ -633,7 +632,7 @@ export const FilteredCytoDFM = forwardRef ((props: CytoDFMProps, ref: ForwardedR
 
                     const nodeLength: number = dfm.nodes.length + alignmentNodes.length
                     const sourceNodeIndex: number = nodeLength + 1
-                    const count: number = 0
+                    const count: number = findMatchingTracesCount(traceNodeIndices, objectType, dfm.traces)
 
                     if(props.alignmentMode === "expansive") {
                         // need node between lastNode and nextNode
@@ -706,8 +705,6 @@ export const FilteredCytoDFM = forwardRef ((props: CytoDFMProps, ref: ForwardedR
         }
 
         const elements: cytoscape.ElementDefinition[] = filteredNodes.concat(alignmentNodes).concat(links).concat(alignmentEdges);
-
-        console.log(elements)
 
         return [elements, legendObjectTypeColors];
     }, [props.dfm, boxedThreshold, props.selectedObjectTypes, props.highlightingMode, modelAlignments, logAlignments, props.alignmentMode]);
@@ -981,8 +978,35 @@ function createNodeIndexDict(nodes: {
     return nodeIndexDict
 }
 
-function translateTraceToNodeIndex(traces: string[][]){
+function translateTracesToNodeIndex(traces: string[][], nodeIndexDict: { [id: string] : number }){
+    let outputTraces: number[][] = []
     for(let trace of traces){
-
+        let outputTrace: number[] = []
+        for (let act of trace){
+            outputTrace.push(nodeIndexDict[act])
+        }
+        outputTraces.push(outputTrace)
     }
+    return outputTraces
+}
+
+type traceType = {
+    actions: number[]
+    thresholds: {[key:string]: {
+            count: number
+            threshold: number
+        }}
+}
+
+
+function findMatchingTracesCount(alignmentTraces: number[][], objectType: string, traces: traceType[]){
+    let matchingTracesCount: number = 0
+    for (let alignmentTrace of alignmentTraces){
+        for (let trace of traces){
+            if (trace.actions.toString() === alignmentTrace.toString()){
+                matchingTracesCount += trace.thresholds[objectType].count
+            }
+        }
+    }
+    return matchingTracesCount
 }
