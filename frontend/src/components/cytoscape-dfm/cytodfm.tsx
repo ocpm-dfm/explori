@@ -706,6 +706,8 @@ export const FilteredCytoDFM = forwardRef ((props: CytoDFMProps, ref: ForwardedR
 
         const elements: cytoscape.ElementDefinition[] = filteredNodes.concat(alignmentNodes).concat(links).concat(alignmentEdges);
 
+        console.log(elements)
+
         return [elements, legendObjectTypeColors];
     }, [props.dfm, boxedThreshold, props.selectedObjectTypes, props.highlightingMode, modelAlignments, logAlignments, props.alignmentMode]);
 
@@ -720,9 +722,11 @@ export const FilteredCytoDFM = forwardRef ((props: CytoDFMProps, ref: ForwardedR
 
         let selectedTraces = null;
 
-        if (selection.selectedNode !== null)
+        // temporary fix for clicking on expansive nodes
+        if (selection.selectedNode !== null && dfm.nodes[selection.selectedNode] !== undefined)
             selectedTraces = dfm.nodes[selection.selectedNode].traces;
-        else if (selection.selectedEdge !== null) {
+        // temporary fix for clicking on edges
+        else if (selection.selectedEdge !== null && dfm.nodes[selection.selectedEdge[1]] !== undefined && dfm.nodes[selection.selectedEdge[2]] !== undefined) {
             const [objectType, source, target] = selection.selectedEdge;
             const allEdges = dfm.subgraphs[objectType];
             for (const edge of allEdges) {
@@ -891,12 +895,17 @@ export const FilteredCytoDFM = forwardRef ((props: CytoDFMProps, ref: ForwardedR
                 <div className="CytoDFM-Overlay CytoDFM-Infobox">
                     {
                         selection.selectedNode !== null &&
+                        // temporary fix for clicking on expansive nodes
+                        props.dfm.nodes[selection.selectedNode] !== undefined &&
                         <h3 className="CytoDFM-Infobox-Header">
                             Activity: { props.dfm.nodes[selection.selectedNode].label }
                         </h3>
                     }
                     {
                         selection.selectedEdge !== null &&
+                        // temporary fix for clicking on edges
+                        props.dfm.nodes[selection.selectedEdge[1]] !== undefined &&
+                        props.dfm.nodes[selection.selectedEdge[2]] !== undefined &&
                         <h3 className="CytoDFM-Infobox-Header">
                             Edge: { props.dfm.nodes[selection.selectedEdge[1]].label } to { props.dfm.nodes[selection.selectedEdge[2]].label }
                         </h3>
