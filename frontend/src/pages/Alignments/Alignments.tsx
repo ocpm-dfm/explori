@@ -196,8 +196,11 @@ export const AlignmentsData = connect<StateProps, DispatchProps, AlignmentsDataP
                                     //      create edge between these two found ones and the activity at index 7 (is never >> since we have log move)
                                     const model_activity = alignment['model_alignment'][index];
                                     let [last_activity, next_activity] = getLastAndNextActivity(alignment, index);
-                                    if(!logEqualityChecker(log_misalignments, [objectType, last_activity, model_activity, next_activity])){
+                                    let element = logEqualityChecker(log_misalignments, [objectType, last_activity, model_activity, next_activity])
+                                    if(element === null){
                                         log_misalignments.push([objectType, last_activity, model_activity, next_activity, [clearAndCutAlignment(alignment_copy)]])
+                                    } else {
+                                        element[4].push(clearAndCutAlignment(alignment_copy))
                                     }
                                 }
                             })
@@ -210,9 +213,11 @@ export const AlignmentsData = connect<StateProps, DispatchProps, AlignmentsDataP
                                     // loop on edge between last and next activity in model
                                     let [last_activity, next_activity] = getLastAndNextActivity(alignment, index);
                                     console.log(alignment)
-                                    if(!modelEqualityChecker(model_misalignments, [objectType, last_activity, next_activity])){
+                                    let element = modelEqualityChecker(model_misalignments, [objectType, last_activity, next_activity])
+                                    if(element === null){
                                         model_misalignments.push([objectType, last_activity, next_activity, [clearAndCutAlignment(alignment_copy)]])
                                     } else {
+                                        element[3].push(clearAndCutAlignment(alignment_copy))
                                     }
                                 }
                             })
@@ -262,23 +267,23 @@ function getLastAndNextActivity(alignment: TraceAlignment, index: number): Align
 function logEqualityChecker(alignments: [string, AlignElement, AlignElement, AlignElement, string[][]][],
                          new_entry: [string, AlignElement, AlignElement, AlignElement])
 {
-    for (const [s, a1, a2, a3] of alignments){
-        if(s === new_entry[0] && a1.activity === new_entry[1].activity && a2.activity === new_entry[2].activity && a3.activity === new_entry[3].activity){
-            return true
+    for (const ele of alignments){
+        if(ele[0] === new_entry[0] && ele[1].activity === new_entry[1].activity && ele[2].activity === new_entry[2].activity && ele[3].activity === new_entry[3].activity){
+            return ele
         }
     }
-    return false
+    return null
 }
 
 function modelEqualityChecker(alignments: [string, AlignElement, AlignElement, string[][]][],
                             new_entry: [string, AlignElement, AlignElement])
 {
-    for (const [s, a1, a2] of alignments){
-        if(s === new_entry[0] && a1.activity === new_entry[1].activity && a2.activity === new_entry[2].activity){
-            return true
+    for (const ele of alignments){
+        if(ele[0] === new_entry[0] && ele[1].activity === new_entry[1].activity && ele[2].activity === new_entry[2].activity){
+            return ele
         }
     }
-    return false
+    return null
 }
 
 function clearAndCutAlignment(alignment: TraceAlignment){

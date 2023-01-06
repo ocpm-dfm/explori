@@ -489,28 +489,15 @@ export const FilteredCytoDFM = forwardRef ((props: CytoDFMProps, ref: ForwardedR
         let objectTypesList = Object.keys(dfm.subgraphs)
 
         if(props.alignmentMode !== "none") {
-            console.log(dfm)
-            console.log(logAlignments)
+            const nodeIndexDict = createNodeIndexDict(dfm.nodes)
             for (const [objectType, lastActivity, intermediateActivity, nextActivity] of logAlignments) {
                 if (selectedObjectTypes.includes(objectType)) {
                     const objectTypeColor = getObjectTypeColor(numberOfColorsNeeded, objectTypesList.indexOf(objectType));
 
-                    let lastNodeIndex: number = -1, intermediateNodeIndex: number = -1, nextNodeIndex: number = -1;
-                    const nodes = dfm.nodes
+                    let lastNodeIndex: number = nodeIndexDict[lastActivity.activity],
+                        intermediateNodeIndex: number = nodeIndexDict[intermediateActivity.activity],
+                        nextNodeIndex: number = nodeIndexDict[nextActivity.activity];
 
-                    for (let i = 0; i < nodes.length; i++) {
-                        switch (nodes[i].label) {
-                            case lastActivity.activity:
-                                lastNodeIndex = i
-                                break;
-                            case intermediateActivity.activity:
-                                intermediateNodeIndex = i
-                                break;
-                            case nextActivity.activity:
-                                nextNodeIndex = i
-                                break;
-                        }
-                    }
                     const nodeIndices = [lastNodeIndex, intermediateNodeIndex, nextNodeIndex]
 
                     if (nodeIndices.indexOf(-1) > -1) {
@@ -635,19 +622,9 @@ export const FilteredCytoDFM = forwardRef ((props: CytoDFMProps, ref: ForwardedR
                 if (selectedObjectTypes.includes(objectType)) {
                     const objectTypeColor = getObjectTypeColor(numberOfColorsNeeded, objectTypesList.indexOf(objectType));
 
-                    let lastNodeIndex: number = -1, nextNodeIndex: number = -1;
-                    const nodes = dfm.nodes
+                    let lastNodeIndex: number = nodeIndexDict[lastActivity.activity],
+                        nextNodeIndex: number = nodeIndexDict[nextActivity.activity];
 
-                    for (let i = 0; i < nodes.length; i++) {
-                        switch (nodes[i].label) {
-                            case lastActivity.activity:
-                                lastNodeIndex = i
-                                break;
-                            case nextActivity.activity:
-                                nextNodeIndex = i
-                                break;
-                        }
-                    }
                     const nodeIndices = [lastNodeIndex, nextNodeIndex]
 
                     if (nodeIndices.indexOf(-1) > -1) {
@@ -990,4 +967,22 @@ function findRedundantEdge(edges: {
         }
     }
     return null
+}
+
+function createNodeIndexDict(nodes: {
+    label: string,
+    counts: {[key:string]: [number, number][]}
+    traces: number[]
+}[]){
+    let nodeIndexDict: { [id: string] : number } = {}
+    for (let node of nodes){
+        nodeIndexDict[node.label] = nodes.indexOf(node)
+    }
+    return nodeIndexDict
+}
+
+function translateTraceToNodeIndex(traces: string[][]){
+    for(let trace of traces){
+
+    }
 }
