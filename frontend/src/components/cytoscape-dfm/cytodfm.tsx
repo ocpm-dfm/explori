@@ -484,13 +484,10 @@ export const FilteredCytoDFM = forwardRef ((props: CytoDFMProps, ref: ForwardedR
             // Filter out all nodes that are below the threshold. The cast is needed to tell TypeScript that all "null" nodes are removed.
             .filter((x) => x !== null) as cytoscape.ElementDefinition[];
 
-        console.log(dfm)
-
         let alignmentNodes = []
         let alignmentEdges = []
         let objectTypesList = Object.keys(dfm.subgraphs)
 
-        console.log(props.alignmentMode)
         if(props.alignmentMode !== "none") {
             for (const [objectType, lastActivity, intermediateActivity, nextActivity] of logAlignments) {
                 if (selectedObjectTypes.includes(objectType)) {
@@ -512,9 +509,6 @@ export const FilteredCytoDFM = forwardRef ((props: CytoDFMProps, ref: ForwardedR
                                 break;
                         }
                     }
-                    /*console.log(lastNodeIndex)
-                    console.log(intermediateNodeIndex)
-                    console.log(nextNodeIndex) */
                     const nodeIndices = [lastNodeIndex, intermediateNodeIndex, nextNodeIndex]
 
                     if (nodeIndices.indexOf(-1) > -1) {
@@ -524,7 +518,7 @@ export const FilteredCytoDFM = forwardRef ((props: CytoDFMProps, ref: ForwardedR
                     const nodeLength: number = dfm.nodes.length + alignmentNodes.length
                     const sourceNodeIndex: number = nodeLength + 1
                     const targetNodeIndex: number = nodeLength + 2
-                    const count: number = 0
+                    let count: number = 0
 
                     if(props.alignmentMode === "expansive"){
                         // need node between lastNode and intermediateNode
@@ -546,7 +540,7 @@ export const FilteredCytoDFM = forwardRef ((props: CytoDFMProps, ref: ForwardedR
                         alignmentNodes.push({
                             data: {
                                 id: `${targetNodeIndex}`,
-                                label: ">>",
+                                label: ".",
                                 numberId: targetNodeIndex
                             },
                             classes: "activity",
@@ -581,8 +575,27 @@ export const FilteredCytoDFM = forwardRef ((props: CytoDFMProps, ref: ForwardedR
                         neededEdges = neededEdgesExpansive
                     }
 
+                    let matchingFirstEdge = findMatch(dfm.subgraphs[objectType], lastNodeIndex, intermediateNodeIndex)
+                    let matchingSecondEdge = findMatch(dfm.subgraphs[objectType], intermediateNodeIndex, nextNodeIndex)
+
                     for (const [source, target] of neededEdges) {
-                        const classes = "log-move"
+                        let classes = "log-move"
+                        if(props.alignmentMode === "expansive"){
+                            // first edge
+                            if((source === lastNodeIndex && target === sourceNodeIndex) || (source === sourceNodeIndex && target === intermediateNodeIndex)){
+                                if(matchingFirstEdge !== null){
+                                    count = getCountAtThreshold(matchingFirstEdge.counts, thresh);
+                                    classes = "edge"
+                                }
+                            }
+                            // second edge
+                            if((source === intermediateNodeIndex && target === targetNodeIndex) || (source === targetNodeIndex && target === nextNodeIndex)){
+                                if(matchingSecondEdge !== null){
+                                    count = getCountAtThreshold(matchingSecondEdge.counts, thresh);
+                                    classes = "edge"
+                                }
+                            }
+                        }
 
                         const width = `${0.2 * edgeHighlightingMode.edgeWidth(source, target, objectType, highlightingInitialData)}em`
                         alignmentEdges.push(
@@ -605,6 +618,14 @@ export const FilteredCytoDFM = forwardRef ((props: CytoDFMProps, ref: ForwardedR
                         allNodesOfSelectedObjectTypes.add(source);
                         allNodesOfSelectedObjectTypes.add(target);
                     }
+
+                    if (props.alignmentMode === "expansive"){
+                        const firstEdge = findRedundantEdge(links, lastNodeIndex, intermediateNodeIndex, objectType)
+                        const secondEdge = findRedundantEdge(links, intermediateNodeIndex, nextNodeIndex, objectType)
+                        links.splice(links.indexOf(firstEdge), 1)
+                        links.splice(links.indexOf(secondEdge), 1)
+                    }
+
                 }
             }
 
@@ -625,8 +646,6 @@ export const FilteredCytoDFM = forwardRef ((props: CytoDFMProps, ref: ForwardedR
                                 break;
                         }
                     }
-                    //console.log(lastNodeIndex)
-                    //console.log(nextNodeIndex)
                     const nodeIndices = [lastNodeIndex, nextNodeIndex]
 
                     if (nodeIndices.indexOf(-1) > -1) {
@@ -940,4 +959,33 @@ export function getCountAtThreshold(counts: [number, number][], threshold: numbe
         rangeStart = rangeEnd;
     }
     return 0;
+}
+
+function findMatch(subgraph: {
+        source: number,
+        target: number,
+        counts: [number, number][]
+        traces: number[]
+    }[], sourceIndex: number, targetIndex: number){
+    for (let edge of subgraph){
+        if( sourceIndex === edge.source && targetIndex === edge.target){
+            return edge
+        }
+    }
+    return null
+}
+
+function findRedundantEdge(edges: {
+    data: {
+        objectType: string,
+        sourceAsNumber: number,
+        targetAsNumber: number,
+    }
+}[], sourceIndex: number, targetIndex: number, objectType: string){
+    for (let edge of edges){
+        if( objectType === edge.data.objectType && sourceIndex === edge.data.sourceAsNumber && targetIndex === edge.data.targetAsNumber){
+            return edge
+        }
+    }
+    return null
 }
