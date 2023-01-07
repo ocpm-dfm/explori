@@ -25,22 +25,26 @@ export type DirectlyFollowsMultigraph = {
     thresholds: number[]
     nodes: {
         label: string,
-        counts: {[key:string]: [number, number][]}
+        counts: { [key: string]: [number, number][] }
         traces: number[]
     }[],
-    subgraphs: {[key:string]: {
+    subgraphs: {
+        [key: string]: {
             source: number,
             target: number,
             counts: [number, number][]
             traces: number[]
-        }[]},
+        }[]
+    },
     traces: [
         {
             actions: number[]
-            thresholds: {[key:string]: {
+            thresholds: {
+                [key: string]: {
                     count: number
                     threshold: number
-                }}
+                }
+            }
         }
     ]
 }
@@ -302,8 +306,8 @@ type RenderTraceData = {
 }
 
 type SelectedTracesData = {
-    shown: {[key:string]: RenderTraceData[]},
-    hidden: {[key: string]: RenderTraceData[]}
+    shown: { [key: string]: RenderTraceData[] },
+    hidden: { [key: string]: RenderTraceData[] }
 }
 
 function initializeNodePositions(dfm: DirectlyFollowsMultigraph | null) {
@@ -316,8 +320,7 @@ function initializeNodePositions(dfm: DirectlyFollowsMultigraph | null) {
     }));
 }
 
-export const FilteredCytoDFM = forwardRef ((props: CytoDFMProps, ref: ForwardedRef<CytoDFMMethods | undefined>) =>
-{
+export const FilteredCytoDFM = forwardRef((props: CytoDFMProps, ref: ForwardedRef<CytoDFMMethods | undefined>) => {
     // We don't actually want to rerender when the state changes, but we want it to persist accross rerenders.
     // That is why we use useRef instead of useState.
     const softState = useRef<CytoDFMSoftState>({
@@ -339,12 +342,12 @@ export const FilteredCytoDFM = forwardRef ((props: CytoDFMProps, ref: ForwardedR
     const cytoscapeRef = useRef<cytoscape.Core | null>(null);
 
     useImperativeHandle(ref, () => ({
-            exportAsJpg() {
-                if (cytoscapeRef.current == null)
-                    return;
+        exportAsJpg() {
+            if (cytoscapeRef.current == null)
+                return;
 
-                fileSaver.saveAs(cytoscapeRef.current.jpg(), "graph.jpg");
-            }
+            fileSaver.saveAs(cytoscapeRef.current.jpg(), "graph.jpg");
+        }
     }));
 
     let boxedThreshold = 0;
@@ -385,8 +388,7 @@ export const FilteredCytoDFM = forwardRef ((props: CytoDFMProps, ref: ForwardedR
                 const edges = dfm.subgraphs[objectType];
                 let hasDisplayedEdge = false;
 
-                for (const edge of edges)
-                {
+                for (const edge of edges) {
                     const count = getCountAtThreshold(edge.counts, thresh);
                     // Ignore edges below the threshold.
                     if (count === 0)
@@ -412,8 +414,8 @@ export const FilteredCytoDFM = forwardRef ((props: CytoDFMProps, ref: ForwardedR
                                     width,
 
                                     objectType,
-                                    sourceAsNumber: edge.source,
-                                    targetAsNumber: edge.target
+                                    metaSource: edge.source,
+                                    metaTarget: edge.target
                                 },
                             classes
                         });
@@ -486,7 +488,7 @@ export const FilteredCytoDFM = forwardRef ((props: CytoDFMProps, ref: ForwardedR
         let alignmentEdges = []
         let objectTypesList = Object.keys(dfm.subgraphs)
 
-        if(props.alignmentMode !== "none") {
+        if (props.alignmentMode !== "none") {
             const nodeIndexDict = createNodeIndexDict(dfm.nodes)
             for (const [objectType, lastActivity, intermediateActivity, nextActivity, alignments] of logAlignments) {
                 if (selectedObjectTypes.includes(objectType)) {
@@ -508,7 +510,7 @@ export const FilteredCytoDFM = forwardRef ((props: CytoDFMProps, ref: ForwardedR
                     const targetNodeIndex: number = nodeLength + 2
                     let count: number = findMatchingTracesCount(traceNodeIndices, objectType, dfm.traces)
 
-                    if(props.alignmentMode === "expansive"){
+                    if (props.alignmentMode === "expansive") {
                         // need node between lastNode and intermediateNode
                         alignmentNodes.push({
                             data: {
@@ -541,23 +543,23 @@ export const FilteredCytoDFM = forwardRef ((props: CytoDFMProps, ref: ForwardedR
 
                     const neededEdgesExpansive: number[][] = [
                         // need edge between these two nodes
-                        [sourceNodeIndex, targetNodeIndex],
+                        [sourceNodeIndex, targetNodeIndex, lastNodeIndex, nextNodeIndex],
                         // need edge between lastNode and sourceNode
-                        [lastNodeIndex, sourceNodeIndex],
+                        [lastNodeIndex, sourceNodeIndex, lastNodeIndex, intermediateNodeIndex],
                         // need edge between sourceNode and intermediateNode
-                        [sourceNodeIndex, intermediateNodeIndex],
+                        [sourceNodeIndex, intermediateNodeIndex, lastNodeIndex, intermediateNodeIndex],
                         // need edge between intermediateNode and targetNode
-                        [intermediateNodeIndex, targetNodeIndex],
+                        [intermediateNodeIndex, targetNodeIndex, intermediateNodeIndex, nextNodeIndex],
                         // need edge between targetNode and nextNode
-                        [targetNodeIndex, nextNodeIndex]
+                        [targetNodeIndex, nextNodeIndex, intermediateNodeIndex, nextNodeIndex]
                     ]
 
                     const neededEdgesSimple: number[][] = [
-                        [lastNodeIndex, nextNodeIndex]
+                        [lastNodeIndex, nextNodeIndex, lastNodeIndex, nextNodeIndex]
                     ]
 
                     let neededEdges;
-                    if(props.alignmentMode === "simple"){
+                    if (props.alignmentMode === "simple") {
                         neededEdges = neededEdgesSimple
                     } else {
                         neededEdges = neededEdgesExpansive
@@ -566,19 +568,19 @@ export const FilteredCytoDFM = forwardRef ((props: CytoDFMProps, ref: ForwardedR
                     let matchingFirstEdge = findMatch(dfm.subgraphs[objectType], lastNodeIndex, intermediateNodeIndex)
                     let matchingSecondEdge = findMatch(dfm.subgraphs[objectType], intermediateNodeIndex, nextNodeIndex)
 
-                    for (const [source, target] of neededEdges) {
+                    for (const [source, target, metaSource, metaTarget] of neededEdges) {
                         let classes = "log-move"
-                        if(props.alignmentMode === "expansive"){
+                        if (props.alignmentMode === "expansive") {
                             // first edge
-                            if((source === lastNodeIndex && target === sourceNodeIndex) || (source === sourceNodeIndex && target === intermediateNodeIndex)){
-                                if(matchingFirstEdge !== null){
+                            if ((source === lastNodeIndex && target === sourceNodeIndex) || (source === sourceNodeIndex && target === intermediateNodeIndex)) {
+                                if (matchingFirstEdge !== null) {
                                     count = getCountAtThreshold(matchingFirstEdge.counts, thresh);
                                     classes = "edge"
                                 }
                             }
                             // second edge
-                            if((source === intermediateNodeIndex && target === targetNodeIndex) || (source === targetNodeIndex && target === nextNodeIndex)){
-                                if(matchingSecondEdge !== null){
+                            if ((source === intermediateNodeIndex && target === targetNodeIndex) || (source === targetNodeIndex && target === nextNodeIndex)) {
+                                if (matchingSecondEdge !== null) {
                                     count = getCountAtThreshold(matchingSecondEdge.counts, thresh);
                                     classes = "edge"
                                 }
@@ -597,8 +599,8 @@ export const FilteredCytoDFM = forwardRef ((props: CytoDFMProps, ref: ForwardedR
                                         width,
 
                                         objectType,
-                                        sourceAsNumber: source,
-                                        targetAsNumber: target
+                                        metaSource: metaSource,
+                                        metaTarget: metaTarget
                                     },
                                 classes
                             });
@@ -607,7 +609,7 @@ export const FilteredCytoDFM = forwardRef ((props: CytoDFMProps, ref: ForwardedR
                         allNodesOfSelectedObjectTypes.add(target);
                     }
 
-                    if (props.alignmentMode === "expansive"){
+                    if (props.alignmentMode === "expansive") {
                         const firstEdge = findRedundantEdge(links, lastNodeIndex, intermediateNodeIndex, objectType)
                         const secondEdge = findRedundantEdge(links, intermediateNodeIndex, nextNodeIndex, objectType)
                         links.splice(links.indexOf(firstEdge), 1)
@@ -635,7 +637,7 @@ export const FilteredCytoDFM = forwardRef ((props: CytoDFMProps, ref: ForwardedR
                     const sourceNodeIndex: number = nodeLength + 1
                     const count: number = findMatchingTracesCount(traceNodeIndices, objectType, dfm.traces)
 
-                    if(props.alignmentMode === "expansive") {
+                    if (props.alignmentMode === "expansive") {
                         // need node between lastNode and nextNode
                         alignmentNodes.push({
                             data: {
@@ -656,28 +658,28 @@ export const FilteredCytoDFM = forwardRef ((props: CytoDFMProps, ref: ForwardedR
                         // need loop on new node
                         //[sourceNodeIndex, sourceNodeIndex],
                         // need edge between lastNode and sourceNode
-                        [lastNodeIndex, sourceNodeIndex],
+                        [lastNodeIndex, sourceNodeIndex, lastNodeIndex, nextNodeIndex],
                         // need edge between sourceNode and nextNode
-                        [sourceNodeIndex, nextNodeIndex]
+                        [sourceNodeIndex, nextNodeIndex, lastNodeIndex, nextNodeIndex]
                     ]
 
                     const neededEdgesSimple: number[][] = [
-                        [lastNodeIndex, nextNodeIndex]
+                        [lastNodeIndex, nextNodeIndex, lastNodeIndex, nextNodeIndex]
                     ]
 
                     let neededEdges;
-                    if(props.alignmentMode === "simple"){
+                    if (props.alignmentMode === "simple") {
                         neededEdges = neededEdgesSimple
                     } else {
                         neededEdges = neededEdgesExpansive
                     }
 
-                    for (const [source, target] of neededEdges) {
+                    for (const [source, target, metaSource, metaTarget] of neededEdges) {
                         let classes = ""
                         if (source === target) {
-                            classes = "loop";
+                            classes = "loop ";
                         }
-                        classes = 'model-move'
+                        classes += 'model-move'
 
                         const width = `${0.2 * edgeHighlightingMode.edgeWidth(source, target, objectType, highlightingInitialData)}em`
                         alignmentEdges.push(
@@ -692,8 +694,8 @@ export const FilteredCytoDFM = forwardRef ((props: CytoDFMProps, ref: ForwardedR
                                         width,
 
                                         objectType,
-                                        sourceAsNumber: source,
-                                        targetAsNumber: target
+                                        metaSource: metaSource,
+                                        metaTarget: metaTarget
                                     },
                                 classes
                             });
@@ -719,7 +721,7 @@ export const FilteredCytoDFM = forwardRef ((props: CytoDFMProps, ref: ForwardedR
         let selectedObjectTypes = props.selectedObjectTypes;
 
         if (dfm === null)
-            return { shown: {}, hidden: {} } as SelectedTracesData;
+            return {shown: {}, hidden: {}} as SelectedTracesData;
 
         let selectedTraces = null;
 
@@ -742,11 +744,11 @@ export const FilteredCytoDFM = forwardRef ((props: CytoDFMProps, ref: ForwardedR
         }
 
         if (selectedTraces == null)
-            return { shown: {}, hidden: {} } as SelectedTracesData;
+            return {shown: {}, hidden: {}} as SelectedTracesData;
 
 
-        const shown: {[key:string]:RenderTraceData[]} = {};
-        const hidden: RenderTraceData[] = [];
+        const shown: { [key: string]: RenderTraceData[] } = {};
+        const hidden: { [key: string]: RenderTraceData[] } = {};
         selectedTraces.forEach((traceId) => {
             const trace = dfm.traces[traceId];
             const activities = trace.actions
@@ -754,23 +756,25 @@ export const FilteredCytoDFM = forwardRef ((props: CytoDFMProps, ref: ForwardedR
                 .map((nodeId) => dfm.nodes[nodeId].label);
 
             Object.keys(trace.thresholds).forEach((objectType) => {
-               if (thresh < trace.thresholds[objectType].threshold)
-                   return;
-               if (!selectedObjectTypes.includes(objectType))
-                   return;
+                if (!selectedObjectTypes.includes(objectType))
+                    return;
 
-               if (!shown[objectType])
-                   shown[objectType] = [];
+                const target = thresh < trace.thresholds[objectType].threshold ? hidden : shown;
+                if (!target[objectType])
+                    target[objectType] = [];
 
-               shown[objectType].push({
-                   id: traceId,
-                   activities,
-                   count: trace.thresholds[objectType].count
-               })
+                target[objectType].push({
+                    id: traceId,
+                    activities,
+                    count: trace.thresholds[objectType].count
+                })
             });
         });
         Object.keys(shown).forEach((objectType) => {
             shown[objectType].sort((a, b) => a.count > b.count ? -1 : 1);
+        });
+        Object.keys(hidden).forEach((objectType) => {
+            hidden[objectType].sort((a, b) => a.count > b.count ? -1 : 1);
         });
 
         return {
@@ -782,13 +786,13 @@ export const FilteredCytoDFM = forwardRef ((props: CytoDFMProps, ref: ForwardedR
 
     if (!props.dfm) {
         // Reset the state if necessary.
-        return <div style={{height: "100%", minHeight: "80vh"}} />;
+        return <div style={{height: "100%", minHeight: "80vh"}}/>;
     }
 
     const layout = {
         name: 'elk',
         spacingFactor: 1,
-        transform: (node: any, pos: {x: number, y: number}) => {
+        transform: (node: any, pos: { x: number, y: number }) => {
             const nodeId = node.data().numberId;
             const storedPosition = softState.current.nodeStates[nodeId];
             if (!storedPosition) {
@@ -834,6 +838,7 @@ export const FilteredCytoDFM = forwardRef ((props: CytoDFMProps, ref: ForwardedR
             }
         }
     }
+
     //endregion
 
     function onNodeTap(event: EventObject) {
@@ -844,10 +849,10 @@ export const FilteredCytoDFM = forwardRef ((props: CytoDFMProps, ref: ForwardedR
     }
 
     function onEdgeTap(event: EventObject) {
-        const edgeData: { objectType: string, sourceAsNumber: number, targetAsNumber: number } = event.target.data();
+        const edgeData: { objectType: string, metaSource: number, metaTarget: number } = event.target.data();
         setSelection({
             selectedNode: null,
-            selectedEdge: [edgeData.objectType, edgeData.sourceAsNumber, edgeData.targetAsNumber]
+            selectedEdge: [edgeData.objectType, edgeData.metaSource, edgeData.metaTarget]
         });
     }
 
@@ -868,17 +873,17 @@ export const FilteredCytoDFM = forwardRef ((props: CytoDFMProps, ref: ForwardedR
                 elements={elements}
                 stylesheet={graphStylesheet}
                 layout={layout}
-                style={ { width: '100%', height: '100%' } }
+                style={{width: '100%', height: '100%'}}
                 wheelSensitivity={0.2}
                 cy={registerEvents}
             />
-            { props.alignmentMode !== "none" && (
+            {props.alignmentMode !== "none" && (
                 <AlignmentsData
                     setLogAlignments={setLogAlignments}
                     setModelAlignments={setModelAlignments}
                 ></AlignmentsData>
             )}
-            { legendObjectTypeColors.length > 0 && props.legendPosition !== "none" &&
+            {legendObjectTypeColors.length > 0 && props.legendPosition !== "none" &&
                 <ul className={`CytoDFM-Overlay CytoDFM-Legend CytoDFM-${props.legendPosition}`}>
                     {
                         legendObjectTypeColors.map(([type, color]) => (
@@ -899,7 +904,7 @@ export const FilteredCytoDFM = forwardRef ((props: CytoDFMProps, ref: ForwardedR
                         // temporary fix for clicking on expansive nodes
                         props.dfm.nodes[selection.selectedNode] !== undefined &&
                         <h3 className="CytoDFM-Infobox-Header">
-                            Activity: { props.dfm.nodes[selection.selectedNode].label }
+                            Activity: {props.dfm.nodes[selection.selectedNode].label}
                         </h3>
                     }
                     {
@@ -907,9 +912,10 @@ export const FilteredCytoDFM = forwardRef ((props: CytoDFMProps, ref: ForwardedR
                         props.dfm.nodes[selection.selectedEdge[1]] !== undefined &&
                         props.dfm.nodes[selection.selectedEdge[2]] !== undefined &&
                         <h3 className="CytoDFM-Infobox-Header">
-                            Edge: { props.dfm.nodes[selection.selectedEdge[1]].label } to { props.dfm.nodes[selection.selectedEdge[2]].label }
+                            Edge: {props.dfm.nodes[selection.selectedEdge[1]].label} to {props.dfm.nodes[selection.selectedEdge[2]].label}
                         </h3>
                     }
+                    <h4>Shown traces</h4>
                     <ul>
                         {
                             Object.keys(selectedTraces.shown).map((objectType) => (
@@ -929,11 +935,31 @@ export const FilteredCytoDFM = forwardRef ((props: CytoDFMProps, ref: ForwardedR
                             ))
                         }
                     </ul>
+                    <h4>Filtered traces</h4>
+                    <ul>
+                        {
+                            Object.keys(selectedTraces.hidden).map((objectType) => (
+                                <li key={`hidden-traces-${objectType}`}>
+                                    <span>{objectType}</span>
+
+                                    <ul>
+                                        {
+                                            selectedTraces.hidden[objectType].map((trace: RenderTraceData) => (
+                                                <li key={`hidden-trace-${objectType}-${trace.id}`}>
+                                                    {trace.count} x {trace.activities.reduce((a, b) => a + ", " + b)}
+                                                </li>
+                                            ))
+                                        }
+                                    </ul>
+                                </li>
+                            ))
+                        }
+                    </ul>
                 </div>
             }
         </div>
-        )
-    ;
+    )
+        ;
 });
 
 export function getCountAtThreshold(counts: [number, number][], threshold: number): number {
@@ -947,13 +973,13 @@ export function getCountAtThreshold(counts: [number, number][], threshold: numbe
 }
 
 function findMatch(subgraph: {
-        source: number,
-        target: number,
-        counts: [number, number][]
-        traces: number[]
-    }[], sourceIndex: number, targetIndex: number){
-    for (let edge of subgraph){
-        if( sourceIndex === edge.source && targetIndex === edge.target){
+    source: number,
+    target: number,
+    counts: [number, number][]
+    traces: number[]
+}[], sourceIndex: number, targetIndex: number) {
+    for (let edge of subgraph) {
+        if (sourceIndex === edge.source && targetIndex === edge.target) {
             return edge
         }
     }
@@ -963,12 +989,12 @@ function findMatch(subgraph: {
 function findRedundantEdge(edges: {
     data: {
         objectType: string,
-        sourceAsNumber: number,
-        targetAsNumber: number,
+        metaSource: number,
+        metaTarget: number,
     }
-}[], sourceIndex: number, targetIndex: number, objectType: string){
-    for (let edge of edges){
-        if( objectType === edge.data.objectType && sourceIndex === edge.data.sourceAsNumber && targetIndex === edge.data.targetAsNumber){
+}[], sourceIndex: number, targetIndex: number, objectType: string) {
+    for (let edge of edges) {
+        if (objectType === edge.data.objectType && sourceIndex === edge.data.metaSource && targetIndex === edge.data.metaTarget) {
             return edge
         }
     }
@@ -977,21 +1003,21 @@ function findRedundantEdge(edges: {
 
 function createNodeIndexDict(nodes: {
     label: string,
-    counts: {[key:string]: [number, number][]}
+    counts: { [key: string]: [number, number][] }
     traces: number[]
-}[]){
-    let nodeIndexDict: { [id: string] : number } = {}
-    for (let node of nodes){
+}[]) {
+    let nodeIndexDict: { [id: string]: number } = {}
+    for (let node of nodes) {
         nodeIndexDict[node.label] = nodes.indexOf(node)
     }
     return nodeIndexDict
 }
 
-function translateTracesToNodeIndex(traces: string[][], nodeIndexDict: { [id: string] : number }){
+function translateTracesToNodeIndex(traces: string[][], nodeIndexDict: { [id: string]: number }) {
     let outputTraces: number[][] = []
-    for(let trace of traces){
+    for (let trace of traces) {
         let outputTrace: number[] = []
-        for (let act of trace){
+        for (let act of trace) {
             outputTrace.push(nodeIndexDict[act])
         }
         outputTraces.push(outputTrace)
@@ -1001,18 +1027,20 @@ function translateTracesToNodeIndex(traces: string[][], nodeIndexDict: { [id: st
 
 type traceType = {
     actions: number[]
-    thresholds: {[key:string]: {
+    thresholds: {
+        [key: string]: {
             count: number
             threshold: number
-        }}
+        }
+    }
 }
 
 
-function findMatchingTracesCount(alignmentTraces: number[][], objectType: string, traces: traceType[]){
+function findMatchingTracesCount(alignmentTraces: number[][], objectType: string, traces: traceType[]) {
     let matchingTracesCount: number = 0
-    for (let alignmentTrace of alignmentTraces){
-        for (let trace of traces){
-            if (trace.actions.toString() === alignmentTrace.toString()){
+    for (let alignmentTrace of alignmentTraces) {
+        for (let trace of traces) {
+            if (trace.actions.toString() === alignmentTrace.toString()) {
                 matchingTracesCount += trace.thresholds[objectType].count
             }
         }

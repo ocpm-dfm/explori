@@ -49,6 +49,8 @@ function countBasedHighlighting(countTransform?: ((count: number) => number)): E
         },
         edgeWidth(source: number, target: number, objectType: string, initialData: any): number {
             const data = initialData as TraceCountInitialData;
+            if (!data.edgeCounts[source] || !data.edgeCounts[source][target] || !data.edgeCounts[source][target][objectType])
+                return 1;
             return data.edgeCounts[source][target][objectType] / data.maxCount;
         }
     })
