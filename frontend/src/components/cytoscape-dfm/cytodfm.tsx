@@ -59,6 +59,7 @@ export type CytoDFMProps = {
     graphHorizontal: boolean,
     alignmentMode: string,
     legendPosition: string,
+    infoboxEnabled: boolean
 }
 
 export interface CytoDFMMethods {
@@ -897,7 +898,7 @@ export const FilteredCytoDFM = forwardRef((props: CytoDFMProps, ref: ForwardedRe
                 </ul>
             }
             {
-                hasSelectedObject && selectedTraces !== null &&
+                props.infoboxEnabled && hasSelectedObject && selectedTraces !== null &&
                 <div className="CytoDFM-Overlay CytoDFM-Infobox">
                     {
                         selection.selectedNode !== null &&

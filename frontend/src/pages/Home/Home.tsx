@@ -100,6 +100,7 @@ export const Home = connect<StateProps, DispatchProps, HomeProps, RootState>(map
     const alreadySelectedAllObjectTypesInitially = props.session.alreadySelectedAllObjectTypesInitially;
 
     const [frozen, setFrozen] = useState<boolean>(false);
+    const [infoboxEnabled, setInfoboxEnabled] = useState<boolean>(true);
 
     const dfm_query = useAsyncAPI<DirectlyFollowsMultigraph>("/pm/dfm", {ocel: selectedOcel},
         {state: props.dfmQuery, setState: props.setDfmQuery});
@@ -142,6 +143,8 @@ export const Home = connect<StateProps, DispatchProps, HomeProps, RootState>(map
                 setAlignmentMode={props.setAlignmentMode}
                 selectedLegendPosition={(props.session.legendPosition as LegendPositionName) || LegendPositionName.None}
                 setLegendPosition={props.setLegendPosition}
+                infoboxEnabled={infoboxEnabled}
+                setInfoboxEnabled={(enabled) => setInfoboxEnabled(enabled)}
             />
             <NewObjectSelection
                 availableObjectTypes={availableObjectTypes}
@@ -163,6 +166,7 @@ export const Home = connect<StateProps, DispatchProps, HomeProps, RootState>(map
                                  graphHorizontal={props.session.graphHorizontal}
                                  alignmentMode={props.session.alignmentMode}
                                  legendPosition={props.session.legendPosition}
+                                 infoboxEnabled={infoboxEnabled}
                                  ref={graphRef}/>
                 {!dfm_query.result && !dfm_query.failed && (
                     <Box sx={{
@@ -215,6 +219,8 @@ type VizSettingsProps = {
     setAlignmentMode: (mode: string) => void,
     selectedLegendPosition: LegendPositionName,
     setLegendPosition: (position: string) => void,
+    infoboxEnabled: boolean,
+    setInfoboxEnabled: (enabled: boolean) => void
 }
 
 const VizSettings = (props: VizSettingsProps) => {
@@ -276,6 +282,11 @@ const VizSettings = (props: VizSettingsProps) => {
                 selected={props.selectedLegendPosition === LegendPositionName.BottomRight}
                 label="Bottom right"
                 onClick={() => props.setLegendPosition(LegendPositionName.BottomRight)}/>
+            <div className="VizSettings-Label">Infobox</div>
+            <DropdownCheckbox
+                selected={props.infoboxEnabled}
+                label={props.infoboxEnabled ? "Enabled" : "Disabled"}
+                onClick={() => props.setInfoboxEnabled(!props.infoboxEnabled)}/>
         </NavbarDropdown>
     )
 }
