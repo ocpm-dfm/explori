@@ -16,7 +16,8 @@ import {EdgeHighlightingMode} from "./EdgeHighlighters";
 
 import {AlignmentsData} from "../../pages/Alignments/Alignments";
 import {AlignElement} from "../../redux/AlignmentsQuery/alignmentsquery.types";
-import {log} from "util";
+import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
+import {faCircleXmark} from "@fortawesome/free-regular-svg-icons";
 
 const fileSaver = require('file-saver');
 
@@ -900,22 +901,29 @@ export const FilteredCytoDFM = forwardRef((props: CytoDFMProps, ref: ForwardedRe
             {
                 props.infoboxEnabled && hasSelectedObject && selectedTraces !== null &&
                 <div className="CytoDFM-Overlay CytoDFM-Infobox">
-                    {
-                        selection.selectedNode !== null &&
-                        // temporary fix for clicking on expansive nodes
-                        props.dfm.nodes[selection.selectedNode] !== undefined &&
-                        <h3 className="CytoDFM-Infobox-Header">
-                            Activity: {props.dfm.nodes[selection.selectedNode].label}
-                        </h3>
-                    }
-                    {
-                        selection.selectedEdge !== null &&
-                        props.dfm.nodes[selection.selectedEdge[1]] !== undefined &&
-                        props.dfm.nodes[selection.selectedEdge[2]] !== undefined &&
-                        <h3 className="CytoDFM-Infobox-Header">
-                            Edge: {props.dfm.nodes[selection.selectedEdge[1]].label} to {props.dfm.nodes[selection.selectedEdge[2]].label}
-                        </h3>
-                    }
+                    <div className="CytoDFM-Infobox-Header">
+                        {
+                            selection.selectedNode !== null &&
+                            // temporary fix for clicking on expansive nodes
+                            props.dfm.nodes[selection.selectedNode] !== undefined &&
+                            <h3>
+                                Activity: {props.dfm.nodes[selection.selectedNode].label}
+                            </h3>
+                        }
+                        {
+                            selection.selectedEdge !== null &&
+                            props.dfm.nodes[selection.selectedEdge[1]] !== undefined &&
+                            props.dfm.nodes[selection.selectedEdge[2]] !== undefined &&
+                            <h3 className="CytoDFM-Infobox-Header">
+                                Edge: {props.dfm.nodes[selection.selectedEdge[1]].label} to {props.dfm.nodes[selection.selectedEdge[2]].label}
+                            </h3>
+                        }
+                        <div className="CytoDFM-Infobox-Header-Close" onClick={() => setSelection({selectedNode: null, selectedEdge: null})}>
+                            <FontAwesomeIcon icon={faCircleXmark} />
+                        </div>
+                    </div>
+                    
+
                     <h4>Shown traces</h4>
                     <ul>
                         {

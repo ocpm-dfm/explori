@@ -62,3 +62,24 @@
     max-height: 50vh;
     overflow-y: scroll;
 }
+
+.CytoDFM-Infobox-Header {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+}
+
+.CytoDFM-Infobox-Header-Close {
+    transition: all 200ms ease-in;
+}
+
+.CytoDFM-Infobox-Header-Close:hover {
+    opacity: 0.8;
+}
+
+.CytoDFM-Infobox-Header-Close>svg {
+    width: 1.2rem;
+    height: 1.2rem;
+}
