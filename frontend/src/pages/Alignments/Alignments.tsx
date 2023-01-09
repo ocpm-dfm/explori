@@ -81,12 +81,12 @@ export const Alignments = connect<StateProps, DispatchProps, AlignmentProps, Roo
     return (
         <div className="DefaultLayout-Container">
             <ExploriNavbar />
-            <div style={{position: "relative"}}>
+            <div style={{position: "relative", minHeight: "50vh"}}>
                 {!alignmentsQuery.result && !alignmentsQuery.preliminary && (
                     <Box sx={{
                         display: 'flex',
                         position: 'absolute',
-                        top: '50%',
+                        bottom: '0%',
                         left: '50%',
                         'margin-right': '-50%',
                         transform: 'translate(-50%, -50%)'

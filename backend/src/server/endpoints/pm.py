@@ -125,7 +125,7 @@ def compute_performance_metrics(process_ocel: str = Query(example="uploaded/p2p-
                                                                                  object_type=object_type),
                                     performance_task, [metrics_ocel, object_type, alignments],
                                     performance_metrics(process_ocel, threshold, object_type),
-                                    result_version="1")
+                                    result_version="2")
         for (object_type, alignments) in alignments_by_object_type.items()
     }
 

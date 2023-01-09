@@ -14,6 +14,7 @@ import {SessionState} from "./redux/UserSession/userSession.types";
 import {resetDfmQueryState} from "./redux/DFMQuery/dfmquery";
 import {resetAlignmentQueryState} from "./redux/AlignmentsQuery/alingmentsquery";
 import {NewSessionPage} from "./pages/NewSession/NewSessionPage";
+import {PerformanceMetricsPage} from "./pages/Performance/Performance";
 
 export type StateChangeCallback = (update: any) => void;
 export type SwitchOcelsCallback = (newOcel: string) => Promise<void>;
@@ -107,10 +108,8 @@ export function App(props: Props) {
             <Routes>
                 <Route path="/" element={<Home />}></Route>
                 <Route path="/alignments" element={<Alignments />}></Route>
+                <Route path="/performance" element={<PerformanceMetricsPage />} />
                 <Route path="/session" element={<NewSessionPage switchOcelCallback={loadSessionOrStartNewOne} />} />
-                {/*<Route path="/session" element={<EventLogList switchOcelsCallback={loadSessionOrStartNewOne} />}></Route>*/}
-                {/*<Route path="/user-session/store" element={<UserSession storeOrRestore={"store"} userSessionState={sessionState} />}></Route>*/}
-                {/*<Route path="/user-session/restore" element={<UserSession storeOrRestore={"restore"} stateChangeCallback={stateChangeCallback} />}></Route>*/}
             </Routes>
         </QueryClientProvider>
     );

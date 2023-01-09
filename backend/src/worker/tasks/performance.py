@@ -16,7 +16,9 @@ def calculate_performance_metrics(base_ocel: str, object_type: str, alignments: 
     log_cases = extract_cases_with_timestamps(get_projected_event_log(base_ocel, object_type))
     aligned_log = align_log(log_cases, alignments)
     metrics, _, _ = pm4py.discover_performance_dfg(aligned_log)
-    return expand_tuple_keys(metrics)
+    return {
+        "edges": expand_tuple_keys(metrics)
+    }
 
 
 def extract_cases_with_timestamps(log: EventLog) -> Dict[str, List[Tuple[str, datetime]]]:
