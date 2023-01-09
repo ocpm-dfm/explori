@@ -1,4 +1,4 @@
-import pprint
+from datetime import datetime
 from typing import Dict, Any, List, Tuple
 
 import pm4py
@@ -13,18 +13,28 @@ from worker.utils import get_projected_event_log
 
 @app.task()
 def calculate_performance_metrics(base_ocel: str, object_type: str, alignments: List[Dict[str, Any]]):
+    log_cases = extract_cases_with_timestamps(get_projected_event_log(base_ocel, object_type))
+    aligned_log = align_log(log_cases, alignments)
+    metrics, _, _ = pm4py.discover_performance_dfg(aligned_log)
+    return expand_tuple_keys(metrics)
+
+
+def extract_cases_with_timestamps(log: EventLog) -> Dict[str, List[Tuple[str, datetime]]]:
+    log: DataFrame = pm4py.convert_to_dataframe(log)
+
+    log_cases: Dict[str, List[Tuple[str, datetime]]] = {}
+    for _, row in log.iterrows():
+        log_cases.setdefault(row['case:concept:name'], []).append((row['concept:name'], row['time:timestamp']))
+
+    return log_cases
+
+
+def align_log(log_cases: Dict[str, List[Tuple[str, datetime]]], alignments: List[Dict[str, Any]]) -> DataFrame:
     alignments_dict: Dict[Any, TraceAlignment] = {}
     for alignment in alignments:
         alignment = TraceAlignment(**alignment)
         log_trace = tuple([step.activity for step in alignment.log_alignment if step.activity != SKIP_MOVE][1:-1])
         alignments_dict[log_trace] = alignment
-
-    log: EventLog = get_projected_event_log(base_ocel, object_type)
-    log: DataFrame = pm4py.convert_to_dataframe(log)
-
-    log_cases: Dict[str, List[Tuple[str, str]]] = {}
-    for _, row in log.iterrows():
-        log_cases.setdefault(row['case:concept:name'], []).append((row['concept:name'], row['time:timestamp']))
 
     current_case_id = 0
     aligned_case_ids = []
@@ -59,12 +69,9 @@ def calculate_performance_metrics(base_ocel: str, object_type: str, alignments: 
             aligned_timestamps.append(case[case_position][1])
             case_position += 1
 
-    aligned_log = DataFrame({ 'case:concept:name': aligned_case_ids, 'concept:name': aligned_activities, 'time:timestamp': aligned_timestamps },
+    return DataFrame({ 'case:concept:name': aligned_case_ids, 'concept:name': aligned_activities, 'time:timestamp': aligned_timestamps },
                             columns=['case:concept:name', 'concept:name', 'time:timestamp'])
 
-    metrics, _, _ = pm4py.discover_performance_dfg(aligned_log)
-
-    return expand_tuple_keys(metrics)
 
 
 def expand_tuple_keys(metrics: Dict[Tuple[str, str], Dict[str, float]]) -> Dict[str, Dict[str, Dict[str, float]]]:
