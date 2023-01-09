@@ -226,6 +226,19 @@ type VizSettingsProps = {
 const VizSettings = (props: VizSettingsProps) => {
     return (
         <NavbarDropdown buttonIcon={faBrush} buttonText="Settings">
+            <div className="VizSettings-Label">Show alignments</div>
+            <DropdownCheckbox
+                selected={props.selectedAlignmentMode === AlignmentModeName.NoAlignments}
+                label="None"
+                onClick={() => props.setAlignmentMode(AlignmentModeName.NoAlignments)}/>
+            <DropdownCheckbox
+                selected={props.selectedAlignmentMode === AlignmentModeName.Simple}
+                label="Simple"
+                onClick={() => props.setAlignmentMode(AlignmentModeName.Simple)}/>
+            <DropdownCheckbox
+                selected={props.selectedAlignmentMode === AlignmentModeName.Expansive}
+                label="Extended"
+                onClick={() => props.setAlignmentMode(AlignmentModeName.Expansive)}/>
             <div className="VizSettings-Label">Highlighting</div>
             <DropdownCheckbox
                 selected={props.selectedHighlightingMode === HighlightingModeName.NoHighlighting}
@@ -248,19 +261,6 @@ const VizSettings = (props: VizSettingsProps) => {
                 selected={props.graphHorizontal}
                 label="Left to right"
                 onClick={() => props.setGraphHorizontal(true)}/>
-            <div className="VizSettings-Label">Show alignments</div>
-            <DropdownCheckbox
-                selected={props.selectedAlignmentMode === AlignmentModeName.NoAlignments}
-                label="None"
-                onClick={() => props.setAlignmentMode(AlignmentModeName.NoAlignments)}/>
-            <DropdownCheckbox
-                selected={props.selectedAlignmentMode === AlignmentModeName.Simple}
-                label="Simple"
-                onClick={() => props.setAlignmentMode(AlignmentModeName.Simple)}/>
-            <DropdownCheckbox
-                selected={props.selectedAlignmentMode === AlignmentModeName.Expansive}
-                label="Expansive"
-                onClick={() => props.setAlignmentMode(AlignmentModeName.Expansive)}/>
             <div className="VizSettings-Label">Legend position</div>
             <DropdownCheckbox
                 selected={props.selectedLegendPosition === LegendPositionName.None}
