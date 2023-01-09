@@ -28,15 +28,19 @@ import {NewObjectSelection} from "../../components/NewObjectSelection/NewObjectS
 import {
     NO_HIGHLIGHTING,
     EDGE_COUNT_HIGHLIGHTING,
-    LOGARITHMIC_EDGE_COUNT_HIGHLIGHTING
+    LOGARITHMIC_EDGE_COUNT_HIGHLIGHTING, MEAN_WAITING_TIME_HIGHLIGHTING, MAX_WAITING_TIME_HIGHLIGHTING
 } from "../../components/cytoscape-dfm/EdgeHighlighters";
 import {NavbarDropdown} from "../../components/ExploriNavbar/NavbarDropdown/NavbarDropdown";
 import {DropdownCheckbox} from "../../components/ExploriNavbar/NavbarDropdown/DropdownCheckbox/DropdownCheckbox";
+import {resetPerformanceQueryState, setPerformanceQueryState} from "../../redux/PerformanceQuery/performancequery";
+import {PerformanceMetrics} from "../../redux/PerformanceQuery/performancequery.types";
 
 enum HighlightingModeName {
     NoHighlighting = "none",
     CountBased = "edgeCounts",
-    LogarithmicCount = "logarithmicEdgeCounts"
+    LogarithmicCount = "logarithmicEdgeCounts",
+    MeanTime = "MeanWaitingTime",
+    MaxTime = "MaxWaitingTime"
 }
 
 enum AlignmentModeName {
@@ -61,6 +65,7 @@ interface HomeProps {
 const mapStateToProps = (state: RootState, props: HomeProps) => ({
     session: state.session,
     dfmQuery: state.dfmQuery,
+    performanceQuery: state.performanceQuery
 });
 const mapDispatchToProps = (dispatch: ThunkDispatch<any, any, any>, props: HomeProps) => ({
     setThreshold: async (threshold: number) => {
@@ -86,6 +91,12 @@ const mapDispatchToProps = (dispatch: ThunkDispatch<any, any, any>, props: HomeP
     },
     resetAlignmentsQuery: () => {
         dispatch(resetAlignmentQueryState())
+    },
+    setPerformanceQuery: (state: AsyncApiState<PerformanceMetrics>) => {
+        dispatch(setPerformanceQueryState(state));
+    },
+    resetPerformanceQuery:() => {
+        dispatch(resetPerformanceQueryState());
     }
 });
 
@@ -104,6 +115,14 @@ export const Home = connect<StateProps, DispatchProps, HomeProps, RootState>(map
 
     const dfm_query = useAsyncAPI<DirectlyFollowsMultigraph>("/pm/dfm", {ocel: selectedOcel},
         {state: props.dfmQuery, setState: props.setDfmQuery});
+    const performanceQuery = useAsyncAPI<PerformanceMetrics>("/pm/performance", {
+        process_ocel: props.session.ocel,
+        metrics_ocel: props.session.ocel,
+        threshold: props.session.threshold/100.0
+    }, {
+        state: props.performanceQuery,
+        setState: props.setPerformanceQuery
+    });
     const graphRef = useRef<CytoDFMMethods>();
 
     const availableObjectTypes: string[] = dfm_query.result ? Object.keys(dfm_query.result.subgraphs) : [];
@@ -116,6 +135,10 @@ export const Home = connect<StateProps, DispatchProps, HomeProps, RootState>(map
                 return EDGE_COUNT_HIGHLIGHTING
             case HighlightingModeName.LogarithmicCount:
                 return LOGARITHMIC_EDGE_COUNT_HIGHLIGHTING
+            case HighlightingModeName.MeanTime:
+                return MEAN_WAITING_TIME_HIGHLIGHTING
+            case HighlightingModeName.MaxTime:
+                return MAX_WAITING_TIME_HIGHLIGHTING
             case null:
             default:
                 return NO_HIGHLIGHTING
@@ -159,6 +182,7 @@ export const Home = connect<StateProps, DispatchProps, HomeProps, RootState>(map
             <div className="Home">
                 <ExploriNavbar lowerRowSlot={navbarItems}/>
                 <FilteredCytoDFM dfm={dfm_query.result}
+                                 performanceMetrics={performanceQuery.result ? performanceQuery.result : performanceQuery.preliminary}
                                  threshold={props.session.threshold / 100}
                                  selectedObjectTypes={props.session.selectedObjectTypes}
                                  positionsFrozen={frozen}
@@ -197,6 +221,7 @@ export const Home = connect<StateProps, DispatchProps, HomeProps, RootState>(map
                         //     filteringThreshold: newThreshold
                         // });
                         props.resetAlignmentsQuery();
+                        props.resetPerformanceQuery();
                         props.setThreshold(newThreshold);
                     }}
                     />
@@ -239,6 +264,14 @@ const VizSettings = (props: VizSettingsProps) => {
                 selected={props.selectedHighlightingMode === HighlightingModeName.LogarithmicCount}
                 label="Logarithmic count"
                 onClick={() => props.setSelectedHighlightingMode(HighlightingModeName.LogarithmicCount)}/>
+            <DropdownCheckbox
+                selected={props.selectedHighlightingMode === HighlightingModeName.MeanTime}
+                label="Mean waiting time"
+                onClick={() => props.setSelectedHighlightingMode(HighlightingModeName.MeanTime)}/>
+            <DropdownCheckbox
+                selected={props.selectedHighlightingMode === HighlightingModeName.MaxTime}
+                label="Max waiting time"
+                onClick={() => props.setSelectedHighlightingMode(HighlightingModeName.MaxTime)}/>
             <div className="VizSettings-Label">Graph direction</div>
             <DropdownCheckbox
                 selected={!props.graphHorizontal}

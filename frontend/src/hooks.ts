@@ -8,6 +8,8 @@ if (window.webpackHotUpdate || (process.env.NODE_ENV !== "production" && process
     API_BASE_URL = 'http://localhost:8080';
 }
 
+const deepEqual = require("deep-equal");
+
 // https://blog.bitsrc.io/polling-in-react-using-the-useinterval-custom-hook-e2bcefda4197?gi=61baa34c5745
 export function useInterval(callback: () => any, delay: number | null) {
     const savedCallback = useRef<() => any>();
@@ -124,7 +126,7 @@ export function useAsyncAPI<DataType>(endpoint: string, parameters: { [key: stri
             });
         }
         else if (data.status === "running") {
-            if (data.preliminary !== null) {
+            if (data.preliminary !== null && !deepEqual(data.preliminary, state.preliminary)) {
                 setState({
                     preliminary: data.preliminary,
                     result: null,

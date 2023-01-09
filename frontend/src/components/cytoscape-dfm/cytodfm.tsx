@@ -18,6 +18,7 @@ import {AlignmentsData} from "../../pages/Alignments/Alignments";
 import {AlignElement} from "../../redux/AlignmentsQuery/alignmentsquery.types";
 import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
 import {faCircleXmark} from "@fortawesome/free-regular-svg-icons";
+import {PerformanceMetrics} from "../../redux/PerformanceQuery/performancequery.types";
 
 const fileSaver = require('file-saver');
 
@@ -53,6 +54,7 @@ export type DirectlyFollowsMultigraph = {
 
 export type CytoDFMProps = {
     dfm: DirectlyFollowsMultigraph | null,
+    performanceMetrics: PerformanceMetrics | null,
     threshold: number,
     selectedObjectTypes: string[],
     positionsFrozen: boolean,
