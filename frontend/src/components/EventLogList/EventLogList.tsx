@@ -69,6 +69,15 @@ export const EventLogList = connect<StateProps, DispatchProps, EventLogListProps
                 props.onSelect(props.eventLogs[selected].full_path);
         };
 
+        const findLog = (eventLog: EventLogMetadata) => {
+            for (let log of props.eventLogs){
+                if (eventLog.full_path === log.full_path){
+                    return log.id
+                }
+            }
+            return -1
+        }
+
         const csvSettingsEnabled = props.enableCSVSettings !== undefined ? props.enableCSVSettings : true;
 
         return (
@@ -87,6 +96,13 @@ export const EventLogList = connect<StateProps, DispatchProps, EventLogListProps
                     <UploadLogButton onUpload={(eventLog) => {
                         if (eventLog.id)
                             setSelected(eventLog.id);
+                        else {
+                            const id = findLog(eventLog)
+                            if (id !== undefined) {
+                                setSelected(id);
+                            }
+
+                        }
                     }
                     }/>
                     <div className="EventLogList-SelectButton" onClick={onSelect}>
