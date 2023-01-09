@@ -5,6 +5,7 @@ from typing import Any, List
 class TaskName(Enum):
     CREATE_DFM = "create_dfm"
     COMPUTE_ALIGNMENTS = "compute_alignments"
+    PERFORMANCE_METRICS = "performance_metrics"
 
     def with_attributes(self, **kwargs) -> str:
         """Sometimes, a big task is divided into subtasks.
@@ -16,5 +17,5 @@ class TaskName(Enum):
             else:
                 return str(values)
 
-        stringified_attributes = ''.join([f"[{key}={flatten_values(value)}" for (key, value) in kwargs.items()])
+        stringified_attributes = ''.join([f"[{key}={flatten_values(value)}]" for (key, value) in kwargs.items()])
         return self.value + stringified_attributes

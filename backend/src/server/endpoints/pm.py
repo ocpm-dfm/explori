@@ -12,6 +12,7 @@ from shared_types import FrontendFriendlyDFM
 from task_names import TaskName
 from worker.tasks.dfm import dfm as dfm_task
 from worker.tasks.alignments import compute_alignments as alignment_task, TraceAlignment
+from worker.tasks.performance import calculate_performance_metrics as performance_task
 
 router = APIRouter(prefix="/pm",
                    tags=['Process Mining'])
@@ -61,10 +62,57 @@ def compute_alignments(process_ocel: str = Query(example="uploaded/p2p-normal.js
                        conformance_ocel: str = Query(example="uploaded/p2p-normal.jsonocel"),
                        threshold: float = Query(example=0.75),
                        task_manager: TaskManager = Depends(get_task_manager)):
-
     process_ocel = secure_ocel_filename(process_ocel)
     conformance_ocel = secure_ocel_filename(conformance_ocel)
 
+    result, conformance_dfm = run_alignment_tasks(process_ocel, conformance_ocel, threshold, task_manager)
+
+    def reformat_output(task_output: Dict[Tuple[str, int], Any] | None):
+        if task_output is None:
+            return None
+
+        return [
+            {
+                object_type: task_output[object_type, trace_id]
+                for object_type in conformance_dfm.traces[trace_id].thresholds
+            }
+            for trace_id in range(len(conformance_dfm.traces))
+        ]
+
+    result.result = reformat_output(result.result)
+    result.preliminary = reformat_output(result.preliminary)
+    return result
+
+
+@router.get('/performance', response_model=TaskStatus[Any])
+def compute_performance_metrics(process_ocel: str = Query(example="uploaded/p2p-normal.jsonocel"),
+                                metrics_ocel: str = Query(example="uploaded/p2p-normal.jsonocel"),
+                                threshold: float = Query(example=0.75),
+                                task_manager: TaskManager = Depends(get_task_manager)):
+    process_ocel = secure_ocel_filename(process_ocel)
+    metrics_ocel = secure_ocel_filename(metrics_ocel)
+
+    alignments_status, _ = run_alignment_tasks(process_ocel, metrics_ocel, threshold, task_manager)
+    if alignments_status.status != "done":
+        return TaskStatus(status="running", preliminary=None, result=None)
+
+    alignments_by_object_type = {}
+    for ((object_type, _), alignment) in alignments_status.result.items():
+        alignments_by_object_type.setdefault(object_type, []).append(alignment)
+
+    task_def = TaskDefinition(metrics_ocel, TaskName.PERFORMANCE_METRICS.with_attributes(debug=True),
+                              performance_task, [metrics_ocel, "MATERIAL", alignments_by_object_type['MATERIAL']],
+                              "PERFORMANCE_METRICS_DEBUG")
+    return task_manager.cached_task(task_def, ignore_cache=True)
+
+
+def run_dfm_task(ocel: str, task_manager, ignore_cache=False):
+    dfm_task_definition = TaskDefinition(ocel, TaskName.CREATE_DFM, dfm_task, [ocel], dfm_cache_key(),
+                                         result_version="3")
+    return task_manager.cached_task(dfm_task_definition, ignore_cache)
+
+
+def run_alignment_tasks(process_ocel: str, conformance_ocel: str, threshold: float, task_manager: TaskManager):
     dfm_task_result = run_dfm_task(process_ocel, task_manager)
     if dfm_task_result.status != "done":
         return dfm_task_result
@@ -76,7 +124,8 @@ def compute_alignments(process_ocel: str = Query(example="uploaded/p2p-normal.js
     conformance_dfm = FrontendFriendlyDFM(**dfm_task_result.result)
 
     if not set(conformance_dfm.subgraphs.keys()).issubset(process_dfm.subgraphs.keys()):
-        raise HTTPException(status_code=status.HTTP_412_PRECONDITION_FAILED, detail="The object types of the OCELS do not match.")
+        raise HTTPException(status_code=status.HTTP_412_PRECONDITION_FAILED,
+                            detail="The object types of the OCELS do not match.")
 
     base_threshold = 0
     for threshold_candidate in process_dfm.thresholds:
@@ -102,26 +151,4 @@ def compute_alignments(process_ocel: str = Query(example="uploaded/p2p-normal.js
         for object_type in conformance_dfm.traces[trace_id].thresholds
     }
 
-    result = task_manager.cached_group(tasks)
-
-    def reformat_output(task_output: Dict[Tuple[str, int], Any] | None):
-        if task_output is None:
-            return None
-
-        return [
-            {
-                object_type: task_output[object_type, trace_id]
-                for object_type in conformance_dfm.traces[trace_id].thresholds
-            }
-            for trace_id in range(len(conformance_dfm.traces))
-        ]
-
-    result.result = reformat_output(result.result)
-    result.preliminary = reformat_output(result.preliminary)
-    return result
-
-
-def run_dfm_task(ocel: str, task_manager, ignore_cache=False):
-    dfm_task_definition = TaskDefinition(ocel, TaskName.CREATE_DFM, dfm_task, [ocel], dfm_cache_key(),
-                                         result_version="3")
-    return task_manager.cached_task(dfm_task_definition, ignore_cache)
+    return task_manager.cached_group(tasks), conformance_dfm
