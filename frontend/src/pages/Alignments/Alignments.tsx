@@ -86,7 +86,7 @@ export const Alignments = connect<StateProps, DispatchProps, AlignmentProps, Roo
                     <Box sx={{
                         display: 'flex',
                         position: 'absolute',
-                        top: '50%',
+                        top: '25rem',
                         left: '50%',
                         'margin-right': '-50%',
                         transform: 'translate(-50%, -50%)'
