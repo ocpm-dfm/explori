@@ -47,8 +47,8 @@ class TaskManager:
         if not ignore_cache and self.__long_term_cache.has(ocel, long_term_key):
             cached_result = self.__long_term_cache.get(ocel, task.long_term_cache_key)
             if task.result_version is None or \
-                    ("version" in cached_result and cached_result["version"] == task.result_version):
-                return TaskStatus(status="done", result=self.__long_term_cache.get(ocel, task.long_term_cache_key))
+                    ("version" in cached_result and cached_result["version"] == task.result_version and "result" in cached_result):
+                return TaskStatus(status="done", result=self.__long_term_cache.get(ocel, task.long_term_cache_key)["result"])
 
         # Check if the task is currently running.
         running_result = self.check_on_running_task(ocel, task.task_name, long_term_key, task.result_version)
@@ -68,7 +68,7 @@ class TaskManager:
 
         for (key, task) in task_statuses.items():
             if task.status == "failed":
-                print("Failed because of task " + key)
+                print("Failed because of task " + str(key))
                 return TaskStatus(status="failed", result=None, preliminary=None)
 
             if task.status == "done":
@@ -100,8 +100,12 @@ class TaskManager:
             # We now write the result to the long term cache, clear up the short term cache and return the result.
             result = task_result.get()
             if version is not None:
-                result['version'] = version
-            self.__long_term_cache.set(ocel, long_term_cache_key, result)
+                self.__long_term_cache.set(ocel, long_term_cache_key, {
+                    'result': result,
+                    'version': version
+                })
+            else:
+                self.__long_term_cache.set(ocel, long_term_cache_key, result)
             self.__short_term_cache.delete(task_cache_key)
             self.__short_term_cache.delete(preliminary_result_cache_key)
             return TaskStatus(status="done", result=result)

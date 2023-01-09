@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, Query, HTTPException
 from pydantic import BaseModel
 from starlette import status
 
-from cache import dfm as dfm_cache_key, alignments
+from cache import dfm as dfm_cache_key, alignments, performance_metrics
 from server.task_manager import get_task_manager, TaskManager, TaskStatus, TaskDefinition
 from server.utils import ocel_filename_from_query, secure_ocel_filename
 from shared_types import FrontendFriendlyDFM
@@ -48,12 +48,14 @@ class AlignmentResponseModel(BaseModel):
 
 @router.get('/dfm', response_model=TaskStatus[DFMResponseModel])
 def calculate_dfm_with_thresholds(ocel: str = Depends(ocel_filename_from_query),
-                    task_manager: TaskManager = Depends(get_task_manager)):
+                                  task_manager: TaskManager = Depends(get_task_manager)):
     """
     Async: Tries to load the given OCEL from the data folder, calculates the DFM and the threshold associated with
     each edge and node.
     """
     return run_dfm_task(ocel, task_manager)
+
+
 # endregion
 
 
@@ -65,7 +67,13 @@ def compute_alignments(process_ocel: str = Query(example="uploaded/p2p-normal.js
     process_ocel = secure_ocel_filename(process_ocel)
     conformance_ocel = secure_ocel_filename(conformance_ocel)
 
-    result, conformance_dfm = run_alignment_tasks(process_ocel, conformance_ocel, threshold, task_manager)
+    process_dfm = get_dfm(process_ocel, task_manager)
+    conformance_dfm = get_dfm(conformance_ocel, task_manager)
+
+    if process_dfm is None or conformance_ocel is None:
+        return TaskStatus(status="running", result=None, preliminary=None)
+
+    result = run_alignment_tasks(process_ocel, conformance_ocel, process_dfm, conformance_dfm, threshold, task_manager)
 
     def reformat_output(task_output: Dict[Tuple[str, int], Any] | None):
         if task_output is None:
@@ -92,7 +100,14 @@ def compute_performance_metrics(process_ocel: str = Query(example="uploaded/p2p-
     process_ocel = secure_ocel_filename(process_ocel)
     metrics_ocel = secure_ocel_filename(metrics_ocel)
 
-    alignments_status, _ = run_alignment_tasks(process_ocel, metrics_ocel, threshold, task_manager)
+    process_dfm = get_dfm(process_ocel, task_manager)
+    metrics_dfm = get_dfm(metrics_ocel, task_manager)
+
+    if process_dfm is None or metrics_dfm is None:
+        return TaskStatus(status="running", result=None, preliminary=None)
+
+    alignments_status = run_alignment_tasks(process_ocel, metrics_ocel, process_dfm, metrics_dfm, threshold,
+                                            task_manager)
     if alignments_status.status != "done":
         return TaskStatus(status="running", preliminary=None, result=None)
 
@@ -100,10 +115,28 @@ def compute_performance_metrics(process_ocel: str = Query(example="uploaded/p2p-
     for ((object_type, _), alignment) in alignments_status.result.items():
         alignments_by_object_type.setdefault(object_type, []).append(alignment)
 
-    task_def = TaskDefinition(metrics_ocel, TaskName.PERFORMANCE_METRICS.with_attributes(debug=True),
-                              performance_task, [metrics_ocel, "MATERIAL", alignments_by_object_type['MATERIAL']],
-                              "PERFORMANCE_METRICS_DEBUG")
-    return task_manager.cached_task(task_def, ignore_cache=True)
+    threshold = box_threshold(process_dfm, threshold)
+
+    tasks = {
+        object_type: TaskDefinition(metrics_ocel,
+                                    TaskName.PERFORMANCE_METRICS.with_attributes(process_ocel=process_ocel,
+                                                                                 metrics_ocel=metrics_ocel,
+                                                                                 threshold=threshold,
+                                                                                 object_type=object_type),
+                                    performance_task, [metrics_ocel, object_type, alignments],
+                                    performance_metrics(process_ocel, threshold, object_type),
+                                    result_version="1")
+        for (object_type, alignments) in alignments_by_object_type.items()
+    }
+
+    return task_manager.cached_group(tasks)
+
+
+def get_dfm(ocel: str, task_manager: TaskManager, ignore_cache: bool = False) -> FrontendFriendlyDFM | None:
+    task = run_dfm_task(ocel, task_manager, ignore_cache)
+    if task.status != "done":
+        return None
+    return FrontendFriendlyDFM(**task.result)
 
 
 def run_dfm_task(ocel: str, task_manager, ignore_cache=False):
@@ -112,43 +145,42 @@ def run_dfm_task(ocel: str, task_manager, ignore_cache=False):
     return task_manager.cached_task(dfm_task_definition, ignore_cache)
 
 
-def run_alignment_tasks(process_ocel: str, conformance_ocel: str, threshold: float, task_manager: TaskManager):
-    dfm_task_result = run_dfm_task(process_ocel, task_manager)
-    if dfm_task_result.status != "done":
-        return dfm_task_result
-    process_dfm = FrontendFriendlyDFM(**dfm_task_result.result)
-
-    dfm_task_result = run_dfm_task(conformance_ocel, task_manager)
-    if dfm_task_result.status != "done":
-        return dfm_task_result
-    conformance_dfm = FrontendFriendlyDFM(**dfm_task_result.result)
-
+def run_alignment_tasks(process_ocel: str,
+                        conformance_ocel: str,
+                        process_dfm: FrontendFriendlyDFM,
+                        conformance_dfm: FrontendFriendlyDFM,
+                        threshold: float, task_manager: TaskManager):
     if not set(conformance_dfm.subgraphs.keys()).issubset(process_dfm.subgraphs.keys()):
         raise HTTPException(status_code=status.HTTP_412_PRECONDITION_FAILED,
                             detail="The object types of the OCELS do not match.")
 
-    base_threshold = 0
-    for threshold_candidate in process_dfm.thresholds:
-        if threshold_candidate <= threshold:
-            base_threshold = threshold_candidate
-        else:
-            break
+    threshold = box_threshold(process_dfm, threshold)
 
     tasks = {
         (object_type, trace_id): TaskDefinition(
             base_ocel=process_ocel,
             task_name=TaskName.COMPUTE_ALIGNMENTS.with_attributes(conformance_ocel=conformance_ocel,
-                                                                  base_threshold=base_threshold,
+                                                                  base_threshold=threshold,
                                                                   object_type=object_type,
                                                                   trace_id=trace_id),
             task=alignment_task,
-            args=[process_ocel, base_threshold, object_type,
+            args=[process_ocel, threshold, object_type,
                   [conformance_dfm.nodes[node_id].label for node_id in conformance_dfm.traces[trace_id].actions]],
-            long_term_cache_key=alignments(base_threshold, conformance_ocel, object_type, trace_id),
+            long_term_cache_key=alignments(threshold, conformance_ocel, object_type, trace_id),
             result_version="2"
         )
         for trace_id in range(len(conformance_dfm.traces))
         for object_type in conformance_dfm.traces[trace_id].thresholds
     }
 
-    return task_manager.cached_group(tasks), conformance_dfm
+    return task_manager.cached_group(tasks)
+
+
+def box_threshold(dfm: FrontendFriendlyDFM, threshold: float) -> float:
+    base_threshold = 0
+    for threshold_candidate in dfm.thresholds:
+        if threshold_candidate <= threshold:
+            base_threshold = threshold_candidate
+        else:
+            return base_threshold
+    return base_threshold

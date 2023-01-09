@@ -223,6 +223,10 @@ def dfm(ignored_object_types: List[str] | None = None) -> str:
 def alignments(base_threshold: float, conformance_ocel: str, object_type: str | None, trace_id: int) -> str:
     return f"alignments-{hash_path(conformance_ocel)}-{hash(object_type)}-{base_threshold}-{trace_id}"
 
+
+def performance_metrics(process_ocel: str, base_threshold: float, object_type: str) -> str:
+    return f"performance-{hash_path(process_ocel)}-{hash(object_type)}-{base_threshold}"
+
 def hash(data: str) -> str:
     return sha256(data.encode('utf-8')).hexdigest()
 

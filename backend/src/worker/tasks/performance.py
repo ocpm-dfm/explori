@@ -64,4 +64,11 @@ def calculate_performance_metrics(base_ocel: str, object_type: str, alignments: 
 
     metrics, _, _ = pm4py.discover_performance_dfg(aligned_log)
 
-    return metrics
+    return expand_tuple_keys(metrics)
+
+
+def expand_tuple_keys(metrics: Dict[Tuple[str, str], Dict[str, float]]) -> Dict[str, Dict[str, Dict[str, float]]]:
+    result = {}
+    for ((activity1, activity2), edge_metrics) in metrics.items():
+        result.setdefault(activity1, {})[activity2] = edge_metrics
+    return result

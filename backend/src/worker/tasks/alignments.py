@@ -93,7 +93,10 @@ def compute_alignments(process_ocel: str, threshold: float, object_type: str, tr
 
     # we know that the DFM exists because the `compute_alignments` endpoint does not start this task before the DFM is discovered
     long_term_cache = get_long_term_cache()
-    dfm = FrontendFriendlyDFM(**long_term_cache.get(process_ocel, dfm_cache_key()))
+    dfm = long_term_cache.get(process_ocel, dfm_cache_key())
+    if 'version' in dfm and 'result' in dfm:
+        dfm = dfm['result']
+    dfm = FrontendFriendlyDFM(**dfm)
     dfg = filter_threshold_of_graph_notation(dfm, object_type, threshold)
 
     projected_log = build_trace_event_log(trace)
