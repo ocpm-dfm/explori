@@ -11,7 +11,7 @@ import {getObjectTypeColor, secondsToHumanReadableFormat} from "../../utils";
 import React from "react";
 import {EdgePerformance, PerformanceMetrics} from "../../redux/PerformanceQuery/performancequery.types";
 import ReactDataGrid from "@inovua/reactdatagrid-community";
-import {downloadBlob} from "../../components/AlignmentsTable/AlignmentsTable";
+import {downloadBlob} from "../../pages/Alignments/Alignments";
 import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
 import {faShareFromSquare} from "@fortawesome/free-solid-svg-icons";
 import '../../components/ExploriNavbar/NavbarButton/NavbarButton.css';

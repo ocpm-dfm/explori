@@ -6,23 +6,6 @@ import {faShareFromSquare} from "@fortawesome/free-solid-svg-icons";
 import '../ExploriNavbar/NavbarButton/NavbarButton.css';
 import './AlignmentsTable.css';
 
-// Code from: https://reactdatagrid.io/docs/miscellaneous#csv-export-+-custom-search-box
-export const downloadBlob = (blob: any, fileName = 'alignments-data.csv') => {
-    const link = document.createElement('a');
-    const url = URL.createObjectURL(blob);
-
-    link.setAttribute('href', url);
-    link.setAttribute('download', fileName);
-    link.style.position = 'absolute';
-    link.style.visibility = 'hidden';
-
-    document.body.appendChild(link);
-
-    link.click();
-
-    document.body.removeChild(link);
-};
-
 export function AlignmentTable(props: {objectType: string, traces: TraceAlignment[]}) {
     const objectType = props.objectType;
     const traces = props.traces;
@@ -73,16 +56,6 @@ export function AlignmentTable(props: {objectType: string, traces: TraceAlignmen
     const columns = createColumns(objectType, numColumns);
     const rows = createRows(traces);
 
-    const exportCSV = () => {
-        const header = columns.map((c) => c.name).join(",");
-        const CSVrows = rows.map((data) => columns.map((c) => data[c.name]).join(","));
-
-        const contents = [header].concat(CSVrows).join('\n');
-        const blob = new Blob([contents], { type: 'text/csv;charset=utf-8;' });
-
-        downloadBlob(blob, "alignments-data-" + columns[0].header + ".csv");
-    };
-
     return (
         <React.Fragment>
             <ReactDataGrid
@@ -107,12 +80,6 @@ export function AlignmentTable(props: {objectType: string, traces: TraceAlignmen
                 showHeader={false}
 
             />
-            <div className={'NavbarButton AlignmentsTable-Button'}
-                 onClick={exportCSV}
-                 title={"Export"}>
-                <FontAwesomeIcon icon={faShareFromSquare} className="NavbarButton-Icon"/>
-                Export
-            </div>
         </React.Fragment>
     )
 }

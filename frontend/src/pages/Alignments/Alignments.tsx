@@ -18,6 +18,25 @@ import './Alignments.css';
 import {getObjectTypeColor} from "../../utils";
 import {TraceAlignment, TraceAlignments, AlignElement} from "../../redux/AlignmentsQuery/alignmentsquery.types";
 import { AlignmentTable } from '../../components/AlignmentsTable/AlignmentsTable';
+import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
+import {faShareFromSquare} from "@fortawesome/free-solid-svg-icons";
+
+// Code from: https://reactdatagrid.io/docs/miscellaneous#csv-export-+-custom-search-box
+export const downloadBlob = (blob: any, fileName = 'alignments-data.csv') => {
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+
+    link.setAttribute('href', url);
+    link.setAttribute('download', fileName);
+    link.style.position = 'absolute';
+    link.style.visibility = 'hidden';
+
+    document.body.appendChild(link);
+
+    link.click();
+
+    document.body.removeChild(link);
+};
 
 type AlignmentProps = {
 }
@@ -78,6 +97,13 @@ export const Alignments = connect<StateProps, DispatchProps, AlignmentProps, Roo
 
     const totalMaterialCount = Object.keys(object_type_alignments).length;
 
+    const exportJSON = (objectType: string) => {
+        const json = JSON.stringify(object_type_alignments[objectType], null, 4);
+        const blob = new Blob([json],{type:'application/json'})
+
+        downloadBlob(blob, "alignments-data-" + objectType + ".json");
+    };
+
     return (
         <div className="DefaultLayout-Container">
             <ExploriNavbar />
@@ -101,6 +127,12 @@ export const Alignments = connect<StateProps, DispatchProps, AlignmentProps, Roo
                             {objectType}
                         </h2>
                         <AlignmentTable objectType={objectType} traces={object_type_alignments[objectType]}  />
+                        <div className={'NavbarButton AlignmentsTable-Button'}
+                             onClick={() => exportJSON(objectType)}
+                             title={"Export"}>
+                            <FontAwesomeIcon icon={faShareFromSquare} className="NavbarButton-Icon"/>
+                            Export
+                        </div>
                     </div>
                 ))}
                 {!alignmentsQuery.result && alignmentsQuery.preliminary && (

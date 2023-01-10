@@ -6,7 +6,7 @@ import "./Home.css";
 import {AsyncApiState, useAsyncAPI} from "../../hooks";
 import {CytoDFMMethods, DirectlyFollowsMultigraph, FilteredCytoDFM} from '../../components/cytoscape-dfm/cytodfm';
 import {faSnowflake} from "@fortawesome/free-regular-svg-icons";
-import {faBrush, faShareFromSquare} from "@fortawesome/free-solid-svg-icons";
+import {faBrush, faShareFromSquare, faDiagramProject} from "@fortawesome/free-solid-svg-icons";
 import CircularProgress from '@mui/material/CircularProgress';
 import Box from '@mui/material/Box';
 import Alert from '@mui/material/Alert';
@@ -251,7 +251,7 @@ type VizSettingsProps = {
 const VizSettings = (props: VizSettingsProps) => {
     return (
         <React.Fragment>
-            <NavbarDropdown buttonIcon={faBrush} buttonText="Graph info">
+            <NavbarDropdown buttonIcon={faDiagramProject} buttonText="Information">
                 <div className="VizSettings-Label">Show alignments</div>
                 <DropdownCheckbox
                     selected={props.selectedAlignmentMode === AlignmentModeName.NoAlignments}
@@ -265,8 +265,6 @@ const VizSettings = (props: VizSettingsProps) => {
                     selected={props.selectedAlignmentMode === AlignmentModeName.Expansive}
                     label="Extended"
                     onClick={() => props.setAlignmentMode(AlignmentModeName.Expansive)}/>
-            </NavbarDropdown>
-            <NavbarDropdown buttonIcon={faBrush} buttonText="Settings">
                 <div className="VizSettings-Label">Highlighting</div>
                 <DropdownCheckbox
                     selected={props.selectedHighlightingMode === HighlightingModeName.NoHighlighting}
@@ -288,6 +286,8 @@ const VizSettings = (props: VizSettingsProps) => {
                     selected={props.selectedHighlightingMode === HighlightingModeName.MaxTime}
                     label="Max waiting time"
                     onClick={() => props.setSelectedHighlightingMode(HighlightingModeName.MaxTime)}/>
+            </NavbarDropdown>
+            <NavbarDropdown buttonIcon={faBrush} buttonText="Settings">
                 <div className="VizSettings-Label">Graph direction</div>
                 <DropdownCheckbox
                     selected={!props.graphHorizontal}
