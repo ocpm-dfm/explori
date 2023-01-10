@@ -122,17 +122,20 @@ export const Alignments = connect<StateProps, DispatchProps, AlignmentProps, Roo
                 )}
                 {Object.keys(object_type_alignments).map((objectType, index) => (
                     <div className="DefaultLayout-Content Alignments-Card" key={`alignments=${objectType}`}>
-                        <h2 className="Alignments-Card-Title">
-                            <div className="Alignments-Card-Title-Circle" style={{backgroundColor: getObjectTypeColor(totalMaterialCount, index)}} />
-                            {objectType}
-                        </h2>
-                        <AlignmentTable objectType={objectType} traces={object_type_alignments[objectType]}  />
-                        <div className={'NavbarButton AlignmentsTable-Button'}
-                             onClick={() => exportJSON(objectType)}
-                             title={"Export"}>
-                            <FontAwesomeIcon icon={faShareFromSquare} className="NavbarButton-Icon"/>
-                            Export
+                        <div className="Alignments-Card-Title-Container">
+                            <h2 className="Alignments-Card-Title">
+                                <div className="Alignments-Card-Title-Circle" style={{backgroundColor: getObjectTypeColor(totalMaterialCount, index)}} />
+                                {objectType}
+                            </h2>
+                            <div className={'NavbarButton AlignmentsTable-Button'}
+                                 onClick={() => exportJSON(objectType)}
+                                 title={"Export"}>
+                                <FontAwesomeIcon icon={faShareFromSquare} className="NavbarButton-Icon"/>
+                                Export
+                            </div>
                         </div>
+                        <AlignmentTable objectType={objectType} traces={object_type_alignments[objectType]}  />
+
                     </div>
                 ))}
                 {!alignmentsQuery.result && alignmentsQuery.preliminary && (
