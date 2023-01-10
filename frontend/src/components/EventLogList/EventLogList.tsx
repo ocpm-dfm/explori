@@ -15,6 +15,8 @@ import {UploadLogButton} from "./UploadLogButton/UploadLogButton";
 import {CSVSettings} from "./CSVSettings/CSVSettings";
 import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
 import {faCircleCheck} from "@fortawesome/free-solid-svg-icons";
+import getUuid from "uuid-by-string";
+import {getURI} from "../../hooks";
 
 
 interface EventLogListProps {
@@ -66,8 +68,19 @@ export const EventLogList = connect<StateProps, DispatchProps, EventLogListProps
         };
 
         const onSelect = () => {
-            if (selected !== null)
+            if (selected !== null) {
+                const ocel = String(props.eventLogs[selected].full_path);
+                const uri = getURI("/logs/delete_csv_cache", {file_path: ocel, uuid: getUuid(ocel)});
+                fetch(uri)
+                    .then((response) => response.json())
+                    .then((result) => {
+                        console.log("All cached data was deleted");
+                    })
+                    .catch(err => console.log("Error in deleting ..."));
+
                 props.onSelect(props.eventLogs[selected].full_path);
+            }
+
         };
 
         const findLog = (eventLog: EventLogMetadata) => {

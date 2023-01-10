@@ -237,6 +237,30 @@ def save_csv_columns(payload: StoreCSVPayload):
 
     return {'status': 'successful'}
 
+@router.get('/delete_csv_cache')
+def delete_csv_cache(file_path: str, uuid: str):
+    file_path_extended = "data" + os.sep + file_path
+    # Delete corresponding cache folder
+    if os.path.exists(file_path_extended):
+        cache = get_long_term_cache()
+        folder = cache.get_folder(file_path_extended)
+        try:
+            shutil.rmtree(folder)
+        except OSError as e:
+            print("Error: %s - %s." % (e.filename, e.strerror))
+
+    else:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="File not found!")
+
+    # Delete corresponding autosave
+    autosave_path = "cache" + os.sep + "sessions" + os.sep + "autosave-" + uuid + ".json"
+    if os.path.exists(autosave_path):
+        os.remove(autosave_path)
+
+    return {
+        "status": "successful"
+    }
+
 @router.get('/restore', response_model=CSV)
 def restore_csv_data(name: str) -> CSV:
     file_path_extended = "data" + os.sep + name
