@@ -297,6 +297,9 @@ interface NodeState {
 
 interface CytoDFMSoftState {
     nodeStates: NodeState[],
+    pan: cytoscape.Position | null,
+    zoom: number | null,
+    lastZoom: number | null
 }
 
 interface CytoDFMSelectionState {
@@ -330,11 +333,17 @@ export const FilteredCytoDFM = forwardRef((props: CytoDFMProps, ref: ForwardedRe
     // That is why we use useRef instead of useState.
     const softState = useRef<CytoDFMSoftState>({
         nodeStates: initializeNodePositions(props.dfm),
+        pan: null,
+        zoom: null,
+        lastZoom: null
     });
     // Automatically reset node positions when the DFM changes.
     useEffect(() => {
         softState.current = {
-            nodeStates: initializeNodePositions(props.dfm)
+            nodeStates: initializeNodePositions(props.dfm),
+            pan: null,
+            zoom: null,
+            lastZoom: null
         }
     }, [props.dfm]);
 
@@ -883,6 +892,51 @@ export const FilteredCytoDFM = forwardRef((props: CytoDFMProps, ref: ForwardedRe
         });
     }
 
+    function onPan() {
+        if (cytoscapeRef.current) {
+            softState.current.pan = cytoscapeRef.current?.pan();
+            // console.log("saved pan");
+        }
+    }
+
+    function onZoom() {
+        if (cytoscapeRef.current) {
+            softState.current.pan = cytoscapeRef.current?.pan();
+            softState.current.zoom = cytoscapeRef.current?.zoom();
+            softState.current.lastZoom = Date.now();
+            // console.log("saved zoom")
+        }
+    }
+
+    function blockProgramaticPan(event: any) {
+        if (cytoscapeRef.current && softState.current.pan) {
+            const hasZoomed = softState.current.lastZoom !== null && (Date.now() - softState.current.lastZoom) < 100;
+            if (!hasZoomed) {
+                const pos = cytoscapeRef.current?.pan();
+                const expected = softState.current.pan;
+
+                if (pos.x !== expected.x || pos.y !== expected.y) {
+                    cytoscapeRef.current?.pan(expected)
+                    // console.log("blocked pan")
+                }
+            }
+            else {
+                softState.current.pan = cytoscapeRef.current?.pan();
+                // console.log("Updated zoom pan");
+            }
+        }
+    }
+
+    function blockProgrammaticZoom(event: any) {
+        if (cytoscapeRef.current && softState.current.zoom && cytoscapeRef.current?.zoom() !== softState.current.zoom) {
+            const hasZoomed = softState.current.lastZoom !== null && (Date.now() - softState.current.lastZoom) < 500;
+            if (!hasZoomed) {
+                cytoscapeRef.current?.zoom(softState.current.zoom);
+                // console.log("blocked zoom", event);
+            }
+        }
+    }
+
     function registerEvents(cy: cytoscape.Core) {
         cytoscapeRef.current = cy;
 
@@ -890,9 +944,15 @@ export const FilteredCytoDFM = forwardRef((props: CytoDFMProps, ref: ForwardedRe
 
         cy.on('tap', "node", (event: EventObject) => onNodeTap(event));
         cy.on('tap', 'edge', (event: EventObject) => onEdgeTap(event));
+        cy.on('dragpan', (event: any) => onPan())
+        cy.on('scrollzoom', (event: any) => onZoom())
+        cy.on('pan', (event) => blockProgramaticPan(event));
+        cy.on('zoom', (event) => blockProgrammaticZoom(event));
     }
 
     const hasSelectedObject = selection.selectedNode !== null || selection.selectedEdge !== null;
+
+    console.log("Pan position: ", softState.current.pan)
 
     return (
         <div className="CytoDFM-container" id="DFM-container">
@@ -902,6 +962,8 @@ export const FilteredCytoDFM = forwardRef((props: CytoDFMProps, ref: ForwardedRe
                 layout={layout}
                 style={{width: '100%', height: '100%'}}
                 wheelSensitivity={0.2}
+                pan={softState.current.pan ? softState.current.pan : { x: 0, y: 0 }}
+                zoom={softState.current.zoom ? softState.current.zoom : 1}
                 cy={registerEvents}
             />
             {props.alignmentMode !== "none" && (
