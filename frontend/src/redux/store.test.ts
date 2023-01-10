@@ -14,6 +14,7 @@ export const testUserSession = (store: any) => {
         graphHorizontal: false,
         alignmentMode: "none",
         legendPosition: "none",
+        performanceMode: "Counts",
     }))
 
     store.dispatch(saveUserSession(store.getState().session))

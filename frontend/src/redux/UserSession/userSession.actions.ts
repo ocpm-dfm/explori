@@ -12,7 +12,8 @@ import {
     SET_HIGHLIGHTING_MODE,
     SET_GRAPH_HORIZONTAL,
     SET_ALIGNMENT_MODE,
-    SET_LEGEND_POSITION
+    SET_LEGEND_POSITION,
+    SET_PERFORMANCE_MODE,
 } from './userSession.types'
 import {ThunkDispatch} from "@reduxjs/toolkit";
 import {RootState} from "../store";
@@ -29,6 +30,7 @@ export const saveUserSession = (session: SessionState) => async (dispatch: Thunk
         highlighting_mode: session.highlightingMode,
         graph_horizontal: session.graphHorizontal,
         alignment_mode: session.alignmentMode,
+        performance_mode: session.performanceMode
     }
 
     await fetch(uri, {
@@ -149,5 +151,12 @@ export const setLegendPosition = (position: string) => (dispatch: Function) => {
     dispatch({
         type: SET_LEGEND_POSITION,
         payload: position,
+    })
+}
+
+export const setPerformanceMode = (mode: string) => (dispatch: Function) => {
+    dispatch({
+        type: SET_PERFORMANCE_MODE,
+        payload: mode,
     })
 }

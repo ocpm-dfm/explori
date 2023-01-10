@@ -11,6 +11,7 @@ const USER_SESSION_INITIAL_STATE = {
     graphHorizontal: false,
     alignmentMode: "none",
     legendPosition: "top-left",
+    performanceMode: "Counts"
 } as SessionState
 
 export default USER_SESSION_INITIAL_STATE

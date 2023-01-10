@@ -99,6 +99,7 @@ export function App(props: Props) {
                 graphHorizontal: false,
                 alignmentMode: "none",
                 legendPosition: "top-left",
+                performanceMode: "Counts",
             });
         }
         localStorage.setItem("explori-currentOcel", newOcel);
