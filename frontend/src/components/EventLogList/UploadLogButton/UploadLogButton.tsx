@@ -10,6 +10,7 @@ import {connect} from "react-redux";
 import './UploadLogButton.css';
 import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
 import {faFileArrowUp} from "@fortawesome/free-solid-svg-icons";
+import {CircularProgress} from "@mui/material";
 
 type LogUploaderProps = {
     onUpload?: (eventLog: EventLogMetadata) => void
@@ -69,6 +70,18 @@ export const UploadLogButton = connect<StateProps, DispatchProps, LogUploaderPro
                 Upload OCEL
             </label>
             <input type="file" accept=".jsonocel, .xmlocel, .csv" id="uploadEventLog" hidden onChange={uploadFile}/>
+            {loading && (
+                <CircularProgress
+                    sx={{
+                        position: 'absolute',
+                        top: '50%',
+                        left: '50%',
+                        marginTop: '-12px',
+                        marginLeft: '-12px',
+                    }}
+                />
+            )}
+
         </div>
     )
 });

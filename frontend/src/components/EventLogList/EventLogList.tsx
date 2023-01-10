@@ -55,6 +55,7 @@ export const EventLogList = connect<StateProps, DispatchProps, EventLogListProps
 
         const [selected, setSelected] = useState<number | null>(null);
         const [eventLogToBeDeleted, setEventLogToBeDeleted] = useState<EventLogMetadata | null>(null);
+        const [gridRef, setGridRef] = useState(null);
 
         let selectedEventLog = null;
         if (selected != null && selected < props.eventLogs.length)
@@ -69,6 +70,15 @@ export const EventLogList = connect<StateProps, DispatchProps, EventLogListProps
                 props.onSelect(props.eventLogs[selected].full_path);
         };
 
+        const findLog = (eventLog: EventLogMetadata) => {
+            for (let log of props.eventLogs){
+                if (eventLog.full_path === log.full_path){
+                    return log.id
+                }
+            }
+            return -1
+        }
+
         const csvSettingsEnabled = props.enableCSVSettings !== undefined ? props.enableCSVSettings : true;
 
         return (
@@ -82,11 +92,24 @@ export const EventLogList = connect<StateProps, DispatchProps, EventLogListProps
                 <EventLogTable eventLogs={props.eventLogs}
                                selection={selected}
                                setSelection={onSelection}
+                               setGridRef={setGridRef}
                                deleteLog={(eventLog) => setEventLogToBeDeleted(eventLog)} />
                 <div className="EventLogList-Buttons">
                     <UploadLogButton onUpload={(eventLog) => {
                         if (eventLog.id)
                             setSelected(eventLog.id);
+                        else {
+                            const id = findLog(eventLog)
+                            if (id !== undefined) {
+                                setSelected(id);
+                                if (gridRef !== null)
+                                    // TypeScript says gridRef is type "never", need to fix this
+                                    { // @ts-ignore
+                                        gridRef.current.scrollToId(id)
+                                    }
+                            }
+
+                        }
                     }
                     }/>
                     <div className="EventLogList-SelectButton" onClick={onSelect}>

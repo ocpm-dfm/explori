@@ -1,7 +1,24 @@
 import ReactDataGrid from "@inovua/reactdatagrid-community";
 import React from "react";
 import {TraceAlignment} from "../../redux/AlignmentsQuery/alignmentsquery.types";
+import {Button} from "@mui/material";
 
+// Code from: https://reactdatagrid.io/docs/miscellaneous#csv-export-+-custom-search-box
+const downloadBlob = (blob: any, fileName = 'alignments-data.csv') => {
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+
+    link.setAttribute('href', url);
+    link.setAttribute('download', fileName);
+    link.style.position = 'absolute';
+    link.style.visibility = 'hidden';
+
+    document.body.appendChild(link);
+
+    link.click();
+
+    document.body.removeChild(link);
+};
 
 export function AlignmentTable(props: {objectType: string, traces: TraceAlignment[]}) {
     const objectType = props.objectType;
@@ -53,28 +70,43 @@ export function AlignmentTable(props: {objectType: string, traces: TraceAlignmen
     const columns = createColumns(objectType, numColumns);
     const rows = createRows(traces);
 
-    return (
-        <ReactDataGrid
-            style={{
-                minHeight: 500,
-                marginTop: 16,
-                width: "100%",
-                minWidth: "20cm"
-            }}
-            rowHeight={50}
-            theme="blue-light"
-            idProperty="uniqueId"
-            dataSource={rows}
-            columns={columns}
-            editable={false}
-            pagination
-            showColumnMenuTool={false}
-            showZebraRows={false}
-            // autosizing columns only available in enterprise edition
-            // enableColumnAutosize={true}
-            defaultShowEmptyRows={false}
-            showHeader={false}
+    const exportCSV = () => {
+        const header = columns.map((c) => c.name).join(",");
+        const CSVrows = rows.map((data) => columns.map((c) => data[c.name]).join(","));
 
-        />
+        const contents = [header].concat(CSVrows).join('\n');
+        const blob = new Blob([contents], { type: 'text/csv;charset=utf-8;' });
+
+        downloadBlob(blob, "alignments-data-" + columns[0].header + ".csv");
+    };
+
+    return (
+        <React.Fragment>
+            <ReactDataGrid
+                style={{
+                    minHeight: 500,
+                    marginTop: 16,
+                    width: "100%",
+                    minWidth: "20cm"
+                }}
+                rowHeight={50}
+                theme="blue-light"
+                idProperty="uniqueId"
+                dataSource={rows}
+                columns={columns}
+                editable={false}
+                pagination
+                showColumnMenuTool={false}
+                showZebraRows={false}
+                // autosizing columns only available in enterprise edition
+                // enableColumnAutosize={true}
+                defaultShowEmptyRows={false}
+                showHeader={false}
+
+            />
+            <Button style={{ marginTop: 16 }} onClick={exportCSV}>
+                Export CSV
+            </Button>
+        </React.Fragment>
     )
 }
