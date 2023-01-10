@@ -11,6 +11,8 @@ import {getObjectTypeColor, secondsToHumanReadableFormat} from "../../utils";
 import React from "react";
 import {EdgePerformance, PerformanceMetrics} from "../../redux/PerformanceQuery/performancequery.types";
 import ReactDataGrid from "@inovua/reactdatagrid-community";
+import {Button} from "@mui/material";
+import {downloadBlob} from "../../components/AlignmentsTable/AlignmentsTable";
 
 type PerformanceProps = {
 }
@@ -138,11 +140,30 @@ function EdgeMetrics(props: {objectType: string, metrics: {[key:string]: {[key: 
         {name: "stdev", header: "Standard deviation", render: renderTime, sort: sortTime},
     ]
 
-    return (<ReactDataGrid
-        idProperty="id"
-        theme={"blue-light"}
-        columns={columns}
-        dataSource={entries}
-        style={{ width: "100%" }}
-    />)
+    const exportCSV = () => {
+        const header = columns.map((c) => c.name).join(",");
+        // @ts-ignore
+        const CSVrows = entries.map((data) => columns.map((c) => data[c.name]).join(","));
+
+        const contents = [header].concat(CSVrows).join('\n');
+        const blob = new Blob([contents], { type: 'text/csv;charset=utf-8;' });
+
+        downloadBlob(blob, "performance-data-" + columns[0].header + ".csv");
+    };
+
+
+    return (
+        <React.Fragment>
+            <ReactDataGrid
+                idProperty="id"
+                theme={"blue-light"}
+                columns={columns}
+                dataSource={entries}
+                style={{ width: "100%" }}
+            />
+            <Button style={{ marginTop: 16 }} onClick={exportCSV}>
+                Export CSV
+            </Button>
+        </React.Fragment>
+    )
 }

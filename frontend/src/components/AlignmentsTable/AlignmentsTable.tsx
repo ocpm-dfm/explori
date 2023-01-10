@@ -4,7 +4,7 @@ import {TraceAlignment} from "../../redux/AlignmentsQuery/alignmentsquery.types"
 import {Button} from "@mui/material";
 
 // Code from: https://reactdatagrid.io/docs/miscellaneous#csv-export-+-custom-search-box
-const downloadBlob = (blob: any, fileName = 'alignments-data.csv') => {
+export const downloadBlob = (blob: any, fileName = 'alignments-data.csv') => {
     const link = document.createElement('a');
     const url = URL.createObjectURL(blob);
 
