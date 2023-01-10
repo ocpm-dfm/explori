@@ -9,8 +9,9 @@ import './EventLogTable.css';
 type EventLogTableProps = {
     eventLogs: EventLogMetadata[],
     selection: number | null,
-    setSelection: ({selected}: { selected: any }) => void
-    deleteLog: (eventLog: EventLogMetadata) => void
+    setSelection: ({selected}: { selected: any }) => void,
+    deleteLog: (eventLog: EventLogMetadata) => void,
+    setGridRef: any,
 }
 
 type TableEventLog = {
@@ -71,6 +72,7 @@ export const EventLogTable = (props: EventLogTableProps) => {
             theme={"blue-light"}
             columns={columns}
             dataSource={tableLogs}
+            onReady={props.setGridRef}
             style={gridStyle}
             selected={props.selection}
             //enableSelection={true}

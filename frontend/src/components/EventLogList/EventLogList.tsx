@@ -55,6 +55,7 @@ export const EventLogList = connect<StateProps, DispatchProps, EventLogListProps
 
         const [selected, setSelected] = useState<number | null>(null);
         const [eventLogToBeDeleted, setEventLogToBeDeleted] = useState<EventLogMetadata | null>(null);
+        const [gridRef, setGridRef] = useState(null);
 
         let selectedEventLog = null;
         if (selected != null && selected < props.eventLogs.length)
@@ -91,6 +92,7 @@ export const EventLogList = connect<StateProps, DispatchProps, EventLogListProps
                 <EventLogTable eventLogs={props.eventLogs}
                                selection={selected}
                                setSelection={onSelection}
+                               setGridRef={setGridRef}
                                deleteLog={(eventLog) => setEventLogToBeDeleted(eventLog)} />
                 <div className="EventLogList-Buttons">
                     <UploadLogButton onUpload={(eventLog) => {
@@ -100,6 +102,11 @@ export const EventLogList = connect<StateProps, DispatchProps, EventLogListProps
                             const id = findLog(eventLog)
                             if (id !== undefined) {
                                 setSelected(id);
+                                if (gridRef !== null)
+                                    // TypeScript says gridRef is type "never", need to fix this
+                                    { // @ts-ignore
+                                        gridRef.current.scrollToId(id)
+                                    }
                             }
 
                         }
