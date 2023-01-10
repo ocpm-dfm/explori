@@ -98,7 +98,7 @@ export function App(props: Props) {
                 highlightingMode: "none",
                 graphHorizontal: false,
                 alignmentMode: "none",
-                legendPosition: "none",
+                legendPosition: "top-left",
             });
         }
         localStorage.setItem("explori-currentOcel", newOcel);

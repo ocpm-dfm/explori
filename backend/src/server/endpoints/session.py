@@ -20,6 +20,8 @@ class Session(BaseModel):
     object_types: List[str]
     highlighting_mode: str | None = None
     graph_horizontal: bool = False
+    legend_position: str = "top-left"
+    alignment_mode: str = "none"
 
     class Config:
         schema_extra = {
