@@ -24,3 +24,10 @@
 
     margin-right: .5rem;
 }
+
+.Alignments-Card-Title-Container {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+}
