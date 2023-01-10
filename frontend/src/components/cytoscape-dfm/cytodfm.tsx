@@ -11,14 +11,15 @@ import {
     useState
 } from "react";
 import cytoscape, {EventObject} from "cytoscape";
-import {getObjectTypeColor} from "../../utils";
+import {getObjectTypeColor, secondsToHumanReadableFormat} from "../../utils";
 import {EdgeHighlightingMode} from "./EdgeHighlighters";
 
 import {AlignmentsData} from "../../pages/Alignments/Alignments";
 import {AlignElement} from "../../redux/AlignmentsQuery/alignmentsquery.types";
 import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
 import {faCircleXmark} from "@fortawesome/free-regular-svg-icons";
-import {PerformanceMetrics} from "../../redux/PerformanceQuery/performancequery.types";
+import {EdgePerformance, PerformanceMetrics} from "../../redux/PerformanceQuery/performancequery.types";
+import React from "react";
 
 const fileSaver = require('file-saver');
 
@@ -716,18 +717,19 @@ export const FilteredCytoDFM = forwardRef((props: CytoDFMProps, ref: ForwardedRe
         console.log(elements)
 
         return [elements, legendObjectTypeColors];
-    }, [props.dfm, boxedThreshold, props.selectedObjectTypes, props.highlightingMode, modelAlignments, logAlignments, props.alignmentMode]);
+    }, [props.dfm, boxedThreshold, props.selectedObjectTypes, props.highlightingMode, modelAlignments, logAlignments, props.alignmentMode, props.performanceMetrics]);
 
 
-    const selectedTraces = useMemo(() => {
+    const [selectedTraces, selectedPerformanceMetrics]: [SelectedTracesData, { [key: string]: EdgePerformance } | null] = useMemo(() => {
         const dfm = props.dfm;
         const thresh = boxedThreshold;
         let selectedObjectTypes = props.selectedObjectTypes;
 
         if (dfm === null)
-            return {shown: {}, hidden: {}} as SelectedTracesData;
+            return [{shown: {}, hidden: {}} as SelectedTracesData, null];
 
         let selectedTraces = null;
+        let selectedEdge = null;
 
         // temporary fix for clicking on expansive nodes
         if (selection.selectedNode !== null && dfm.nodes[selection.selectedNode] !== undefined)
@@ -739,6 +741,7 @@ export const FilteredCytoDFM = forwardRef((props: CytoDFMProps, ref: ForwardedRe
             for (const edge of allEdges) {
                 if (edge.source === source && edge.target === target) {
                     selectedTraces = edge.traces;
+                    selectedEdge = edge;
                     break;
                 }
             }
@@ -748,8 +751,7 @@ export const FilteredCytoDFM = forwardRef((props: CytoDFMProps, ref: ForwardedRe
         }
 
         if (selectedTraces == null)
-            return {shown: {}, hidden: {}} as SelectedTracesData;
-
+            return [{shown: {}, hidden: {}} as SelectedTracesData, null];
 
         const shown: { [key: string]: RenderTraceData[] } = {};
         const hidden: { [key: string]: RenderTraceData[] } = {};
@@ -781,11 +783,32 @@ export const FilteredCytoDFM = forwardRef((props: CytoDFMProps, ref: ForwardedRe
             hidden[objectType].sort((a, b) => a.count > b.count ? -1 : 1);
         });
 
-        return {
+        let performanceMetrics: { [key: string]: EdgePerformance } | null = null;
+        if (selectedEdge != null && props.performanceMetrics != null) {
+            const source = dfm.nodes[selectedEdge.source].label;
+            const target = dfm.nodes[selectedEdge.target].label;
+            Object.keys(props.performanceMetrics).forEach((objectType) => {
+                if (!props.performanceMetrics || !props.performanceMetrics[objectType])
+                    return;
+                if (!props.selectedObjectTypes.includes(objectType))
+                    return;
+
+                const edges = props.performanceMetrics[objectType].edges;
+                if (!edges[source] || !edges[source][target])
+                    return;
+
+                if (!performanceMetrics)
+                    performanceMetrics = {};
+                performanceMetrics[objectType] = edges[source][target];
+            });
+        }
+
+
+        return [{
             shown,
             hidden
-        }
-    }, [props.dfm, boxedThreshold, props.selectedObjectTypes, selection]);
+        }, performanceMetrics]
+    }, [props.dfm, props.performanceMetrics, boxedThreshold, props.selectedObjectTypes, selection]);
 
 
     if (!props.dfm) {
@@ -920,52 +943,60 @@ export const FilteredCytoDFM = forwardRef((props: CytoDFMProps, ref: ForwardedRe
                                 Edge: {props.dfm.nodes[selection.selectedEdge[1]].label} to {props.dfm.nodes[selection.selectedEdge[2]].label}
                             </h3>
                         }
-                        <div className="CytoDFM-Infobox-Header-Close" onClick={() => setSelection({selectedNode: null, selectedEdge: null})}>
-                            <FontAwesomeIcon icon={faCircleXmark} />
+                        <div className="CytoDFM-Infobox-Header-Close"
+                             onClick={() => setSelection({selectedNode: null, selectedEdge: null})}>
+                            <FontAwesomeIcon icon={faCircleXmark}/>
                         </div>
                     </div>
-                    
 
-                    <h4>Shown traces</h4>
-                    <ul>
-                        {
-                            Object.keys(selectedTraces.shown).map((objectType) => (
-                                <li key={`traces-${objectType}`}>
-                                    <span>{objectType}</span>
+                    {
+                        selectedPerformanceMetrics && (
+                            <div className="CytoDFM-Infobox-Waittime">
+                                <div className="CytoDFM-Infobox-Waittime-Header">Waiting time</div>
+                                <div className="CytoDFM-Infobox-Waittime-Header">Min</div>
+                                <div className="CytoDFM-Infobox-Waittime-Header">Mean</div>
+                                <div className="CytoDFM-Infobox-Waittime-Header">Max</div>
+                                <div className="CytoDFM-Infobox-Waittime-Header">Total</div>
 
-                                    <ul>
-                                        {
-                                            selectedTraces.shown[objectType].map((trace: RenderTraceData) => (
-                                                <li key={`trace-${objectType}-${trace.id}`}>
-                                                    {trace.count} x {trace.activities.reduce((a, b) => a + ", " + b)}
-                                                </li>
-                                            ))
-                                        }
-                                    </ul>
-                                </li>
-                            ))
-                        }
-                    </ul>
-                    <h4>Filtered traces</h4>
-                    <ul>
-                        {
-                            Object.keys(selectedTraces.hidden).map((objectType) => (
-                                <li key={`hidden-traces-${objectType}`}>
-                                    <span>{objectType}</span>
-
-                                    <ul>
-                                        {
-                                            selectedTraces.hidden[objectType].map((trace: RenderTraceData) => (
-                                                <li key={`hidden-trace-${objectType}-${trace.id}`}>
-                                                    {trace.count} x {trace.activities.reduce((a, b) => a + ", " + b)}
-                                                </li>
-                                            ))
-                                        }
-                                    </ul>
-                                </li>
-                            ))
-                        }
-                    </ul>
+                                {Object.keys(selectedPerformanceMetrics).map((objectType) => {
+                                    const metrics: EdgePerformance = selectedPerformanceMetrics[objectType];
+                                    const color = legendObjectTypeColors.find(([ot, _]) => (ot === objectType))![1];
+                                    return (
+                                        <React.Fragment key={`performance-${objectType}`}>
+                                            <div className="CytoDFM-Infobox-Waittime-Cell CytoDFM-Infobox-Waittime-Cell-OT">
+                                                <div className="CytoDFM-Legend-Circle" style={{backgroundColor: color}}>
+                                                </div>
+                                                {objectType}
+                                            </div>
+                                            <div className="CytoDFM-Infobox-Waittime-Cell">
+                                                {secondsToHumanReadableFormat(metrics.min, 2)}
+                                            </div>
+                                            <div className="CytoDFM-Infobox-Waittime-Cell">
+                                                {secondsToHumanReadableFormat(metrics.mean, 2)}
+                                            </div>
+                                            <div className="CytoDFM-Infobox-Waittime-Cell">
+                                                {secondsToHumanReadableFormat(metrics.max, 2)}
+                                            </div>
+                                            <div className="CytoDFM-Infobox-Waittime-Cell">
+                                                {secondsToHumanReadableFormat(metrics.sum, 2)}
+                                            </div>
+                                        </React.Fragment>
+                                    )
+                                })
+                                }
+                            </div>
+                        )
+                    }
+                    <div className="CytoDFM-Infobox-Traces-Grid">
+                        <InfoboxTraces traces={selectedTraces.shown}
+                                       title="Shown traces"
+                                       keyPrefix="shown"
+                                       legendColors={legendObjectTypeColors}/>
+                        <InfoboxTraces traces={selectedTraces.hidden}
+                                       title="Filtered traces"
+                                       keyPrefix="hidden"
+                                       legendColors={legendObjectTypeColors}/>
+                    </div>
                 </div>
             }
         </div>
@@ -1057,4 +1088,35 @@ function findMatchingTracesCount(alignmentTraces: number[][], objectType: string
         }
     }
     return matchingTracesCount
+}
+
+function InfoboxTraces(props: { title: string, traces: { [key: string]: RenderTraceData[] }, keyPrefix: string, legendColors: [string, string][] }) {
+    if (Object.keys(props.traces).length === 0)
+        return <React.Fragment />
+
+    return <React.Fragment>
+        <h4 className="CytoDFM-Infobox-Traces-Header">{props.title}</h4>
+        {Object.entries(props.traces).map(([objectType, traces]) => {
+            const color = props.legendColors.find(([ot, _]) => (ot === objectType))![1];
+
+            return (
+                <React.Fragment key={props.keyPrefix + "-" + objectType}>
+                    <div className="CytoDFM-Infobox-Traces-OT CytoDFM-Infobox-Traces-Header">
+                        <div className="CytoDFM-Legend-Circle" style={{backgroundColor: color}}>
+                        </div>
+                        {objectType}
+                    </div>
+                        {traces.map((trace) => (
+                            <React.Fragment key={`${props.keyPrefix}-${objectType}-${trace.id}`}>
+                                <div className="CytoDFM-Infobox-Traces-Trace-Count">
+                                    {trace.count}x
+                                </div>
+                                <div>
+                                    {trace.activities.reduce((a, b) => a + ", " + b)}
+                                </div>
+                            </React.Fragment>
+                        ))}
+                </React.Fragment>)
+        })}
+    </React.Fragment>
 }

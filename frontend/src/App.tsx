@@ -15,6 +15,7 @@ import {resetDfmQueryState} from "./redux/DFMQuery/dfmquery";
 import {resetAlignmentQueryState} from "./redux/AlignmentsQuery/alingmentsquery";
 import {NewSessionPage} from "./pages/NewSession/NewSessionPage";
 import {PerformanceMetricsPage} from "./pages/Performance/Performance";
+import {resetPerformanceQueryState} from "./redux/PerformanceQuery/performancequery";
 
 export type StateChangeCallback = (update: any) => void;
 export type SwitchOcelsCallback = (newOcel: string) => Promise<void>;
@@ -40,7 +41,8 @@ const mapDispatchToProps = (dispatch: ThunkDispatch<{}, {}, any>, ownProps: OwnP
     },
     resetQueryStates: () => {
         dispatch(resetDfmQueryState());
-        dispatch(resetAlignmentQueryState())
+        dispatch(resetAlignmentQueryState());
+        dispatch(resetPerformanceQueryState());
     }
 })
 

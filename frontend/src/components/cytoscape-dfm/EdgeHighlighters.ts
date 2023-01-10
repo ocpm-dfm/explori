@@ -51,13 +51,13 @@ function countBasedHighlighting(countTransform?: ((count: number) => number)): E
             const data = initialData as TraceCountInitialData;
             if (!data.edgeCounts[source] || !data.edgeCounts[source][target] || !data.edgeCounts[source][target][objectType])
                 return 1;
-            return data.edgeCounts[source][target][objectType] / data.maxCount;
+            return 1.5 * data.edgeCounts[source][target][objectType] / data.maxCount;
         }
     })
 }
 
 function performanceBasedHighlighting(aspect: string): EdgeHighlightingMode {
-    return {
+    return clampOutput({
         createInitialData(dfm: DirectlyFollowsMultigraph, props: CytoDFMProps): any {
             if (!props.performanceMetrics)
                 return null;
@@ -106,13 +106,12 @@ function performanceBasedHighlighting(aspect: string): EdgeHighlightingMode {
 
             const data = initialData as TraceCountInitialData;
 
-            if (!data.edgeCounts[source] || !data.edgeCounts[source][target] || !data.edgeCounts[source][target][objectType])
+            if (!data.edgeCounts[source] || !data.edgeCounts[source][target] || data.edgeCounts[source][target][objectType] === undefined)
                 return 1;
 
-
-            return data.edgeCounts[source][target][objectType] / data.maxCount;
+            return 1.5 * data.edgeCounts[source][target][objectType] / data.maxCount;
         }
-    }
+    })
 }
 
 function clampOutput(mode: EdgeHighlightingMode, clampMin: number = 0.2, clampMax: number = 1.5): EdgeHighlightingMode {
@@ -120,7 +119,11 @@ function clampOutput(mode: EdgeHighlightingMode, clampMin: number = 0.2, clampMa
         createInitialData: mode.createInitialData,
         edgeWidth(source: number, target: number, objectType: string, initialData: any): number {
             const original = mode.edgeWidth(source, target, objectType, initialData);
-            return clampMin + (clampMax - clampMin) * original;
+            if (original < clampMin)
+                return clampMin;
+            if (original > clampMax)
+                return clampMax;
+            return original;
         }
     }
 }

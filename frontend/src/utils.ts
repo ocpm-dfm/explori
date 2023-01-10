@@ -44,7 +44,7 @@ export function getObjectTypeColor(numberOfColorsNeeded: number, indexOfCurrentC
     }
 }
 
-export function secondsToHumanReadableFormat(seconds: number): string {
+export function secondsToHumanReadableFormat(seconds: number, accuracy: number = -1): string {
     function handleTimestep(remainingTime: number, factor: number, unit: string, parts: string[]): [number, string[]] {
         const count = Math.floor(remainingTime / factor)
         if (parts.length > 0 || count > 0)
@@ -57,7 +57,10 @@ export function secondsToHumanReadableFormat(seconds: number): string {
     [remaining, parts] = handleTimestep(remaining, 24 * 60 * 60, "d", parts);
     [remaining, parts] = handleTimestep(remaining, 60 * 60, "h", parts);
     [remaining, parts] = handleTimestep(remaining, 60, "m", parts);
-    parts.push(`${Math.round(remaining)}s`)
+    parts.push(`${Math.round(remaining)}s`);
+
+    if (accuracy > 0 && accuracy < parts.length)
+        parts = parts.slice(0, accuracy);
 
     return parts.reduce((a, b) => a + " " + b);
 }
