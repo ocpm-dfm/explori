@@ -250,76 +250,80 @@ type VizSettingsProps = {
 
 const VizSettings = (props: VizSettingsProps) => {
     return (
-        <NavbarDropdown buttonIcon={faBrush} buttonText="Settings">
-            <div className="VizSettings-Label">Show alignments</div>
-            <DropdownCheckbox
-                selected={props.selectedAlignmentMode === AlignmentModeName.NoAlignments}
-                label="None"
-                onClick={() => props.setAlignmentMode(AlignmentModeName.NoAlignments)}/>
-            <DropdownCheckbox
-                selected={props.selectedAlignmentMode === AlignmentModeName.Simple}
-                label="Simple"
-                onClick={() => props.setAlignmentMode(AlignmentModeName.Simple)}/>
-            <DropdownCheckbox
-                selected={props.selectedAlignmentMode === AlignmentModeName.Expansive}
-                label="Extended"
-                onClick={() => props.setAlignmentMode(AlignmentModeName.Expansive)}/>
-            <div className="VizSettings-Label">Highlighting</div>
-            <DropdownCheckbox
-                selected={props.selectedHighlightingMode === HighlightingModeName.NoHighlighting}
-                label="None"
-                onClick={() => props.setSelectedHighlightingMode(HighlightingModeName.NoHighlighting)}/>
-            <DropdownCheckbox
-                selected={props.selectedHighlightingMode === HighlightingModeName.CountBased}
-                label="Count"
-                onClick={() => props.setSelectedHighlightingMode(HighlightingModeName.CountBased)}/>
-            <DropdownCheckbox
-                selected={props.selectedHighlightingMode === HighlightingModeName.LogarithmicCount}
-                label="Logarithmic count"
-                onClick={() => props.setSelectedHighlightingMode(HighlightingModeName.LogarithmicCount)}/>
-            <DropdownCheckbox
-                selected={props.selectedHighlightingMode === HighlightingModeName.MeanTime}
-                label="Mean waiting time"
-                onClick={() => props.setSelectedHighlightingMode(HighlightingModeName.MeanTime)}/>
-            <DropdownCheckbox
-                selected={props.selectedHighlightingMode === HighlightingModeName.MaxTime}
-                label="Max waiting time"
-                onClick={() => props.setSelectedHighlightingMode(HighlightingModeName.MaxTime)}/>
-            <div className="VizSettings-Label">Graph direction</div>
-            <DropdownCheckbox
-                selected={!props.graphHorizontal}
-                label="Top to down"
-                onClick={() => props.setGraphHorizontal(false)}/>
-            <DropdownCheckbox
-                selected={props.graphHorizontal}
-                label="Left to right"
-                onClick={() => props.setGraphHorizontal(true)}/>
-            <div className="VizSettings-Label">Legend position</div>
-            <DropdownCheckbox
-                selected={props.selectedLegendPosition === LegendPositionName.None}
-                label="None"
-                onClick={() => props.setLegendPosition(LegendPositionName.None)}/>
-            <DropdownCheckbox
-                selected={props.selectedLegendPosition === LegendPositionName.TopLeft}
-                label="Top left"
-                onClick={() => props.setLegendPosition(LegendPositionName.TopLeft)}/>
-            <DropdownCheckbox
-                selected={props.selectedLegendPosition === LegendPositionName.TopRight}
-                label="Top right"
-                onClick={() => props.setLegendPosition(LegendPositionName.TopRight)}/>
-            <DropdownCheckbox
-                selected={props.selectedLegendPosition === LegendPositionName.BottomLeft}
-                label="Bottom left"
-                onClick={() => props.setLegendPosition(LegendPositionName.BottomLeft)}/>
-            <DropdownCheckbox
-                selected={props.selectedLegendPosition === LegendPositionName.BottomRight}
-                label="Bottom right"
-                onClick={() => props.setLegendPosition(LegendPositionName.BottomRight)}/>
-            <div className="VizSettings-Label">Infobox</div>
-            <DropdownCheckbox
-                selected={props.infoboxEnabled}
-                label={props.infoboxEnabled ? "Enabled" : "Disabled"}
-                onClick={() => props.setInfoboxEnabled(!props.infoboxEnabled)}/>
-        </NavbarDropdown>
+        <React.Fragment>
+            <NavbarDropdown buttonIcon={faBrush} buttonText="Graph info">
+                <div className="VizSettings-Label">Show alignments</div>
+                <DropdownCheckbox
+                    selected={props.selectedAlignmentMode === AlignmentModeName.NoAlignments}
+                    label="None"
+                    onClick={() => props.setAlignmentMode(AlignmentModeName.NoAlignments)}/>
+                <DropdownCheckbox
+                    selected={props.selectedAlignmentMode === AlignmentModeName.Simple}
+                    label="Simple"
+                    onClick={() => props.setAlignmentMode(AlignmentModeName.Simple)}/>
+                <DropdownCheckbox
+                    selected={props.selectedAlignmentMode === AlignmentModeName.Expansive}
+                    label="Extended"
+                    onClick={() => props.setAlignmentMode(AlignmentModeName.Expansive)}/>
+            </NavbarDropdown>
+            <NavbarDropdown buttonIcon={faBrush} buttonText="Settings">
+                <div className="VizSettings-Label">Highlighting</div>
+                <DropdownCheckbox
+                    selected={props.selectedHighlightingMode === HighlightingModeName.NoHighlighting}
+                    label="None"
+                    onClick={() => props.setSelectedHighlightingMode(HighlightingModeName.NoHighlighting)}/>
+                <DropdownCheckbox
+                    selected={props.selectedHighlightingMode === HighlightingModeName.CountBased}
+                    label="Count"
+                    onClick={() => props.setSelectedHighlightingMode(HighlightingModeName.CountBased)}/>
+                <DropdownCheckbox
+                    selected={props.selectedHighlightingMode === HighlightingModeName.LogarithmicCount}
+                    label="Logarithmic count"
+                    onClick={() => props.setSelectedHighlightingMode(HighlightingModeName.LogarithmicCount)}/>
+                <DropdownCheckbox
+                    selected={props.selectedHighlightingMode === HighlightingModeName.MeanTime}
+                    label="Mean waiting time"
+                    onClick={() => props.setSelectedHighlightingMode(HighlightingModeName.MeanTime)}/>
+                <DropdownCheckbox
+                    selected={props.selectedHighlightingMode === HighlightingModeName.MaxTime}
+                    label="Max waiting time"
+                    onClick={() => props.setSelectedHighlightingMode(HighlightingModeName.MaxTime)}/>
+                <div className="VizSettings-Label">Graph direction</div>
+                <DropdownCheckbox
+                    selected={!props.graphHorizontal}
+                    label="Top to down"
+                    onClick={() => props.setGraphHorizontal(false)}/>
+                <DropdownCheckbox
+                    selected={props.graphHorizontal}
+                    label="Left to right"
+                    onClick={() => props.setGraphHorizontal(true)}/>
+                <div className="VizSettings-Label">Legend position</div>
+                <DropdownCheckbox
+                    selected={props.selectedLegendPosition === LegendPositionName.None}
+                    label="None"
+                    onClick={() => props.setLegendPosition(LegendPositionName.None)}/>
+                <DropdownCheckbox
+                    selected={props.selectedLegendPosition === LegendPositionName.TopLeft}
+                    label="Top left"
+                    onClick={() => props.setLegendPosition(LegendPositionName.TopLeft)}/>
+                <DropdownCheckbox
+                    selected={props.selectedLegendPosition === LegendPositionName.TopRight}
+                    label="Top right"
+                    onClick={() => props.setLegendPosition(LegendPositionName.TopRight)}/>
+                <DropdownCheckbox
+                    selected={props.selectedLegendPosition === LegendPositionName.BottomLeft}
+                    label="Bottom left"
+                    onClick={() => props.setLegendPosition(LegendPositionName.BottomLeft)}/>
+                <DropdownCheckbox
+                    selected={props.selectedLegendPosition === LegendPositionName.BottomRight}
+                    label="Bottom right"
+                    onClick={() => props.setLegendPosition(LegendPositionName.BottomRight)}/>
+                <div className="VizSettings-Label">Infobox</div>
+                <DropdownCheckbox
+                    selected={props.infoboxEnabled}
+                    label={props.infoboxEnabled ? "Enabled" : "Disabled"}
+                    onClick={() => props.setInfoboxEnabled(!props.infoboxEnabled)}/>
+            </NavbarDropdown>
+        </React.Fragment>
     )
 }
