@@ -11,8 +11,11 @@ import {getObjectTypeColor, secondsToHumanReadableFormat} from "../../utils";
 import React from "react";
 import {EdgePerformance, PerformanceMetrics} from "../../redux/PerformanceQuery/performancequery.types";
 import ReactDataGrid from "@inovua/reactdatagrid-community";
-import {Button} from "@mui/material";
 import {downloadBlob} from "../../components/AlignmentsTable/AlignmentsTable";
+import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
+import {faShareFromSquare} from "@fortawesome/free-solid-svg-icons";
+import '../../components/ExploriNavbar/NavbarButton/NavbarButton.css';
+import './Performance.css';
 
 type PerformanceProps = {
 }
@@ -148,7 +151,7 @@ function EdgeMetrics(props: {objectType: string, metrics: {[key:string]: {[key: 
         const contents = [header].concat(CSVrows).join('\n');
         const blob = new Blob([contents], { type: 'text/csv;charset=utf-8;' });
 
-        downloadBlob(blob, "performance-data-" + columns[0].header + ".csv");
+        downloadBlob(blob, "performance-data-" + props.objectType + ".csv");
     };
 
 
@@ -161,9 +164,13 @@ function EdgeMetrics(props: {objectType: string, metrics: {[key:string]: {[key: 
                 dataSource={entries}
                 style={{ width: "100%" }}
             />
-            <Button style={{ marginTop: 16 }} onClick={exportCSV}>
-                Export CSV
-            </Button>
+            <div className={'NavbarButton Performance-Button'}
+                 onClick={exportCSV}
+                 hidden
+                 title={"Export"}>
+                <FontAwesomeIcon icon={faShareFromSquare} className="NavbarButton-Icon"/>
+                Export
+            </div>
         </React.Fragment>
     )
 }

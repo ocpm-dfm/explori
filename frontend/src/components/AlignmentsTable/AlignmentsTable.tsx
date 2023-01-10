@@ -1,7 +1,10 @@
 import ReactDataGrid from "@inovua/reactdatagrid-community";
 import React from "react";
 import {TraceAlignment} from "../../redux/AlignmentsQuery/alignmentsquery.types";
-import {Button} from "@mui/material";
+import {FontAwesomeIcon} from '@fortawesome/react-fontawesome'
+import {faShareFromSquare} from "@fortawesome/free-solid-svg-icons";
+import '../ExploriNavbar/NavbarButton/NavbarButton.css';
+import './AlignmentsTable.css';
 
 // Code from: https://reactdatagrid.io/docs/miscellaneous#csv-export-+-custom-search-box
 export const downloadBlob = (blob: any, fileName = 'alignments-data.csv') => {
@@ -104,9 +107,12 @@ export function AlignmentTable(props: {objectType: string, traces: TraceAlignmen
                 showHeader={false}
 
             />
-            <Button style={{ marginTop: 16 }} onClick={exportCSV}>
-                Export CSV
-            </Button>
+            <div className={'NavbarButton AlignmentsTable-Button'}
+                 onClick={exportCSV}
+                 title={"Export"}>
+                <FontAwesomeIcon icon={faShareFromSquare} className="NavbarButton-Icon"/>
+                Export
+            </div>
         </React.Fragment>
     )
 }
