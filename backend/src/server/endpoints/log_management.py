@@ -261,6 +261,39 @@ def delete_csv_cache(file_path: str, uuid: str):
         "status": "successful"
     }
 
+@router.get('/clear_cache')
+def delete_csv_cache():
+    dir_path = "cache"
+    # clear all OCEL caches
+    for directory in [x[0] for x in os.walk(dir_path)]:
+        if directory != dir_path and directory != dir_path + os.sep + "csv_columns" and directory != dir_path + os.sep + "sessions":
+            try:
+                shutil.rmtree(directory)
+            except OSError as e:
+                print("Error: %s - %s." % (e.filename, e.strerror))
+
+    # clear csv_columns:
+    csv_dir_path = dir_path + os.sep + "csv_columns"
+    for directory in [x[2] for x in os.walk(csv_dir_path)]:
+        for file in directory:
+            try:
+                os.remove(csv_dir_path + os.sep + file)
+            except OSError as e:
+                print("Error: %s - %s." % (e.filename, e.strerror))
+
+    # Clear autosaves
+    autosave_dir_path = "cache" + os.sep + "sessions"
+    for directory in [x[2] for x in os.walk(autosave_dir_path)]:
+        for file in directory:
+            try:
+                os.remove(autosave_dir_path + os.sep + file)
+            except OSError as e:
+                print("Error: %s - %s." % (e.filename, e.strerror))
+
+    return {
+        "status": "successful"
+    }
+
 @router.get('/restore', response_model=CSV)
 def restore_csv_data(name: str) -> CSV:
     file_path_extended = "data" + os.sep + name

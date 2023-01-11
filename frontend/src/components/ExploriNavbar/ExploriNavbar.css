@@ -62,6 +62,10 @@
     height: 1.8rem;
 }
 
+.ENAV-help {
+    padding-right: 8px;
+}
+
 .ENAV-Row2 {
     display: flex;
     flex-direction: row;
