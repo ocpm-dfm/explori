@@ -1,16 +1,13 @@
-FROM python:3.10
+ARG BUILD_ENV
 
-# PYTHONPATH: needed to specify the celery app `worker.main.app` relative to it
-# EXPLORI_REDIS_HOST: needed to specify the address of the redis docker container (simply its name since they're in the same docker network)
-ENV EXPLORI_REDIS_HOST=redis
-ENV EXPLORI_REDIS_PORT=6379
+FROM explori-backend-base-image as common_pre_build
+ONBUILD WORKDIR /explori/celery
 
-WORKDIR /explori/celery
+FROM common_pre_build as prod_build
+ONBUILD COPY src/ src/
 
-COPY requirements.txt .
-RUN pip install -r requirements.txt
+FROM common_pre_build as dev_build
 
-COPY src/ src/
-COPY data/ data/
-
-CMD PYTHONUNBUFFERED=1 EXPLORI_REDIS_HOST=${EXPLORI_REDIS_HOST} EXPLORI_REDIS_PORT=${EXPLORI_REDIS_PORT} PYTHONPATH="src/" celery --app=worker.main.app worker --loglevel=INFO
+# TODO: do we need ONBUILD in the one below as well?
+FROM ${BUILD_ENV}_build
+CMD PYTHONUNBUFFERED=1 EXPLORI_REDIS_HOST=${REDIS_HOST} EXPLORI_REDIS_PORT=${REDIS_PORT} PYTHONPATH="src/" celery --app=worker.main.app worker --loglevel=INFO
