@@ -1,8 +1,7 @@
 import React from 'react';
 import  "../../components/DefaultLayout/DefaultLayout.css";
-import {AsyncApiState, useAsyncAPI} from "../../api";
+import {AsyncApiState, useAsyncAPI} from "../../hooks";
 import {ExploriNavbar} from "../../components/ExploriNavbar/ExploriNavbar";
-import ReactDataGrid from '@inovua/reactdatagrid-community';
 import '@inovua/reactdatagrid-community/index.css';
 import '@inovua/reactdatagrid-community/theme/blue-light.css';
 import "@inovua/reactdatagrid-community/theme/blue-light.css";
@@ -15,29 +14,40 @@ import {connect} from "react-redux";
 import {ThunkDispatch} from "@reduxjs/toolkit";
 import {setAlignmentQueryState} from "../../redux/AlignmentsQuery/alingmentsquery";
 
+import './Alignments.css';
+import {getObjectTypeColor} from "../../utils";
+import {TraceAlignment, TraceAlignments, AlignElement} from "../../redux/AlignmentsQuery/alignmentsquery.types";
+import { AlignmentTable } from '../../components/AlignmentsTable/AlignmentsTable';
+import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
+import {faShareFromSquare} from "@fortawesome/free-solid-svg-icons";
 
-const SKIP_MOVE = ">>";
-type AlignElement = {
-    activity: string
+// Code from: https://reactdatagrid.io/docs/miscellaneous#csv-export-+-custom-search-box
+export const downloadBlob = (blob: any, fileName = 'alignments-data.csv') => {
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+
+    link.setAttribute('href', url);
+    link.setAttribute('download', fileName);
+    link.style.position = 'absolute';
+    link.style.visibility = 'hidden';
+
+    document.body.appendChild(link);
+
+    link.click();
+
+    document.body.removeChild(link);
 };
-
-type TraceAlignment = {
-    log_alignment: AlignElement[],
-    model_alignment: AlignElement[],
-}
-
-export type TraceAlignments = {[key: string]: TraceAlignment | null}[];
 
 type AlignmentProps = {
 }
 
-const mapStateToProps = (state: RootState, props: AlignmentProps) => ({
+const mapStateToProps = (state: RootState, _: AlignmentProps) => ({
     modelOcel: state.session.ocel,
     threshold: state.session.threshold,
     queryState: state.alignmentsQuery
 });
 
-const mapDispatchToProps = (dispatch: ThunkDispatch<any, any, any>, props: AlignmentProps) => ({
+const mapDispatchToProps = (dispatch: ThunkDispatch<any, any, any>, _: AlignmentProps) => ({
     setQueryState: (state: AsyncApiState<TraceAlignments>) => {
         dispatch(setAlignmentQueryState(state));
     }
@@ -66,7 +76,7 @@ export const Alignments = connect<StateProps, DispatchProps, AlignmentProps, Roo
     const alignmentData = alignmentsQuery.preliminary ? alignmentsQuery.preliminary : alignmentsQuery.result;
     if (alignmentData) {
         try {
-            alignmentData.forEach((traceWithAlignments) => {
+            alignmentData.forEach((traceWithAlignments : any) => {
                 Object.keys(traceWithAlignments).forEach((objectType) => {
                     const alignment = traceWithAlignments[objectType];
                     if (alignment) {
@@ -85,16 +95,24 @@ export const Alignments = connect<StateProps, DispatchProps, AlignmentProps, Roo
         }
     }
 
+    const totalMaterialCount = Object.keys(object_type_alignments).length;
+
+    const exportJSON = (objectType: string) => {
+        const json = JSON.stringify(object_type_alignments[objectType], null, 4);
+        const blob = new Blob([json],{type:'application/json'})
+
+        downloadBlob(blob, "alignments-data-" + objectType + ".json");
+    };
 
     return (
         <div className="DefaultLayout-Container">
             <ExploriNavbar />
-            <div className="DefaultLayout-Content">
+            <div style={{position: "relative", minHeight: "50vh"}}>
                 {!alignmentsQuery.result && !alignmentsQuery.preliminary && (
                     <Box sx={{
                         display: 'flex',
                         position: 'absolute',
-                        top: '50%',
+                        bottom: '0%',
                         left: '50%',
                         'margin-right': '-50%',
                         transform: 'translate(-50%, -50%)'
@@ -102,17 +120,30 @@ export const Alignments = connect<StateProps, DispatchProps, AlignmentProps, Roo
                         <CircularProgress />
                     </Box>
                 )}
-                {Object.keys(object_type_alignments).map((objectType) => (
-                    <AlignmentTable objectType={objectType} traces={object_type_alignments[objectType]} key={`alignments=${objectType}`} />
+                {Object.keys(object_type_alignments).map((objectType, index) => (
+                    <div className="DefaultLayout-Content Alignments-Card" key={`alignments=${objectType}`}>
+                        <div className="Alignments-Card-Title-Container">
+                            <h2 className="Alignments-Card-Title">
+                                <div className="Alignments-Card-Title-Circle" style={{backgroundColor: getObjectTypeColor(totalMaterialCount, index)}} />
+                                {objectType}
+                            </h2>
+                            <div className={'NavbarButton AlignmentsTable-Button'}
+                                 onClick={() => exportJSON(objectType)}
+                                 title={"Export"}>
+                                <FontAwesomeIcon icon={faShareFromSquare} className="NavbarButton-Icon"/>
+                                Export
+                            </div>
+                        </div>
+                        <AlignmentTable objectType={objectType} traces={object_type_alignments[objectType]}  />
+
+                    </div>
                 ))}
                 {!alignmentsQuery.result && alignmentsQuery.preliminary && (
                     <Box sx={{
                         display: 'flex',
                         position: 'absolute',
-                        top: '14%',
-                        left: '98%',
-                        'margin-right': '-50%',
-                        transform: 'translate(-50%, -50%)'
+                        top: '2rem',
+                        right: '2rem'
                     }}>
                         <CircularProgress />
                     </Box>
@@ -122,78 +153,176 @@ export const Alignments = connect<StateProps, DispatchProps, AlignmentProps, Roo
     )
 });
 
-export function AlignmentTable(props: {objectType: string, traces: TraceAlignment[]}) {
-    const objectType = props.objectType;
-    const traces = props.traces;
+type AlignmentsDataProps = {
+    setLogAlignments: any
+    setModelAlignments: any
+}
+type DataProps = AlignmentsDataProps & StateProps & DispatchProps;
 
-    const createColumns = (objectType: string, numColumns: number) => {
-        let columns = new Array(numColumns);
-        columns[0] = {
-            name: 0, header: objectType,
-        };
-        for(let i = 1; i < numColumns; i++) {
-            columns[i] = {
-                name: i, header: "",
-            };
+export type LogAlignment = {
+    alignments: [
+        {
+            objectType: string,
+            nodes: [
+                {
+                    source: number,
+                    intermediary: number,
+                    target: number,
+                }
+            ]
         }
-        return columns;
-    };
+    ]
+}
 
-    const createRows = (traces: TraceAlignment[]) => {
-        let rows = [];
-        let uniqueId = 1;
-        for (let traceIdx = 0; traceIdx < traces.length; traceIdx++) {
-            const trace = traces[traceIdx];
-            let row: any = {
-                uniqueId: uniqueId++,
-                0: "Trace " + traceIdx,
-                1: "[Log Alignment]",
-            };
-            for(let i = 0; i < trace.log_alignment.length; i++) {
-                row[i + 2] = trace.log_alignment[i]['activity'];
-            }
-            rows.push(row);
-
-            row = {
-                uniqueId: uniqueId++,
-                1: "[Model Alignment]",
-            };
-            for(let i = 0; i < trace.model_alignment.length; i++) {
-                row[i + 2] = trace.model_alignment[i]['activity'];
-            }
-            rows.push(row);
+export type ModelAlignment = {
+    alignments: [
+        {
+            objectType: string,
+            nodes: [
+                {
+                    source: number,
+                    target: number,
+                }
+            ]
         }
+    ]
+}
 
-        return rows;
-    };
+export const AlignmentsData = connect<StateProps, DispatchProps, AlignmentsDataProps, RootState>(mapStateToProps, mapDispatchToProps)((props: DataProps) => {
+    const modelOcel = props.modelOcel;
+    const conformanceOcel = props.modelOcel;
+    const threshold = props.threshold;
 
-    // max alignment width + 2 for trace index and log/model alignment prefix columns
-    const numColumns = Math.max(...traces.map((alignment) => alignment.log_alignment.length)) + 2;
-    const columns = createColumns(objectType, numColumns);
-    const rows = createRows(traces);
+    const alignmentsQuery = useAsyncAPI<TraceAlignments>("/pm/alignments", {
+        process_ocel: modelOcel,
+        conformance_ocel: conformanceOcel,
+        threshold: threshold/100.0,
+    }, {
+        state: props.queryState,
+        setState: props.setQueryState
+    });
 
-    return (
-        <div className="DefaultLayout-Container">
-            <div className="DefaultLayout-Content">
-                <ReactDataGrid
-                    style={{
-                        minHeight: 500,
-                        marginTop: 16
-                    }}
-                    rowHeight={50}
-                    theme="blue-light"
-                    idProperty="uniqueId"
-                    dataSource={rows}
-                    columns={columns}
-                    editable={false}
-                    pagination
-                    showColumnMenuTool={false}
-                    showZebraRows={false}
-                    // autosizing columns only available in enterprise edition
-                    // enableColumnAutosize={true}
-                    defaultShowEmptyRows={false}
-                />
-            </div>
-        </div>
-    )
+    const alignmentData = alignmentsQuery.preliminary ? alignmentsQuery.preliminary : alignmentsQuery.result;
+    if (alignmentData) {
+        try {
+            let log_misalignments: [string, AlignElement, AlignElement, AlignElement, string[][]][] = [];
+            let model_misalignments: [string, AlignElement, AlignElement, string[][]][] = [];
+            alignmentData.forEach((traceWithAlignments : any) => {
+                Object.keys(traceWithAlignments).forEach((objectType) => {
+                    const alignment = traceWithAlignments[objectType];
+                    if (alignment) {
+                        if(alignment['log_alignment'].length === alignment['model_alignment'].length){
+                            let alignment_copy = JSON.parse(JSON.stringify(alignment));
+                            const log_indices = alignment_copy['log_alignment'].map((item: any, index: number) => (item['activity'] === ">>" ? index : null)).filter((item: number | null) => item !== null);
+                            const model_indices = alignment_copy['model_alignment'].map((item: any, index: number) => (item['activity'] === ">>" ? index : null)).filter((item: number | null) => item !== null);
+                            log_indices.forEach((index: number) => {
+                                if(index === 0){
+                                    console.log("something went wrong? Explori start should always be in the log")
+                                } else if(index === alignment['log_alignment'].length-1){
+                                    console.log("something went wrong? Explori end should always be in the log")
+                                } else {
+                                    // need edge from edge between last activity before to skipped activity and edge between skipped activity and next activity
+                                    // search in model alignment for last activity and next activity (so go to start and use first activity that is not ">>")
+                                    // e.g: have index 7 where >> is seen in log, then go to model index 7 and go to start until we find first activity that is not >>
+                                    //      then same with going till end
+                                    //      create edge between these two found ones and the activity at index 7 (is never >> since we have log move)
+                                    const model_activity = alignment['model_alignment'][index];
+                                    let [last_activity, next_activity] = getLastAndNextActivity(alignment, index);
+                                    let element = logEqualityChecker(log_misalignments, [objectType, last_activity, model_activity, next_activity])
+                                    if(element === null){
+                                        log_misalignments.push([objectType, last_activity, model_activity, next_activity, [clearAndCutAlignment(alignment_copy)]])
+                                    } else {
+                                        element[4].push(clearAndCutAlignment(alignment_copy))
+                                    }
+                                }
+                            })
+                            model_indices.forEach((index: number) => {
+                                if(index === 0){
+                                    // loop on start node
+                                } else if(index === alignment['log_alignment'].length-1){
+                                    // loop on end node
+                                } else {
+                                    // loop on edge between last and next activity in model
+                                    let [last_activity, next_activity] = getLastAndNextActivity(alignment, index);
+                                    let element = modelEqualityChecker(model_misalignments, [objectType, last_activity, next_activity])
+                                    if(element === null){
+                                        model_misalignments.push([objectType, last_activity, next_activity, [clearAndCutAlignment(alignment_copy)]])
+                                    } else {
+                                        element[3].push(clearAndCutAlignment(alignment_copy))
+                                    }
+                                }
+                            })
+
+                        }
+                    }
+                })
+            });
+            props.setLogAlignments(log_misalignments)
+            props.setModelAlignments(model_misalignments)
+            //console.log(object_type_alignments['MATERIAL']);
+        }
+        catch (e) {
+            console.error(e);
+            console.log(alignmentData)
+        }
+    }
+
+    return null
+});
+
+function getLastAndNextActivity(alignment: TraceAlignment, index: number): AlignElement[] {
+    let first_activity: AlignElement = {activity: ""};
+    for (let i = index-1; i >= 0; i--){
+        if (alignment['model_alignment'][i].activity !== ">>"){
+            first_activity = alignment['model_alignment'][i];
+            break;
+        }
+    }
+    if(first_activity.activity === ""){
+        console.log("something went wrong? Explori start should always be in the log")
+    }
+    let second_activity: AlignElement = {activity: ""};
+    for (let i = index+1; i <= alignment['log_alignment'].length; i++){
+        if (alignment['model_alignment'][i].activity !== ">>"){
+            second_activity = alignment['model_alignment'][i];
+            break;
+        }
+    }
+    if(second_activity.activity === ""){
+        console.log("something went wrong? Explori end should always be in the log")
+    }
+
+    return [first_activity, second_activity];
+}
+
+function logEqualityChecker(alignments: [string, AlignElement, AlignElement, AlignElement, string[][]][],
+                         new_entry: [string, AlignElement, AlignElement, AlignElement])
+{
+    for (const ele of alignments){
+        if(ele[0] === new_entry[0] && ele[1].activity === new_entry[1].activity && ele[2].activity === new_entry[2].activity && ele[3].activity === new_entry[3].activity){
+            return ele
+        }
+    }
+    return null
+}
+
+function modelEqualityChecker(alignments: [string, AlignElement, AlignElement, string[][]][],
+                            new_entry: [string, AlignElement, AlignElement])
+{
+    for (const ele of alignments){
+        if(ele[0] === new_entry[0] && ele[1].activity === new_entry[1].activity && ele[2].activity === new_entry[2].activity){
+            return ele
+        }
+    }
+    return null
+}
+
+function clearAndCutAlignment(alignment: TraceAlignment){
+    let activities: string[] = []
+    for(let ele of alignment['log_alignment']){
+        if (ele.activity !== ">>"){
+            activities.push(ele.activity)
+        }
+    }
+    return activities
 }

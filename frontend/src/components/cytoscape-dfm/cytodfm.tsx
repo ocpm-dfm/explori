@@ -11,6 +11,15 @@ import {
     useState
 } from "react";
 import cytoscape, {EventObject} from "cytoscape";
+import {getObjectTypeColor, secondsToHumanReadableFormat} from "../../utils";
+import {EdgeHighlightingMode} from "./EdgeHighlighters";
+
+import {AlignmentsData} from "../../pages/Alignments/Alignments";
+import {AlignElement} from "../../redux/AlignmentsQuery/alignmentsquery.types";
+import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
+import {faCircleXmark} from "@fortawesome/free-regular-svg-icons";
+import {EdgePerformance, PerformanceMetrics} from "../../redux/PerformanceQuery/performancequery.types";
+import React from "react";
 
 const fileSaver = require('file-saver');
 
@@ -19,22 +28,26 @@ export type DirectlyFollowsMultigraph = {
     thresholds: number[]
     nodes: {
         label: string,
-        counts: {[key:string]: [number, number][]}
+        counts: { [key: string]: [number, number][] }
         traces: number[]
     }[],
-    subgraphs: {[key:string]: {
+    subgraphs: {
+        [key: string]: {
             source: number,
             target: number,
             counts: [number, number][]
             traces: number[]
-        }[]},
+        }[]
+    },
     traces: [
         {
             actions: number[]
-            thresholds: {[key:string]: {
+            thresholds: {
+                [key: string]: {
                     count: number
                     threshold: number
-                }}
+                }
+            }
         }
     ]
 }
@@ -42,26 +55,22 @@ export type DirectlyFollowsMultigraph = {
 
 export type CytoDFMProps = {
     dfm: DirectlyFollowsMultigraph | null,
+    performanceMetrics: PerformanceMetrics | null,
     threshold: number,
     selectedObjectTypes: string[],
-    positionsFrozen: boolean
+    positionsFrozen: boolean,
+    highlightingMode: EdgeHighlightingMode,
+    graphHorizontal: boolean,
+    alignmentMode: string,
+    legendPosition: string,
+    infoboxEnabled: boolean
 }
 
 export interface CytoDFMMethods {
     exportAsJpg(): void;
 }
 
-const preselectedColors = [
-    '#E53935',
-    '#1E88E5',
-    '#7CB342',
-    '#FF9800',
-    '#5E35B1',
-    '#FDD835',
-    '#00897B',
-    '#D81B60',
-    '#795548'
-]
+
 const startIcon = `data:image/svg+xml;utf8,${encodeURIComponent("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>\n" +
     "<!-- Created with Inkscape (http://www.inkscape.org/) -->\n" +
     "\n" +
@@ -217,6 +226,7 @@ const graphStylesheet: cytoscape.Stylesheet[] = [
         "selector": 'edge',  // For all edges
         "style":
             {
+                "width": "data(width)",
                 "target-arrow-color": "data(color)",  // Arrow color
                 "target-arrow-shape": "triangle",  // Arrow shape
                 "line-color": "data(color)",  // edge color
@@ -224,6 +234,41 @@ const graphStylesheet: cytoscape.Stylesheet[] = [
                 // Default curve-If it is style, the arrow will not be displayed, so specify it
                 'curve-style': 'bezier',
                 'label': 'data(label)',
+                "line-style": "solid",
+                'text-wrap': 'wrap',
+                'color': 'black',
+            }
+    },
+    {
+        "selector": '.log-move',  // For all edges
+        "style":
+            {
+                "width": "data(width)",
+                "target-arrow-color": "data(color)",  // Arrow color
+                "target-arrow-shape": "triangle",  // Arrow shape
+                "line-color": "data(color)",  // edge color
+                'arrow-scale': 2,  // Arrow size
+                // Default curve-If it is style, the arrow will not be displayed, so specify it
+                'curve-style': 'bezier',
+                'label': 'data(label)',
+                "line-style": "dashed",
+                'text-wrap': 'wrap',
+                'color': 'black',
+            }
+    },
+    {
+        "selector": '.model-move',  // For all edges
+        "style":
+            {
+                "width": "data(width)",
+                "target-arrow-color": "data(color)",  // Arrow color
+                "target-arrow-shape": "triangle",  // Arrow shape
+                "line-color": "data(color)",  // edge color
+                'arrow-scale': 2,  // Arrow size
+                // Default curve-If it is style, the arrow will not be displayed, so specify it
+                'curve-style': 'bezier',
+                'label': 'data(label)',
+                "line-style": "dotted",
                 'text-wrap': 'wrap',
                 'color': 'black',
             }
@@ -244,42 +289,6 @@ const graphStylesheet: cytoscape.Stylesheet[] = [
             }
     }];
 
-// https://stackoverflow.com/questions/1484506/random-color-generator/7419630#7419630
-function generateColors(numColors: number, colorIndex: number) {
-    let h = colorIndex / numColors;
-    let i = ~~(h * 6);
-    let f = h * 6 - i;
-    let q = 1 - f;
-
-    let r, g, b;
-    switch(i % 6){
-        case 0: r = 1; g = f; b = 0; break;
-        case 1: r = q; g = 1; b = 0; break;
-        case 2: r = 0; g = 1; b = f; break;
-        case 3: r = 0; g = q; b = 1; break;
-        case 4: r = f; g = 0; b = 1; break;
-        case 5: r = 1; g = 0; b = q; break;
-        default: r = 0; g = 0; b = 0; break; // to make typescript happy and avoid r,g,b "possibly" being undefined
-    }
-
-    return "#" + ("00" + (~~(r * 255)).toString(16)).slice(-2) + ("00" + (~~(g * 255)).toString(16)).slice(-2) + ("00" + (~~(b * 255)).toString(16)).slice(-2);
-}
-
-// Either choose from preselected set of colors or generate an arbitrary amount of colors if not enough were preselected.
-// Note that we cannot mix these two approaches and give back preselected colors until we don't have enough and then use
-// the color generation as we currently can't make sure we don't generate a color that's identical (or too close) to a
-// preselected (and already returned and therefore used) color.
-function getEdgeColor(numberOfColorsNeeded: number, indexOfCurrentColor: number) {
-    console.assert(indexOfCurrentColor >= 0 && indexOfCurrentColor < numberOfColorsNeeded);
-
-    if(numberOfColorsNeeded <= preselectedColors.length) {
-        return preselectedColors[indexOfCurrentColor];
-    } else {
-        return generateColors(numberOfColorsNeeded, indexOfCurrentColor);
-    }
-}
-
-
 interface NodeState {
     x: number | null
     y: number | null
@@ -288,6 +297,9 @@ interface NodeState {
 
 interface CytoDFMSoftState {
     nodeStates: NodeState[],
+    pan: cytoscape.Position | null,
+    zoom: number | null,
+    lastZoom: number | null
 }
 
 interface CytoDFMSelectionState {
@@ -302,8 +314,8 @@ type RenderTraceData = {
 }
 
 type SelectedTracesData = {
-    shown: {[key:string]: RenderTraceData[]},
-    hidden: {[key: string]: RenderTraceData[]}
+    shown: { [key: string]: RenderTraceData[] },
+    hidden: { [key: string]: RenderTraceData[] }
 }
 
 function initializeNodePositions(dfm: DirectlyFollowsMultigraph | null) {
@@ -316,17 +328,22 @@ function initializeNodePositions(dfm: DirectlyFollowsMultigraph | null) {
     }));
 }
 
-export const FilteredCytoDFM = forwardRef ((props: CytoDFMProps, ref: ForwardedRef<CytoDFMMethods | undefined>) =>
-{
+export const FilteredCytoDFM = forwardRef((props: CytoDFMProps, ref: ForwardedRef<CytoDFMMethods | undefined>) => {
     // We don't actually want to rerender when the state changes, but we want it to persist accross rerenders.
     // That is why we use useRef instead of useState.
     const softState = useRef<CytoDFMSoftState>({
         nodeStates: initializeNodePositions(props.dfm),
+        pan: null,
+        zoom: null,
+        lastZoom: null
     });
     // Automatically reset node positions when the DFM changes.
     useEffect(() => {
         softState.current = {
-            nodeStates: initializeNodePositions(props.dfm)
+            nodeStates: initializeNodePositions(props.dfm),
+            pan: null,
+            zoom: null,
+            lastZoom: null
         }
     }, [props.dfm]);
 
@@ -334,15 +351,17 @@ export const FilteredCytoDFM = forwardRef ((props: CytoDFMProps, ref: ForwardedR
         selectedNode: null,
         selectedEdge: null
     });
+    const [logAlignments, setLogAlignments] = useState<[string, AlignElement, AlignElement, AlignElement, string[][]][]>([]);
+    const [modelAlignments, setModelAlignments] = useState<[string, AlignElement, AlignElement, string[][]][]>([]);
     const cytoscapeRef = useRef<cytoscape.Core | null>(null);
 
     useImperativeHandle(ref, () => ({
-            exportAsJpg() {
-                if (cytoscapeRef.current == null)
-                    return;
+        exportAsJpg() {
+            if (cytoscapeRef.current == null)
+                return;
 
-                fileSaver.saveAs(cytoscapeRef.current.jpg(), "graph.jpg");
-            }
+            fileSaver.saveAs(cytoscapeRef.current.jpg(), "graph.jpg");
+        }
     }));
 
     let boxedThreshold = 0;
@@ -360,8 +379,10 @@ export const FilteredCytoDFM = forwardRef ((props: CytoDFMProps, ref: ForwardedR
         const dfm = props.dfm;
         const thresh = boxedThreshold;
         const selectedObjectTypes = props.selectedObjectTypes;
+        const edgeHighlightingMode = props.highlightingMode;
 
         console.log("Filtering", dfm, selectedObjectTypes, thresh);
+
 
         if (!dfm)
             return [[], []];
@@ -372,15 +393,16 @@ export const FilteredCytoDFM = forwardRef ((props: CytoDFMProps, ref: ForwardedR
         let allNodesOfSelectedObjectTypes = new Set<number>();
         const numberOfColorsNeeded = Object.keys(dfm.subgraphs).length;
 
+        const highlightingInitialData = edgeHighlightingMode.createInitialData(dfm, props);
+
         Object.keys(dfm.subgraphs).forEach((objectType, i) => {
             if (selectedObjectTypes.includes(objectType)) {
-                const objectTypeColor = getEdgeColor(numberOfColorsNeeded, i);
+                const objectTypeColor = getObjectTypeColor(numberOfColorsNeeded, i);
 
                 const edges = dfm.subgraphs[objectType];
                 let hasDisplayedEdge = false;
 
-                for (const edge of edges)
-                {
+                for (const edge of edges) {
                     const count = getCountAtThreshold(edge.counts, thresh);
                     // Ignore edges below the threshold.
                     if (count === 0)
@@ -393,6 +415,7 @@ export const FilteredCytoDFM = forwardRef ((props: CytoDFMProps, ref: ForwardedR
                         classes = "loop";
                     }
 
+                    const width = `${0.2 * edgeHighlightingMode.edgeWidth(edge.source, edge.target, objectType, highlightingInitialData)}em`
                     links.push(
                         {
                             data:
@@ -400,11 +423,13 @@ export const FilteredCytoDFM = forwardRef ((props: CytoDFMProps, ref: ForwardedR
                                     source: `${edge.source}`,
                                     target: `${edge.target}`,
                                     label: `${count}`,
+                                    style: 'solid',
                                     color: objectTypeColor,
+                                    width,
 
                                     objectType,
-                                    sourceAsNumber: edge.source,
-                                    targetAsNumber: edge.target
+                                    metaSource: edge.source,
+                                    metaTarget: edge.target
                                 },
                             classes
                         });
@@ -472,30 +497,260 @@ export const FilteredCytoDFM = forwardRef ((props: CytoDFMProps, ref: ForwardedR
             })
             // Filter out all nodes that are below the threshold. The cast is needed to tell TypeScript that all "null" nodes are removed.
             .filter((x) => x !== null) as cytoscape.ElementDefinition[];
-        const elements: cytoscape.ElementDefinition[] = filteredNodes.concat(links);
+
+        let alignmentNodes = []
+        let alignmentEdges = []
+        let objectTypesList = Object.keys(dfm.subgraphs)
+
+        if (props.alignmentMode !== "none") {
+            const nodeIndexDict = createNodeIndexDict(dfm.nodes)
+            for (const [objectType, lastActivity, intermediateActivity, nextActivity, alignments] of logAlignments) {
+                if (selectedObjectTypes.includes(objectType)) {
+                    let traceNodeIndices = translateTracesToNodeIndex(alignments, nodeIndexDict)
+                    const objectTypeColor = getObjectTypeColor(numberOfColorsNeeded, objectTypesList.indexOf(objectType));
+
+                    let lastNodeIndex: number = nodeIndexDict[lastActivity.activity],
+                        intermediateNodeIndex: number = nodeIndexDict[intermediateActivity.activity],
+                        nextNodeIndex: number = nodeIndexDict[nextActivity.activity];
+
+                    const nodeIndices = [lastNodeIndex, intermediateNodeIndex, nextNodeIndex]
+
+                    if (nodeIndices.indexOf(-1) > -1) {
+                        break
+                    }
+
+                    const nodeLength: number = dfm.nodes.length + alignmentNodes.length
+                    const sourceNodeIndex: number = nodeLength + 1
+                    const targetNodeIndex: number = nodeLength + 2
+                    let count: number = findMatchingTracesCount(traceNodeIndices, objectType, dfm.traces)
+
+                    if (props.alignmentMode === "expansive") {
+                        // need node between lastNode and intermediateNode
+                        alignmentNodes.push({
+                            data: {
+                                id: `${sourceNodeIndex}`,
+                                //label: `${lastActivity.activity + "_" + intermediateActivity.activity} (${count})`,
+                                label: ".",
+                                numberId: sourceNodeIndex
+                            },
+                            classes: "activity",
+                            position: {
+                                x: 10,
+                                y: 10
+                            }
+                        })
+
+                        // need node between intermediateNode and nextNode
+                        alignmentNodes.push({
+                            data: {
+                                id: `${targetNodeIndex}`,
+                                label: ".",
+                                numberId: targetNodeIndex
+                            },
+                            classes: "activity",
+                            position: {
+                                x: 10,
+                                y: 10
+                            }
+                        })
+                    }
+
+                    const neededEdgesExpansive: number[][] = [
+                        // need edge between these two nodes
+                        [sourceNodeIndex, targetNodeIndex, lastNodeIndex, nextNodeIndex],
+                        // need edge between lastNode and sourceNode
+                        [lastNodeIndex, sourceNodeIndex, lastNodeIndex, intermediateNodeIndex],
+                        // need edge between sourceNode and intermediateNode
+                        [sourceNodeIndex, intermediateNodeIndex, lastNodeIndex, intermediateNodeIndex],
+                        // need edge between intermediateNode and targetNode
+                        [intermediateNodeIndex, targetNodeIndex, intermediateNodeIndex, nextNodeIndex],
+                        // need edge between targetNode and nextNode
+                        [targetNodeIndex, nextNodeIndex, intermediateNodeIndex, nextNodeIndex]
+                    ]
+
+                    const neededEdgesSimple: number[][] = [
+                        [lastNodeIndex, nextNodeIndex, lastNodeIndex, nextNodeIndex]
+                    ]
+
+                    let neededEdges;
+                    if (props.alignmentMode === "simple") {
+                        neededEdges = neededEdgesSimple
+                    } else {
+                        neededEdges = neededEdgesExpansive
+                    }
+
+                    let matchingFirstEdge = findMatch(dfm.subgraphs[objectType], lastNodeIndex, intermediateNodeIndex)
+                    let matchingSecondEdge = findMatch(dfm.subgraphs[objectType], intermediateNodeIndex, nextNodeIndex)
+
+                    for (const [source, target, metaSource, metaTarget] of neededEdges) {
+                        let classes = "log-move"
+                        if (props.alignmentMode === "expansive") {
+                            // first edge
+                            if ((source === lastNodeIndex && target === sourceNodeIndex) || (source === sourceNodeIndex && target === intermediateNodeIndex)) {
+                                if (matchingFirstEdge !== null) {
+                                    count = getCountAtThreshold(matchingFirstEdge.counts, thresh);
+                                    classes = "edge"
+                                }
+                            }
+                            // second edge
+                            if ((source === intermediateNodeIndex && target === targetNodeIndex) || (source === targetNodeIndex && target === nextNodeIndex)) {
+                                if (matchingSecondEdge !== null) {
+                                    count = getCountAtThreshold(matchingSecondEdge.counts, thresh);
+                                    classes = "edge"
+                                }
+                            }
+                        }
+
+                        const width = `${0.2 * edgeHighlightingMode.edgeWidth(source, target, objectType, highlightingInitialData)}em`
+                        alignmentEdges.push(
+                            {
+                                data:
+                                    {
+                                        source: `${source}`,
+                                        target: `${target}`,
+                                        label: `${count}`,
+                                        color: objectTypeColor,
+                                        width,
+
+                                        objectType,
+                                        metaSource: metaSource,
+                                        metaTarget: metaTarget
+                                    },
+                                classes
+                            });
+
+                        allNodesOfSelectedObjectTypes.add(source);
+                        allNodesOfSelectedObjectTypes.add(target);
+                    }
+
+                    if (props.alignmentMode === "expansive") {
+                        const firstEdge = findRedundantEdge(links, lastNodeIndex, intermediateNodeIndex, objectType)
+                        const secondEdge = findRedundantEdge(links, intermediateNodeIndex, nextNodeIndex, objectType)
+                        links.splice(links.indexOf(firstEdge), 1)
+                        links.splice(links.indexOf(secondEdge), 1)
+                    }
+
+                }
+            }
+
+            for (const [objectType, lastActivity, nextActivity, alignments] of modelAlignments) {
+                if (selectedObjectTypes.includes(objectType)) {
+                    let traceNodeIndices = translateTracesToNodeIndex(alignments, nodeIndexDict)
+                    const objectTypeColor = getObjectTypeColor(numberOfColorsNeeded, objectTypesList.indexOf(objectType));
+
+                    let lastNodeIndex: number = nodeIndexDict[lastActivity.activity],
+                        nextNodeIndex: number = nodeIndexDict[nextActivity.activity];
+
+                    const nodeIndices = [lastNodeIndex, nextNodeIndex]
+
+                    if (nodeIndices.indexOf(-1) > -1) {
+                        break
+                    }
+
+                    const nodeLength: number = dfm.nodes.length + alignmentNodes.length
+                    const sourceNodeIndex: number = nodeLength + 1
+                    const count: number = findMatchingTracesCount(traceNodeIndices, objectType, dfm.traces)
+
+                    if (props.alignmentMode === "expansive") {
+                        // need node between lastNode and nextNode
+                        alignmentNodes.push({
+                            data: {
+                                id: `${sourceNodeIndex}`,
+                                //label: `${lastActivity.activity + "_" + intermediateActivity.activity} (${count})`,
+                                label: ">>",
+                                numberId: sourceNodeIndex
+                            },
+                            classes: "activity",
+                            position: {
+                                x: 10,
+                                y: 10
+                            }
+                        })
+                    }
+
+                    const neededEdgesExpansive: number[][] = [
+                        // need loop on new node
+                        //[sourceNodeIndex, sourceNodeIndex],
+                        // need edge between lastNode and sourceNode
+                        [lastNodeIndex, sourceNodeIndex, lastNodeIndex, nextNodeIndex],
+                        // need edge between sourceNode and nextNode
+                        [sourceNodeIndex, nextNodeIndex, lastNodeIndex, nextNodeIndex]
+                    ]
+
+                    const neededEdgesSimple: number[][] = [
+                        [lastNodeIndex, nextNodeIndex, lastNodeIndex, nextNodeIndex]
+                    ]
+
+                    let neededEdges;
+                    if (props.alignmentMode === "simple") {
+                        neededEdges = neededEdgesSimple
+                    } else {
+                        neededEdges = neededEdgesExpansive
+                    }
+
+                    for (const [source, target, metaSource, metaTarget] of neededEdges) {
+                        let classes = ""
+                        if (source === target) {
+                            classes = "loop ";
+                        }
+                        classes += 'model-move'
+
+                        const width = `${0.2 * edgeHighlightingMode.edgeWidth(source, target, objectType, highlightingInitialData)}em`
+                        alignmentEdges.push(
+                            {
+                                data:
+                                    {
+                                        source: `${source}`,
+                                        target: `${target}`,
+                                        label: `${count}`,
+                                        style: 'dotted',
+                                        color: objectTypeColor,
+                                        width,
+
+                                        objectType,
+                                        metaSource: metaSource,
+                                        metaTarget: metaTarget
+                                    },
+                                classes
+                            });
+
+                        allNodesOfSelectedObjectTypes.add(source);
+                        allNodesOfSelectedObjectTypes.add(target);
+                    }
+                }
+            }
+        }
+
+        const elements: cytoscape.ElementDefinition[] = filteredNodes.concat(alignmentNodes).concat(links).concat(alignmentEdges);
+
+        console.log(elements)
 
         return [elements, legendObjectTypeColors];
-    }, [props.dfm, boxedThreshold, props.selectedObjectTypes]);
+    }, [props.dfm, boxedThreshold, props.selectedObjectTypes, props.highlightingMode, modelAlignments, logAlignments, props.alignmentMode, props.performanceMetrics]);
 
 
-    const selectedTraces = useMemo(() => {
+    const [selectedTraces, selectedPerformanceMetrics]: [SelectedTracesData, { [key: string]: EdgePerformance } | null] = useMemo(() => {
         const dfm = props.dfm;
         const thresh = boxedThreshold;
         let selectedObjectTypes = props.selectedObjectTypes;
 
         if (dfm === null)
-            return { shown: {}, hidden: {} } as SelectedTracesData;
+            return [{shown: {}, hidden: {}} as SelectedTracesData, null];
 
         let selectedTraces = null;
+        let selectedEdge = null;
 
-        if (selection.selectedNode !== null)
+        // temporary fix for clicking on expansive nodes
+        if (selection.selectedNode !== null && dfm.nodes[selection.selectedNode] !== undefined)
             selectedTraces = dfm.nodes[selection.selectedNode].traces;
-        else if (selection.selectedEdge !== null) {
+        // temporary fix for clicking on edges
+        else if (selection.selectedEdge !== null && dfm.nodes[selection.selectedEdge[1]] !== undefined && dfm.nodes[selection.selectedEdge[2]] !== undefined) {
             const [objectType, source, target] = selection.selectedEdge;
             const allEdges = dfm.subgraphs[objectType];
             for (const edge of allEdges) {
                 if (edge.source === source && edge.target === target) {
                     selectedTraces = edge.traces;
+                    selectedEdge = edge;
                     break;
                 }
             }
@@ -505,11 +760,10 @@ export const FilteredCytoDFM = forwardRef ((props: CytoDFMProps, ref: ForwardedR
         }
 
         if (selectedTraces == null)
-            return { shown: {}, hidden: {} } as SelectedTracesData;
+            return [{shown: {}, hidden: {}} as SelectedTracesData, null];
 
-
-        const shown: {[key:string]:RenderTraceData[]} = {};
-        const hidden: RenderTraceData[] = [];
+        const shown: { [key: string]: RenderTraceData[] } = {};
+        const hidden: { [key: string]: RenderTraceData[] } = {};
         selectedTraces.forEach((traceId) => {
             const trace = dfm.traces[traceId];
             const activities = trace.actions
@@ -517,41 +771,64 @@ export const FilteredCytoDFM = forwardRef ((props: CytoDFMProps, ref: ForwardedR
                 .map((nodeId) => dfm.nodes[nodeId].label);
 
             Object.keys(trace.thresholds).forEach((objectType) => {
-               if (thresh < trace.thresholds[objectType].threshold)
-                   return;
-               if (!selectedObjectTypes.includes(objectType))
-                   return;
+                if (!selectedObjectTypes.includes(objectType))
+                    return;
 
-               if (!shown[objectType])
-                   shown[objectType] = [];
+                const target = thresh < trace.thresholds[objectType].threshold ? hidden : shown;
+                if (!target[objectType])
+                    target[objectType] = [];
 
-               shown[objectType].push({
-                   id: traceId,
-                   activities,
-                   count: trace.thresholds[objectType].count
-               })
+                target[objectType].push({
+                    id: traceId,
+                    activities,
+                    count: trace.thresholds[objectType].count
+                })
             });
         });
         Object.keys(shown).forEach((objectType) => {
             shown[objectType].sort((a, b) => a.count > b.count ? -1 : 1);
         });
+        Object.keys(hidden).forEach((objectType) => {
+            hidden[objectType].sort((a, b) => a.count > b.count ? -1 : 1);
+        });
 
-        return {
+        let performanceMetrics: { [key: string]: EdgePerformance } | null = null;
+        if (selectedEdge != null && props.performanceMetrics != null) {
+            const source = dfm.nodes[selectedEdge.source].label;
+            const target = dfm.nodes[selectedEdge.target].label;
+            Object.keys(props.performanceMetrics).forEach((objectType) => {
+                if (!props.performanceMetrics || !props.performanceMetrics[objectType])
+                    return;
+                if (!props.selectedObjectTypes.includes(objectType))
+                    return;
+
+                const edges = props.performanceMetrics[objectType].edges;
+                if (!edges[source] || !edges[source][target])
+                    return;
+
+                if (!performanceMetrics)
+                    performanceMetrics = {};
+                performanceMetrics[objectType] = edges[source][target];
+            });
+        }
+
+
+        return [{
             shown,
             hidden
-        }
-    }, [props.dfm, boxedThreshold, props.selectedObjectTypes, selection]);
+        }, performanceMetrics]
+    }, [props.dfm, props.performanceMetrics, boxedThreshold, props.selectedObjectTypes, selection]);
 
 
     if (!props.dfm) {
         // Reset the state if necessary.
-        return <div style={{height: "100%", minHeight: "80vh"}} />;
+        return <div style={{height: "100%", minHeight: "80vh"}}/>;
     }
 
     const layout = {
         name: 'elk',
         spacingFactor: 1,
-        transform: (node: any, pos: {x: number, y: number}) => {
+        transform: (node: any, pos: { x: number, y: number }) => {
             const nodeId = node.data().numberId;
             const storedPosition = softState.current.nodeStates[nodeId];
             if (!storedPosition) {
@@ -575,9 +852,12 @@ export const FilteredCytoDFM = forwardRef ((props: CytoDFMProps, ref: ForwardedR
 
         elk: {
             'algorithm': 'layered',
-            'elk.direction': 'DOWN',
+            'elk.direction': props.graphHorizontal ? 'RIGHT' : 'DOWN',
             'spacing.portsSurrounding': 20,
-            "spacing.nodeNodeBetweenLayers": 100
+            "spacing.nodeNodeBetweenLayers": 100,
+            // ...(props.graphHorizontal ? {
+            //     "spacing.nodeNode": 2000
+            // }: {})
         }
     };
 
@@ -594,6 +874,7 @@ export const FilteredCytoDFM = forwardRef ((props: CytoDFMProps, ref: ForwardedR
             }
         }
     }
+
     //endregion
 
     function onNodeTap(event: EventObject) {
@@ -604,11 +885,56 @@ export const FilteredCytoDFM = forwardRef ((props: CytoDFMProps, ref: ForwardedR
     }
 
     function onEdgeTap(event: EventObject) {
-        const edgeData: { objectType: string, sourceAsNumber: number, targetAsNumber: number } = event.target.data();
+        const edgeData: { objectType: string, metaSource: number, metaTarget: number } = event.target.data();
         setSelection({
             selectedNode: null,
-            selectedEdge: [edgeData.objectType, edgeData.sourceAsNumber, edgeData.targetAsNumber]
+            selectedEdge: [edgeData.objectType, edgeData.metaSource, edgeData.metaTarget]
         });
+    }
+
+    function onPan() {
+        if (cytoscapeRef.current) {
+            softState.current.pan = cytoscapeRef.current?.pan();
+            // console.log("saved pan");
+        }
+    }
+
+    function onZoom() {
+        if (cytoscapeRef.current) {
+            softState.current.pan = cytoscapeRef.current?.pan();
+            softState.current.zoom = cytoscapeRef.current?.zoom();
+            softState.current.lastZoom = Date.now();
+            // console.log("saved zoom")
+        }
+    }
+
+    function blockProgramaticPan(event: any) {
+        if (cytoscapeRef.current && softState.current.pan) {
+            const hasZoomed = softState.current.lastZoom !== null && (Date.now() - softState.current.lastZoom) < 100;
+            if (!hasZoomed) {
+                const pos = cytoscapeRef.current?.pan();
+                const expected = softState.current.pan;
+
+                if (pos.x !== expected.x || pos.y !== expected.y) {
+                    cytoscapeRef.current?.pan(expected)
+                    // console.log("blocked pan")
+                }
+            }
+            else {
+                softState.current.pan = cytoscapeRef.current?.pan();
+                // console.log("Updated zoom pan");
+            }
+        }
+    }
+
+    function blockProgrammaticZoom(event: any) {
+        if (cytoscapeRef.current && softState.current.zoom && cytoscapeRef.current?.zoom() !== softState.current.zoom) {
+            const hasZoomed = softState.current.lastZoom !== null && (Date.now() - softState.current.lastZoom) < 500;
+            if (!hasZoomed) {
+                cytoscapeRef.current?.zoom(softState.current.zoom);
+                // console.log("blocked zoom", event);
+            }
+        }
     }
 
     function registerEvents(cy: cytoscape.Core) {
@@ -618,9 +944,15 @@ export const FilteredCytoDFM = forwardRef ((props: CytoDFMProps, ref: ForwardedR
 
         cy.on('tap', "node", (event: EventObject) => onNodeTap(event));
         cy.on('tap', 'edge', (event: EventObject) => onEdgeTap(event));
+        cy.on('dragpan', (event: any) => onPan())
+        cy.on('scrollzoom', (event: any) => onZoom())
+        cy.on('pan', (event) => blockProgramaticPan(event));
+        cy.on('zoom', (event) => blockProgrammaticZoom(event));
     }
 
     const hasSelectedObject = selection.selectedNode !== null || selection.selectedEdge !== null;
+
+    console.log("Pan position: ", softState.current.pan)
 
     return (
         <div className="CytoDFM-container" id="DFM-container">
@@ -628,12 +960,20 @@ export const FilteredCytoDFM = forwardRef ((props: CytoDFMProps, ref: ForwardedR
                 elements={elements}
                 stylesheet={graphStylesheet}
                 layout={layout}
-                style={ { width: '100%', height: '100%' } }
+                style={{width: '100%', height: '100%'}}
                 wheelSensitivity={0.2}
+                pan={softState.current.pan ? softState.current.pan : { x: 0, y: 0 }}
+                zoom={softState.current.zoom ? softState.current.zoom : 1}
                 cy={registerEvents}
             />
-            { legendObjectTypeColors.length > 0 &&
-                <ul className="CytoDFM-Overlay CytoDFM-Legend">
+            {props.alignmentMode !== "none" && (
+                <AlignmentsData
+                    setLogAlignments={setLogAlignments}
+                    setModelAlignments={setModelAlignments}
+                ></AlignmentsData>
+            )}
+            {legendObjectTypeColors.length > 0 && props.legendPosition !== "none" &&
+                <ul className={`CytoDFM-Overlay CytoDFM-Legend CytoDFM-${props.legendPosition}`}>
                     {
                         legendObjectTypeColors.map(([type, color]) => (
                             <li key={type}>
@@ -646,47 +986,87 @@ export const FilteredCytoDFM = forwardRef ((props: CytoDFMProps, ref: ForwardedR
                 </ul>
             }
             {
-                hasSelectedObject && selectedTraces !== null &&
+                props.infoboxEnabled && hasSelectedObject && selectedTraces !== null &&
                 <div className="CytoDFM-Overlay CytoDFM-Infobox">
-                    {
-                        selection.selectedNode !== null &&
-                        <h3 className="CytoDFM-Infobox-Header">
-                            Activity: { props.dfm.nodes[selection.selectedNode].label }
-                        </h3>
-                    }
-                    {
-                        selection.selectedEdge !== null &&
-                        <h3 className="CytoDFM-Infobox-Header">
-                            Edge: { props.dfm.nodes[selection.selectedEdge[1]].label } to { props.dfm.nodes[selection.selectedEdge[2]].label }
-                        </h3>
-                    }
-                    <ul>
+                    <div className="CytoDFM-Infobox-Header">
                         {
-                            Object.keys(selectedTraces.shown).map((objectType) => (
-                                <li key={`traces-${objectType}`}>
-                                    <span>{objectType}</span>
-
-                                    <ul>
-                                        {
-                                            selectedTraces.shown[objectType].map((trace: RenderTraceData) => (
-                                                <li key={`trace-${objectType}-${trace.id}`}>
-                                                    {trace.count} x {trace.activities.reduce((a, b) => a + ", " + b)}
-                                                </li>
-                                            ))
-                                        }
-                                    </ul>
-                                </li>
-                            ))
+                            selection.selectedNode !== null &&
+                            // temporary fix for clicking on expansive nodes
+                            props.dfm.nodes[selection.selectedNode] !== undefined &&
+                            <h3>
+                                Activity: {props.dfm.nodes[selection.selectedNode].label}
+                            </h3>
                         }
-                    </ul>
+                        {
+                            selection.selectedEdge !== null &&
+                            props.dfm.nodes[selection.selectedEdge[1]] !== undefined &&
+                            props.dfm.nodes[selection.selectedEdge[2]] !== undefined &&
+                            <h3 className="CytoDFM-Infobox-Header">
+                                Edge: {props.dfm.nodes[selection.selectedEdge[1]].label} to {props.dfm.nodes[selection.selectedEdge[2]].label}
+                            </h3>
+                        }
+                        <div className="CytoDFM-Infobox-Header-Close"
+                             onClick={() => setSelection({selectedNode: null, selectedEdge: null})}>
+                            <FontAwesomeIcon icon={faCircleXmark}/>
+                        </div>
+                    </div>
+
+                    {
+                        selectedPerformanceMetrics && (
+                            <div className="CytoDFM-Infobox-Waittime">
+                                <div className="CytoDFM-Infobox-Waittime-Header">Waiting time</div>
+                                <div className="CytoDFM-Infobox-Waittime-Header">Min</div>
+                                <div className="CytoDFM-Infobox-Waittime-Header">Mean</div>
+                                <div className="CytoDFM-Infobox-Waittime-Header">Max</div>
+                                <div className="CytoDFM-Infobox-Waittime-Header">Total</div>
+
+                                {Object.keys(selectedPerformanceMetrics).map((objectType) => {
+                                    const metrics: EdgePerformance = selectedPerformanceMetrics[objectType];
+                                    const color = legendObjectTypeColors.find(([ot, _]) => (ot === objectType))![1];
+                                    return (
+                                        <React.Fragment key={`performance-${objectType}`}>
+                                            <div className="CytoDFM-Infobox-Waittime-Cell CytoDFM-Infobox-Waittime-Cell-OT">
+                                                <div className="CytoDFM-Legend-Circle" style={{backgroundColor: color}}>
+                                                </div>
+                                                {objectType}
+                                            </div>
+                                            <div className="CytoDFM-Infobox-Waittime-Cell">
+                                                {secondsToHumanReadableFormat(metrics.min, 2)}
+                                            </div>
+                                            <div className="CytoDFM-Infobox-Waittime-Cell">
+                                                {secondsToHumanReadableFormat(metrics.mean, 2)}
+                                            </div>
+                                            <div className="CytoDFM-Infobox-Waittime-Cell">
+                                                {secondsToHumanReadableFormat(metrics.max, 2)}
+                                            </div>
+                                            <div className="CytoDFM-Infobox-Waittime-Cell">
+                                                {secondsToHumanReadableFormat(metrics.sum, 2)}
+                                            </div>
+                                        </React.Fragment>
+                                    )
+                                })
+                                }
+                            </div>
+                        )
+                    }
+                    <div className="CytoDFM-Infobox-Traces-Grid">
+                        <InfoboxTraces traces={selectedTraces.shown}
+                                       title="Shown traces"
+                                       keyPrefix="shown"
+                                       legendColors={legendObjectTypeColors}/>
+                        <InfoboxTraces traces={selectedTraces.hidden}
+                                       title="Filtered traces"
+                                       keyPrefix="hidden"
+                                       legendColors={legendObjectTypeColors}/>
+                    </div>
                 </div>
             }
         </div>
-        )
-    ;
+    )
+        ;
 });
 
-function getCountAtThreshold(counts: [number, number][], threshold: number): number {
+export function getCountAtThreshold(counts: [number, number][], threshold: number): number {
     let rangeStart = 0;
     for (const [rangeEnd, count] of counts) {
         if (rangeStart <= threshold && threshold < rangeEnd)
@@ -694,4 +1074,111 @@ function getCountAtThreshold(counts: [number, number][], threshold: number): num
         rangeStart = rangeEnd;
     }
     return 0;
+}
+
+function findMatch(subgraph: {
+    source: number,
+    target: number,
+    counts: [number, number][]
+    traces: number[]
+}[], sourceIndex: number, targetIndex: number) {
+    for (let edge of subgraph) {
+        if (sourceIndex === edge.source && targetIndex === edge.target) {
+            return edge
+        }
+    }
+    return null
+}
+
+function findRedundantEdge(edges: {
+    data: {
+        objectType: string,
+        metaSource: number,
+        metaTarget: number,
+    }
+}[], sourceIndex: number, targetIndex: number, objectType: string) {
+    for (let edge of edges) {
+        if (objectType === edge.data.objectType && sourceIndex === edge.data.metaSource && targetIndex === edge.data.metaTarget) {
+            return edge
+        }
+    }
+    return null
+}
+
+function createNodeIndexDict(nodes: {
+    label: string,
+    counts: { [key: string]: [number, number][] }
+    traces: number[]
+}[]) {
+    let nodeIndexDict: { [id: string]: number } = {}
+    for (let node of nodes) {
+        nodeIndexDict[node.label] = nodes.indexOf(node)
+    }
+    return nodeIndexDict
+}
+
+function translateTracesToNodeIndex(traces: string[][], nodeIndexDict: { [id: string]: number }) {
+    let outputTraces: number[][] = []
+    for (let trace of traces) {
+        let outputTrace: number[] = []
+        for (let act of trace) {
+            outputTrace.push(nodeIndexDict[act])
+        }
+        outputTraces.push(outputTrace)
+    }
+    return outputTraces
+}
+
+type traceType = {
+    actions: number[]
+    thresholds: {
+        [key: string]: {
+            count: number
+            threshold: number
+        }
+    }
+}
+
+
+function findMatchingTracesCount(alignmentTraces: number[][], objectType: string, traces: traceType[]) {
+    let matchingTracesCount: number = 0
+    for (let alignmentTrace of alignmentTraces) {
+        for (let trace of traces) {
+            if (trace.actions.toString() === alignmentTrace.toString()) {
+                matchingTracesCount += trace.thresholds[objectType].count
+            }
+        }
+    }
+    return matchingTracesCount
+}
+
+function InfoboxTraces(props: { title: string, traces: { [key: string]: RenderTraceData[] }, keyPrefix: string, legendColors: [string, string][] }) {
+    if (Object.keys(props.traces).length === 0)
+        return <React.Fragment />
+
+    return <React.Fragment>
+        <h4 className="CytoDFM-Infobox-Traces-Header">{props.title}</h4>
+        {Object.entries(props.traces).map(([objectType, traces]) => {
+            const color = props.legendColors.find(([ot, _]) => (ot === objectType))![1];
+
+            return (
+                <React.Fragment key={props.keyPrefix + "-" + objectType}>
+                    <div className="CytoDFM-Infobox-Traces-OT CytoDFM-Infobox-Traces-Header">
+                        <div className="CytoDFM-Legend-Circle" style={{backgroundColor: color}}>
+                        </div>
+                        {objectType}
+                    </div>
+                        {traces.map((trace) => (
+                            <React.Fragment key={`${props.keyPrefix}-${objectType}-${trace.id}`}>
+                                <div className="CytoDFM-Infobox-Traces-Trace-Count">
+                                    {trace.count}x
+                                </div>
+                                <div>
+                                    {trace.activities.reduce((a, b) => a + ", " + b)}
+                                </div>
+                            </React.Fragment>
+                        ))}
+                </React.Fragment>)
+        })}
+    </React.Fragment>
 }

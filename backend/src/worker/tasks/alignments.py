@@ -93,11 +93,15 @@ def compute_alignments(process_ocel: str, threshold: float, object_type: str, tr
 
     # we know that the DFM exists because the `compute_alignments` endpoint does not start this task before the DFM is discovered
     long_term_cache = get_long_term_cache()
-    dfm = FrontendFriendlyDFM(**long_term_cache.get(process_ocel, dfm_cache_key()))
+    dfm = long_term_cache.get(process_ocel, dfm_cache_key())
+    if 'version' in dfm and 'result' in dfm:
+        dfm = dfm['result']
+    dfm = FrontendFriendlyDFM(**dfm)
     dfg = filter_threshold_of_graph_notation(dfm, object_type, threshold)
 
     projected_log = build_trace_event_log(trace)
-    petrinet, initial_marking, final_marking = build_petrinet(dfg)
+    # petrinet, initial_marking, final_marking = build_petrinet(dfg)
+    petrinet, initial_marking, final_marking = build_pm4py_dfg(dfg)
 
     aligned_traces = conformance_diagnostics_alignments(projected_log, petrinet, initial_marking, final_marking)
 
@@ -133,51 +137,48 @@ def build_trace_event_log(trace: List[str]) -> EventLog:
 
     return log_conv_factory.apply(df)
 
+
+def build_pm4py_dfg(dfg: FilteredDFG):
+    edges = {(dfg.nodes[edge.source], dfg.nodes[edge.target]): 1 for edge in dfg.edges}
+    return edges, {START_TOKEN: 1}, {STOP_TOKEN: 1}
+
+
 def build_petrinet(dfg):
     net = PetriNet()
 
     # "A place for each node ∈ N (this includes places belonging to start and end)"
-    places = {}
-    start_place = None
-    end_place = None
+    node_places = {}
+    explori_start_place = None
+    explori_end_place = None
     for (i, node) in enumerate(dfg.nodes):
+        node_places[i] = add_place(net, name=node)
         if node == START_TOKEN:
-            start_place = add_place(net)
-            places[i] = start_place
-            continue
+            explori_start_place = node_places[i]
         elif node == STOP_TOKEN:
-            end_place = add_place(net)
-            places[i] = end_place
-            continue
+            explori_end_place = node_places[i]
 
-        places[i] = add_place(net, name=node)
+    assert(explori_start_place is not None and explori_end_place is not None)
 
-    assert(start_place is not None and end_place is not None)
+    # add artificial start to net because EXPLORI_START node will be target node of the EXPLORI_START transition
+    petrinet_start_place = add_place(net)
+    add_connected_transition(petrinet_start_place, explori_start_place, START_TOKEN, START_TOKEN, net)
 
     # "For each edge (s, t) ∈ E, a subgraph connecting the place belonging to s to the place belonging to t.
     # This subgraph depends on whether t is end. If t is end, then this subgraph is a silent transition
     # connecting s to t. If t is not end, then this subgraph executes ts and tc in sequence, where ts is optional.
     for edge in dfg.edges:
-        s = places[edge.source]
-        t = places[edge.target]
+        s = node_places[edge.source]
+        t = node_places[edge.target]
 
-        if t == end_place:
-            add_empty_connected_transition(s, t, net)
+        if t == explori_end_place:
+            add_connected_transition(s, t, STOP_TOKEN, STOP_TOKEN, net)
         else:
-            # we introduce optional transition for start of event, although we currently only handle data
-            # containing only event completions
             target_label = dfg.nodes[edge.target]
-            # start_label = f"[START]-{target_label}"
-            # end_label = f"{target_label}"
-            #
-            # intermediate_place = add_place(net)
-            # add_optional_connected_transition(s, intermediate_place, start_label, start_label, net)
-            # add_connected_transition(intermediate_place, t, end_label, end_label, net)
-
             add_connected_transition(s, t, target_label, target_label, net)
 
     initial_marking = discover_initial_marking(net)
     final_marking = discover_final_marking(net)
+
     # checks if unique source, unique sink exist and if all places are reachable from source and can reach sink
     assert(check_wfnet(net))
 

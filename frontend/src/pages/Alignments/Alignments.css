@@ -1,0 +1,33 @@
+
+.Alignments-Card {
+    width: calc(min(100vw - 4rem, 30cm));
+    margin-bottom: 2rem;
+}
+
+.Alignments-Card-Title {
+    --title-size: 1.2rem;
+    font-size: var(--title-size);
+    line-height: var(--title-size);
+
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+}
+
+.Alignments-Card-Title-Circle {
+    --circle-size: 1rem;
+    display: inline-block;
+
+    width: var(--circle-size);
+    height: var(--circle-size);
+    border-radius: 50%;
+
+    margin-right: .5rem;
+}
+
+.Alignments-Card-Title-Container {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+}

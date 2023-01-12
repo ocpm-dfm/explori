@@ -18,6 +18,8 @@ code {
 }
 
 html {
+  font-size: 100%;
+
   --text-light: 250, 250, 250;
   --text-dark: 33, 33, 33;
 
@@ -34,6 +36,8 @@ html {
   --color3: #044040;
   --color4: #D92525;
   --color5: #F2F2F2;
+
+  --navbar-height: calc(2 * 0.5rem + 2rem + 2 * 0.5rem + 2rem);
 
   background-color: var(--background-color);
 }

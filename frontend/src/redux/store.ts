@@ -12,20 +12,11 @@ import {DirectlyFollowsMultigraph} from "../components/cytoscape-dfm/cytodfm";
 import sessionStateReducer from "./UserSession/userSession.reducer";
 import eventLogsReducer from "./EventLogs/eventLogs.reducer";
 import {DfmQueryInitialState, DfmQueryReducer} from "./DFMQuery/dfmquery";
-import {AsyncApiState} from "../api";
+import {AsyncApiState} from "../hooks";
 import {AlignementQueryReduce, AlignmentsInitialState} from "./AlignmentsQuery/alingmentsquery";
-import {TraceAlignments} from "../pages/Alignments/Alignments";
-
-/*
-TODO:
-    1. Create session reducers:
-        i. To restore session
-        ii. To create new session
-        iii. To save session
-    2. When app is mounted restore the session, if not available then create a new session
-    3. Store discovered DFM when App component (ie whole application) is unmounted
-    4. In listofEventLogs state, the key extra is just a string whereas ReactDataGrid expects it to be FontAwesomeIcon => Map it in react component
-*/
+import {TraceAlignments} from "./AlignmentsQuery/alignmentsquery.types";
+import {PerformanceMetrics} from "./PerformanceQuery/performancequery.types";
+import {PerformanceMetricsInitialState, PerformanceMetricsQueryReduce} from "./PerformanceQuery/performancequery";
 
 let middleware: any[] = [thunkMiddleware]
 
@@ -39,14 +30,16 @@ export interface RootState {
     session: SessionState,
     listOfEventLogs: EventLogMetadata[],
     dfmQuery: AsyncApiState<DirectlyFollowsMultigraph>,
-    alignmentsQuery: AsyncApiState<TraceAlignments>
+    alignmentsQuery: AsyncApiState<TraceAlignments>,
+    performanceQuery: AsyncApiState<PerformanceMetrics>
 }
 
 const initalState: RootState = {
     session: USER_SESSION_INITIAL_STATE,
     listOfEventLogs: EVENT_LIST_INITIAL_STATE,
     dfmQuery: DfmQueryInitialState,
-    alignmentsQuery: AlignmentsInitialState
+    alignmentsQuery: AlignmentsInitialState,
+    performanceQuery: PerformanceMetricsInitialState
 }
 
 const store = configureStore({
@@ -54,7 +47,8 @@ const store = configureStore({
         session: sessionStateReducer,
         listOfEventLogs: eventLogsReducer,
         dfmQuery: DfmQueryReducer as any,
-        alignmentsQuery: AlignementQueryReduce as any
+        alignmentsQuery: AlignementQueryReduce as any,
+        performanceQuery: PerformanceMetricsQueryReduce as any
     },
     middleware: middleware,
     preloadedState: initalState

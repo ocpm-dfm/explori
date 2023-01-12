@@ -11,7 +11,7 @@ app = Celery(
     broker=f"redis://{REDIS_HOST}:{REDIS_PORT}/0",
     backend=f"redis://{REDIS_HOST}:{REDIS_PORT}/0"
 )
-app.autodiscover_tasks(['worker.tasks.dfm', 'worker.tasks.alignments'], force=True)
+app.autodiscover_tasks(['worker.tasks.dfm', 'worker.tasks.alignments', 'worker.tasks.performance'], force=True)
 
 
 @app.task()

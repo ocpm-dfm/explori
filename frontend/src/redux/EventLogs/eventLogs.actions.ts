@@ -1,6 +1,5 @@
 import {ADD_EVENT_LOG, EventLogMetadata, SET_EVENT_LOGS} from "./eventLogs.types";
 import { fetchEventLogs } from "./eventLogs.utils";
-import {getURI} from "../../api";
 
 export const loadEventLogs = () => async (dispatch: Function) => {
     const eventLogs = await fetchEventLogs();

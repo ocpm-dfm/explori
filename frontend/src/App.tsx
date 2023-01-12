@@ -13,6 +13,9 @@ import {ThunkDispatch} from "@reduxjs/toolkit";
 import {SessionState} from "./redux/UserSession/userSession.types";
 import {resetDfmQueryState} from "./redux/DFMQuery/dfmquery";
 import {resetAlignmentQueryState} from "./redux/AlignmentsQuery/alingmentsquery";
+import {NewSessionPage} from "./pages/NewSession/NewSessionPage";
+import {PerformanceMetricsPage} from "./pages/Performance/Performance";
+import {resetPerformanceQueryState} from "./redux/PerformanceQuery/performancequery";
 
 export type StateChangeCallback = (update: any) => void;
 export type SwitchOcelsCallback = (newOcel: string) => Promise<void>;
@@ -38,7 +41,8 @@ const mapDispatchToProps = (dispatch: ThunkDispatch<{}, {}, any>, ownProps: OwnP
     },
     resetQueryStates: () => {
         dispatch(resetDfmQueryState());
-        dispatch(resetAlignmentQueryState())
+        dispatch(resetAlignmentQueryState());
+        dispatch(resetPerformanceQueryState());
     }
 })
 
@@ -90,7 +94,11 @@ export function App(props: Props) {
                 ocel: newOcel,
                 threshold: 75,
                 selectedObjectTypes: [],
-                alreadySelectedAllObjectTypesInitially: false
+                alreadySelectedAllObjectTypesInitially: false,
+                highlightingMode: "none",
+                graphHorizontal: false,
+                alignmentMode: "none",
+                legendPosition: "top-left",
             });
         }
         localStorage.setItem("explori-currentOcel", newOcel);
@@ -102,9 +110,8 @@ export function App(props: Props) {
             <Routes>
                 <Route path="/" element={<Home />}></Route>
                 <Route path="/alignments" element={<Alignments />}></Route>
-                <Route path="/session" element={<EventLogList switchOcelsCallback={loadSessionOrStartNewOne} />}></Route>
-                {/*<Route path="/user-session/store" element={<UserSession storeOrRestore={"store"} userSessionState={sessionState} />}></Route>*/}
-                {/*<Route path="/user-session/restore" element={<UserSession storeOrRestore={"restore"} stateChangeCallback={stateChangeCallback} />}></Route>*/}
+                <Route path="/performance" element={<PerformanceMetricsPage />} />
+                <Route path="/session" element={<NewSessionPage switchOcelCallback={loadSessionOrStartNewOne} />} />
             </Routes>
         </QueryClientProvider>
     );

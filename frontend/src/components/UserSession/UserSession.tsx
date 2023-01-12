@@ -1,7 +1,7 @@
 import React, {useCallback, useEffect, useState} from 'react';
 import './UserSession.css';
 import  "../DefaultLayout/DefaultLayout.css";
-import {getURI} from "../../api";
+import {getURI} from "../../hooks";
 import {Button, TextField, Stack} from "@mui/material";
 import {ExploriNavbar} from "../ExploriNavbar/ExploriNavbar";
 import ReactDataGrid from '@inovua/reactdatagrid-community';
@@ -14,6 +14,10 @@ type BackendSession = {
     base_ocel: string,
     threshold: number,
     object_types: string[],
+    highlighting_mode: string | null
+    graph_horizontal: boolean,
+    alignment_mode: string,
+    legend_position: string,
 }
 
 export function UserSession(props: {storeOrRestore: string, userSessionState?: SessionState, stateChangeCallback?: any}) {
@@ -196,6 +200,10 @@ function translateToBackend(session: SessionState): BackendSession{
         base_ocel: session.ocel,
         threshold: session.threshold,
         object_types: session.selectedObjectTypes,
+        highlighting_mode: session.highlightingMode,
+        graph_horizontal: session.graphHorizontal,
+        alignment_mode: session.alignmentMode,
+        legend_position: session.legendPosition,
     }
 }
 
@@ -207,5 +215,9 @@ function translateToFrontend(session: BackendSession): SessionState {
         // Set `alreadySelectedAllObjectTypesInitially` to true as we're in the process of restoring a session
         // which implies an existing object type selection which we don't want to overwrite!
         alreadySelectedAllObjectTypesInitially: true,
+        highlightingMode: session.highlighting_mode,
+        graphHorizontal: session.graph_horizontal,
+        alignmentMode: session.alignment_mode,
+        legendPosition: session.legend_position,
     }
 }

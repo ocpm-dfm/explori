@@ -1,0 +1,28 @@
+.EventLogTable-LogSourceIcon {
+    margin-right: 0.5rem;
+
+    aspect-ratio: 1/1;
+    width: 1.2rem;
+}
+
+.EventLogTable-DeleteButton {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 0;
+    /*aspect-ratio: 1/1;*/
+
+    transition: background-color 0.2s ease-in;
+
+    background-color: rgba(0, 0, 0, 0);
+    border-style: none;
+}
+
+.EventLogTable-DeleteButton>svg {
+    aspect-ratio: 1/1;
+    height: 1rem;
+}
+
+.EventLogTable-DeleteButton:hover {
+    color: #E53935;
+}

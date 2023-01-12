@@ -1,5 +1,6 @@
 import json
 import os
+import pprint
 from pathlib import PureWindowsPath
 from typing import Dict, List, Tuple
 
@@ -50,7 +51,7 @@ def get_projected_traces(ocel_filename: str, object_type: str, build_if_non_exis
 
     # Create the traces:
     event_log = get_projected_event_log(ocel_filename, object_type)
-    traces = [(variant, len(cases)) for (variant, cases) in pm4py.get_variants_as_tuples(event_log).items()]
+    traces = [(variant, n_cases) for (variant, n_cases) in pm4py.get_variants_as_tuples(event_log).items()]
     cache.set(ocel_filename, projected_log_traces(object_type), traces)
     return traces
 
