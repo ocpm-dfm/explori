@@ -8,6 +8,5 @@ ONBUILD COPY src/ src/
 
 FROM common_pre_build as dev_build
 
-# TODO: do we need ONBUILD in the one below as well?
 FROM ${BUILD_ENV}_build
 CMD PYTHONUNBUFFERED=1 EXPLORI_REDIS_HOST=${REDIS_HOST} EXPLORI_REDIS_PORT=${REDIS_PORT} PYTHONPATH="src/" celery --app=worker.main.app worker --loglevel=INFO

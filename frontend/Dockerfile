@@ -11,8 +11,8 @@ ONBUILD COPY tsconfig.json .
 FROM common_pre_build as dev_build
 
 FROM ${BUILD_ENV}_build
-ONBUILD COPY package.json .
-ONBUILD COPY package-lock.json .
+COPY package.json .
+COPY package-lock.json .
 # TODO: add NODE_ENV=production once frontend (e.g. api.ts `API_BASE_URL`) supports production mode
-ONBUILD RUN npm ci
+RUN npm ci
 CMD PORT=3000 npm run start
