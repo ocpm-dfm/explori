@@ -1,29 +1,41 @@
 version: "3.9"
+
 services:
   webserver:
-    build: frontend/
+    build:
+      context: frontend/
+      dockerfile: Dockerfile
+    depends_on:
+      - fastapi
     ports:
       - "80:3000"
   fastapi:
     build:
       context: backend/
       dockerfile: Dockerfile_fastapi
+    environment:
+      REDIS_HOST: "redis"
+      REDIS_PORT: 6379
+    depends_on:
+      - celery
+      - redis
+      - _backend_base
     ports:
       - "8080:8080"
-    volumes:
-      - cache:/explori/fastapi/cache
   celery:
     build:
       context: backend/
       dockerfile: Dockerfile_celery
-    volumes:
-      - cache:/explori/celery/cache
+    environment:
+      REDIS_HOST: "redis"
+      REDIS_PORT: 6379
+    depends_on:
+      - redis
+      - _backend_base
   redis:
     image: "redis:alpine"
-    ports:
-      - "6379:6379"
-
-# meta target which only includes redis, celery to be able to run manually/debug webserver, fastapi
-
-volumes:
-  cache:
+  _backend_base:
+    image: explori-backend-base-image
+    build:
+      context: backend/
+      dockerfile: Dockerfile_backend
