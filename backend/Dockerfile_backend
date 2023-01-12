@@ -2,3 +2,4 @@ FROM python:3.10
 
 COPY requirements.txt requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir pm4py==2.3.4
