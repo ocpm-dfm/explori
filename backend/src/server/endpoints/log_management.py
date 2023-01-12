@@ -1,7 +1,7 @@
 import os
 import json
 import shutil
-from pathlib import PureWindowsPath
+from pathlib import PureWindowsPath, Path
 
 import pandas as pd
 from typing import List
@@ -108,7 +108,10 @@ def list_available_logs():
 
 @router.put('/upload')
 async def upload_event_logs(file: UploadFile):
-    file_location = "." + os.sep + "data" + os.sep + "uploaded" + os.sep + file.filename
+    upload_folder_location = "." + os.sep + "data" + os.sep + "uploaded"
+    Path(upload_folder_location).mkdir(parents=True, exist_ok=True)
+
+    file_location = upload_folder_location + os.sep + file.filename
     file_content = await file.read()
     with open(file_location, "wb") as f:
         f.write(file_content)
