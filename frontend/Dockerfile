@@ -1,17 +1,18 @@
-FROM node:16
+ARG BUILD_ENV
 
-ENV WEBSERVER_PORT=80
+FROM node:16 as common_pre_build
+ONBUILD WORKDIR /explori/webserver
 
-WORKDIR /explori/webserver
+FROM common_pre_build as prod_build
+ONBUILD COPY public/ public/
+ONBUILD COPY src/ src/
+ONBUILD COPY tsconfig.json .
 
-COPY package*.json .
-RUN npm install
+FROM common_pre_build as dev_build
 
-COPY public/ public/
-COPY src/ src/
-COPY tsconfig.json .
-# replace with the following once .dockerignore exists
-#COPY . .
-
-# TODO: port forwarding not working, uses port 3000 apparently
-CMD npm run start -- --port ${WEBSERVER_PORT}
+FROM ${BUILD_ENV}_build
+ONBUILD COPY package.json .
+ONBUILD COPY package-lock.json .
+# TODO: add NODE_ENV=production once frontend (e.g. api.ts `API_BASE_URL`) supports production mode
+ONBUILD RUN npm ci
+CMD PORT=3000 npm run start
