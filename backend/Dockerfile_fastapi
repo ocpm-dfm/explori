@@ -1,15 +1,14 @@
-FROM python:3.10
+ARG BUILD_ENV
 
-ENV DEV=1
-ENV EXPLORI_REDIS_HOST=redis
-ENV EXPLORI_REDIS_PORT=6379
+FROM explori-backend-base-image as common_pre_build
+ONBUILD WORKDIR /explori/fastapi
 
-WORKDIR /explori/fastapi
+FROM common_pre_build as prod_build
+ONBUILD COPY src/ src/
 
-COPY requirements.txt requirements.txt
-RUN pip install -r requirements.txt
+FROM common_pre_build as dev_build
+ONBUILD ENV DEV=1
 
-COPY src/ src/
-COPY data/ data/
-
-CMD PYTHONUNBUFFERED=1 DEV=${DEV} EXPLORI_REDIS_HOST=${EXPLORI_REDIS_HOST} EXPLORI_REDIS_PORT=${EXPLORI_REDIS_PORT} PYTHONPATH="src/" uvicorn server.main:app --host 0.0.0.0 --port 8080
+# TODO: do we need ONBUILD in the one below as well?
+FROM ${BUILD_ENV}_build
+CMD DEV=${DEV} PYTHONUNBUFFERED=1 EXPLORI_REDIS_HOST=${REDIS_HOST} EXPLORI_REDIS_PORT=${REDIS_PORT} PYTHONPATH="src/" uvicorn server.main:app --host 0.0.0.0 --port 8080
