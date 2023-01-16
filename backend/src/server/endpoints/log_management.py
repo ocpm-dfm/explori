@@ -16,7 +16,7 @@ from pydantic import BaseModel
 from starlette import status
 
 from server.task_manager import TaskStatus
-from cache import get_long_term_cache
+from cache import get_long_term_cache, get_short_term_cache
 
 router = APIRouter(prefix='/logs',
                    tags=['Log management'])
@@ -289,6 +289,10 @@ def delete_cache():
                 os.remove(autosave_dir_path + os.sep + file)
             except OSError as e:
                 print("Error: %s - %s." % (e.filename, e.strerror))
+
+    # Clear redis tasks
+    redis = get_short_term_cache()
+    redis.clear_cache()
 
     return {
         "status": "successful"
