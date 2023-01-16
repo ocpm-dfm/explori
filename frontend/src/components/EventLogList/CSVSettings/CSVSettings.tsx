@@ -12,7 +12,8 @@ import ReactDataGrid from "@inovua/reactdatagrid-community";
 import './CSVSettings.css';
 
 type CSVSettingProps = {
-    selectedEventLog: EventLogMetadata | null
+    selectedEventLog: EventLogMetadata | null,
+    setCSVSettings: any
 }
 
 type Column = {
@@ -21,7 +22,7 @@ type Column = {
     defaultWidth: number
 }
 
-type CSVState = {
+export type CSVState = {
     objects: string[],
     activity: string,
     timestamp: string,
@@ -129,6 +130,7 @@ export const CSVSettings = (props: CSVSettingProps) => {
             if (response.status === 200) {
                 const data: CSVState = await (await fetch(uri)).json();
                 console.log(data);
+                props.setCSVSettings(data);
                 setObjectTypes(data.objects);
                 setActivityName(data.activity);
                 setTimestampName(data.timestamp);

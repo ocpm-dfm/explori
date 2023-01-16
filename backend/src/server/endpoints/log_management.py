@@ -262,7 +262,7 @@ def delete_csv_cache(file_path: str, uuid: str):
     }
 
 @router.get('/clear_cache')
-def delete_csv_cache():
+def delete_cache():
     dir_path = "cache"
     # clear all OCEL caches
     for directory in [x[0] for x in os.walk(dir_path)]:
