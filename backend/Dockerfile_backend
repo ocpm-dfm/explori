@@ -1,5 +1,16 @@
-FROM python:3.10
+FROM python:3.10-slim AS compile-image
+RUN apt-get update
+RUN apt-get install -y --no-install-recommends build-essential gcc
 
-COPY requirements.txt requirements.txt
-RUN pip install --no-cache-dir -r requirements.txt
-RUN pip install --no-cache-dir pm4py==2.3.4
+RUN python -m venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+
+COPY requirements.txt .
+RUN pip install -r requirements.txt
+RUN pip install pm4py==2.3.4
+
+FROM python:3.10-slim AS build-image
+RUN apt-get update
+RUN apt-get install -y --no-install-recommends libgomp1
+COPY --from=compile-image /opt/venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
