@@ -5,6 +5,7 @@ import '../ExploriNavbar/NavbarButton/NavbarButton.css';
 import {getURI} from "../../hooks";
 import {Button, TextField, Stack} from "@mui/material";
 import {ExploriNavbar} from "../ExploriNavbar/ExploriNavbar";
+import {DeleteSessionModal} from "./DeleteSessionModal";
 import ReactDataGrid from '@inovua/reactdatagrid-community';
 import '@inovua/reactdatagrid-community/index.css';
 import '@inovua/reactdatagrid-community/theme/blue-light.css';
@@ -12,7 +13,8 @@ import { TypeDataSource } from '@inovua/reactdatagrid-community/types';
 import {SessionState} from "../../redux/UserSession/userSession.types";
 import { useNavigate } from "react-router-dom";
 import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
-import {faDownload, faSave, faShareFromSquare} from "@fortawesome/free-solid-svg-icons";
+import {faDownload, faSave, faShareFromSquare, faTrash} from "@fortawesome/free-solid-svg-icons";
+import {DeleteEventLogModal} from "../EventLogList/DeleteEventLogModal/DeleteEventLogModal";
 
 type BackendSession = {
     base_ocel: string,
@@ -32,6 +34,7 @@ export function UserSession(props: {storeOrRestore: string, userSessionState?: S
     const [fileName, setFileName] = useState(userSessionState? userSessionState.ocel.split("/").pop()?.split(".").slice(0, -1).toString() : 'default');
     const [updated, setUpdated] = useState(false);
     const [selected, setSelected] = useState(null);
+    const [sessionToBeDeleted, setSessionToBeDeleted] = useState(null);
     const navigate = useNavigate();
 
     let initialDataSource: TypeDataSource = [];
@@ -43,7 +46,8 @@ export function UserSession(props: {storeOrRestore: string, userSessionState?: S
         { name: 'threshold', header: 'Threshold', defaultFlex: 1 },
         { name: 'objects', header: 'Object types', defaultFlex: 4},
         { name: 'alignments', header: 'Alignments', defaultFlex: 2},
-        { name: 'performance', header: 'Performance', defaultFlex: 2}
+        { name: 'performance', header: 'Performance', defaultFlex: 2},
+        { name: 'deleteButton', header: '', defaultFlex: .25}
     ]
 
     let compareDates = (a: { age: number; }, b: { age: number; }) => {
@@ -66,7 +70,15 @@ export function UserSession(props: {storeOrRestore: string, userSessionState?: S
             threshold: data[3],
             objects: data[4].toString(),
             alignments: data[5],
-            performance: data[6]
+            performance: data[6],
+            deleteButton:
+                <button className="EventLogTable-DeleteButton" onClick={(event) => {
+                    setSessionToBeDeleted(data[0]);
+                    event.stopPropagation();
+                }
+                }>
+                    <FontAwesomeIcon icon={faTrash}/>
+                </button>
         }
     }
 
@@ -166,6 +178,12 @@ export function UserSession(props: {storeOrRestore: string, userSessionState?: S
     } else if (storeOrRestore === "restore" && stateChangeCallback) {
         content = (
             <div className={"UserSessionRestore UserSession-Card"}>
+                <DeleteSessionModal selectedSession={sessionToBeDeleted}
+                                     afterDelete={async () => {
+                                         setSelected(null);
+                                         setUpdated(!updated)
+                                     }}
+                                     onClose={() => setSessionToBeDeleted(null)} />
                 <ReactDataGrid
                     idProperty={"id"}
                     theme={"blue-light"}
@@ -173,7 +191,6 @@ export function UserSession(props: {storeOrRestore: string, userSessionState?: S
                     dataSource={dataSource}
                     style={gridStyle}
                     selected={selected}
-                    //enableSelection={true}
                     onSelectionChange={onSelection}
                 ></ReactDataGrid>
                 <Stack spacing={3} direction="row" justifyContent="center">
