@@ -151,8 +151,13 @@ export const EventLogList = connect<StateProps, DispatchProps, EventLogListProps
                                deleteLog={(eventLog) => setEventLogToBeDeleted(eventLog)} />
                 <div className="EventLogList-Buttons">
                     <UploadLogButton onUpload={(eventLog) => {
-                        if (eventLog.id)
+                        if (eventLog.id !== undefined)
                             setSelected(eventLog.id);
+                            if (gridRef !== null)
+                                // TypeScript says gridRef is type "never", need to fix this
+                            { // @ts-ignore
+                                gridRef.current.scrollToId(eventLog.id)
+                            }
                         else {
                             const id = findLog(eventLog)
                             if (id !== undefined) {
