@@ -40,7 +40,10 @@ export function UserSession(props: {storeOrRestore: string, userSessionState?: S
         { name: 'name', header: 'Session name', defaultFlex: 9 },
         { name: 'age', header: 'Last change date', defaultFlex: 4 },
         { name: 'ocel', header: 'Used OCEL', defaultFlex: 4 },
-        { name: 'threshold', header: 'Threshold', defaultFlex: 1.5 }
+        { name: 'threshold', header: 'Threshold', defaultFlex: 1 },
+        { name: 'objects', header: 'Object types', defaultFlex: 4},
+        { name: 'alignments', header: 'Alignments', defaultFlex: 2},
+        { name: 'performance', header: 'Performance', defaultFlex: 2}
     ]
 
     let compareDates = (a: { age: number; }, b: { age: number; }) => {
@@ -60,7 +63,10 @@ export function UserSession(props: {storeOrRestore: string, userSessionState?: S
             name: data[0],
             age: new Date(data[1] * 1000).toLocaleString('en-US'),
             ocel: data[2].split("/").pop().split(".").slice(0, -1),
-            threshold: data[3]
+            threshold: data[3],
+            objects: data[4].toString(),
+            alignments: data[5],
+            performance: data[6]
         }
     }
 
@@ -128,7 +134,7 @@ export function UserSession(props: {storeOrRestore: string, userSessionState?: S
         );
     } else if (storeOrRestore === "restore" && stateChangeCallback) {
         content = (
-            <div className={"UserSessionRestore"}>
+            <div className={"UserSessionRestore UserSession-Card"}>
                 <ReactDataGrid
                     idProperty={"id"}
                     theme={"blue-light"}

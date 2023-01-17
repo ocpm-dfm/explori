@@ -57,7 +57,7 @@ def restore_session(name: str) -> Session:
 
 
 class AvailableSessionsResponseModel(BaseModel):
-    __root__: List[Tuple[str, float, str, float]]
+    __root__: List[Tuple[str, float, str, float, List[str], str, str]]
 
     class Config:
         schema_extra = {
@@ -90,7 +90,7 @@ def list_available_sessions():
 
             with open(session_file, 'r') as f:
                 session = Session(**json.load(f))
-            result.append((session_name, last_change, session.base_ocel, session.threshold))
+            result.append((session_name, last_change, session.base_ocel, session.threshold, session.object_types, session.alignment_mode, session.performance_mode))
     return result
 
 
