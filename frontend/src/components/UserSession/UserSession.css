@@ -6,3 +6,13 @@
     top: 20%;
     bottom: 20%;
 }
+
+.UserSessionStore-Button {
+    padding-top: 25px;
+    padding-right: 10px;
+}
+
+.UserSessionRestore-Button {
+    padding-top: 25px;
+    padding-right: 10px;
+}

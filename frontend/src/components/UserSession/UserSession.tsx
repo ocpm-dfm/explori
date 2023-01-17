@@ -1,6 +1,7 @@
 import React, {useCallback, useEffect, useState} from 'react';
 import './UserSession.css';
 import  "../DefaultLayout/DefaultLayout.css";
+import '../ExploriNavbar/NavbarButton/NavbarButton.css';
 import {getURI} from "../../hooks";
 import {Button, TextField, Stack} from "@mui/material";
 import {ExploriNavbar} from "../ExploriNavbar/ExploriNavbar";
@@ -10,6 +11,8 @@ import '@inovua/reactdatagrid-community/theme/blue-light.css';
 import { TypeDataSource } from '@inovua/reactdatagrid-community/types';
 import {SessionState} from "../../redux/UserSession/userSession.types";
 import { useNavigate } from "react-router-dom";
+import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
+import {faDownload, faSave, faShareFromSquare} from "@fortawesome/free-solid-svg-icons";
 
 type BackendSession = {
     base_ocel: string,
@@ -109,20 +112,18 @@ export function UserSession(props: {storeOrRestore: string, userSessionState?: S
                     onChange={handleChange}
                     variant="outlined"
                 />
-                <Button variant="contained" component="label" sx={{'top': '10px', 'background-color': 'rgb(var(--color1))'}}>
-                    Store session
-                    <input
-                        type={"button"}
-                        hidden
-                        onClick={() => {
-                            if (fileName)
-                                storeSession(fileName, userSessionState);
-                            else
-                                storeSession('default', userSessionState);
-                            setUpdated(!updated);
-                        }
-                    }></input>
-                </Button>
+                <div className={'NavbarButton UserSessionStore-Button'}
+                     onClick={() => {
+                         if (fileName)
+                             storeSession(fileName, userSessionState);
+                         else
+                             storeSession('default', userSessionState);
+                         setUpdated(!updated);
+                     }}
+                >
+                    <FontAwesomeIcon icon={faSave} className="NavbarButton-Icon"/>
+                    Store Session
+                </div>
             </Stack>
         );
     } else if (storeOrRestore === "restore" && stateChangeCallback) {
@@ -139,19 +140,17 @@ export function UserSession(props: {storeOrRestore: string, userSessionState?: S
                     onSelectionChange={onSelection}
                 ></ReactDataGrid>
                 <Stack spacing={3} direction="row" justifyContent="center">
-                    <Button variant="contained" component="label" sx={{'top': '10px', 'background-color': 'rgb(var(--color1))'}}>
-                        Restore session
-                        <input
-                            type={"button"}
-                            hidden
-                            onClick={async () => {
-                                await restoreSession(
-                                    selected === null ? 'default' : String(dataSource[Number(selected)].name), stateChangeCallback
-                                );
-                                navigate("/");
-                            }
-                            }></input>
-                    </Button>
+                    <div className={'NavbarButton UserSessionRestore-Button'}
+                         onClick={async () => {
+                             await restoreSession(
+                                 selected === null ? 'default' : String(dataSource[Number(selected)].name), stateChangeCallback
+                             );
+                             navigate("/");
+                         }}
+                    >
+                        <FontAwesomeIcon icon={faDownload} className="NavbarButton-Icon"/>
+                        Restore Session
+                    </div>
                 </Stack>
             </div>
         );
