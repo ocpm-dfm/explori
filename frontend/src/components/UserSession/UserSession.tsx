@@ -117,7 +117,7 @@ export function UserSession(props: {storeOrRestore: string, userSessionState?: S
             { key: "OCEL", value: userSessionState.ocel},
             { key: "Threshold", value: userSessionState.threshold},
             { key: "Selected object types", value: JSON.stringify(userSessionState.selectedObjectTypes)},
-            { key: "Graph orientation", value: userSessionState.graphHorizontal? 'Top to down': 'Left to right'},
+            { key: "Graph orientation", value: userSessionState.graphHorizontal? 'Left to right': 'Top to down'},
             { key: "Highlighting mode", value: userSessionState.highlightingMode},
             { key: "Legend position", value: userSessionState.legendPosition},
             { key: "Alignment mode", value: userSessionState.alignmentMode},
