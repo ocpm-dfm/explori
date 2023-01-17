@@ -9,6 +9,7 @@ import '@inovua/reactdatagrid-community/index.css';
 import '@inovua/reactdatagrid-community/theme/blue-light.css';
 import { TypeDataSource } from '@inovua/reactdatagrid-community/types';
 import {SessionState} from "../../redux/UserSession/userSession.types";
+import { useNavigate } from "react-router-dom";
 
 type BackendSession = {
     base_ocel: string,
@@ -25,9 +26,10 @@ export function UserSession(props: {storeOrRestore: string, userSessionState?: S
     const storeOrRestore = props.storeOrRestore;
     const userSessionState = props.userSessionState;
     const stateChangeCallback = props.stateChangeCallback;
-    const [fileName, setFileName] = useState('default');
+    const [fileName, setFileName] = useState(userSessionState? userSessionState.ocel.split("/").pop()?.split(".").slice(0, -1).toString() : 'default');
     const [updated, setUpdated] = useState(false);
     const [selected, setSelected] = useState(null);
+    const navigate = useNavigate();
 
     let initialDataSource: TypeDataSource = [];
     const [dataSource, setDataSource] = useState(initialDataSource);
@@ -103,7 +105,6 @@ export function UserSession(props: {storeOrRestore: string, userSessionState?: S
                     label={"Name"}
                     sx={{'top': '10px', 'color': 'rgb(var(--color1))'}}
                     id="outlined-basic"
-                    defaultValue={'default'}
                     value={fileName}
                     onChange={handleChange}
                     variant="outlined"
@@ -114,7 +115,10 @@ export function UserSession(props: {storeOrRestore: string, userSessionState?: S
                         type={"button"}
                         hidden
                         onClick={() => {
-                            storeSession(fileName, userSessionState);
+                            if (fileName)
+                                storeSession(fileName, userSessionState);
+                            else
+                                storeSession('default', userSessionState);
                             setUpdated(!updated);
                         }
                     }></input>
@@ -140,10 +144,11 @@ export function UserSession(props: {storeOrRestore: string, userSessionState?: S
                         <input
                             type={"button"}
                             hidden
-                            onClick={() => {
-                                restoreSession(
-                                    selected === null? 'default' : String(dataSource[Number(selected)].name), stateChangeCallback
+                            onClick={async () => {
+                                await restoreSession(
+                                    selected === null ? 'default' : String(dataSource[Number(selected)].name), stateChangeCallback
                                 );
+                                navigate("/");
                             }
                             }></input>
                     </Button>

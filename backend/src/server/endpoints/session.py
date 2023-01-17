@@ -22,6 +22,7 @@ class Session(BaseModel):
     graph_horizontal: bool = False
     legend_position: str = "top-left"
     alignment_mode: str = "none"
+    performance_mode: str = "Counts"
 
     class Config:
         schema_extra = {

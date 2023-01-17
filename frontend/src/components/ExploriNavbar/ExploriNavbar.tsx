@@ -1,6 +1,12 @@
 import "./ExploriNavbar.css"
 import {FontAwesomeIcon} from '@fortawesome/react-fontawesome'
-import {faDiagramProject, faArrowRightArrowLeft, faGaugeHigh} from "@fortawesome/free-solid-svg-icons";
+import {
+    faDiagramProject,
+    faArrowRightArrowLeft,
+    faGaugeHigh,
+    faSave,
+    faDownload
+} from "@fortawesome/free-solid-svg-icons";
 import {faFile, IconDefinition, faCircleQuestion} from "@fortawesome/free-regular-svg-icons";
 import {Link, useLocation} from "react-router-dom";
 
@@ -32,12 +38,20 @@ export function ExploriNavbar(props: ExploriNavbarProps) {
                     <span>Explori</span>
                 </div>
                 <div>
+                    <Link to="/user-session/store" className="ENAV-new-session ENAV-help">
+                        <FontAwesomeIcon icon={faSave} />
+                    </Link>
+                    <Link to="/user-session/restore" className="ENAV-new-session ENAV-help">
+                        <FontAwesomeIcon icon={faDownload} />
+                    </Link>
                     <Link to="/help" className="ENAV-new-session ENAV-help">
                         <FontAwesomeIcon icon={faCircleQuestion} />
                     </Link>
                     <Link to="/session" className="ENAV-new-session">
                         <FontAwesomeIcon icon={faFile} />
                     </Link>
+
+
                 </div>
             </div>
             <div className="ENAV-Row ENAV-Row2">

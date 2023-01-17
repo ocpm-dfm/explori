@@ -1232,11 +1232,7 @@ function getPerformanceCount(performanceMode: string, performanceMetricEdges: Ob
             && targetLabel !== "|EXPLORI_END|"
         ){
             const edgeMetrics = performanceMetricEdges[sourceLabel]? performanceMetricEdges[sourceLabel][targetLabel] : undefined
-            console.log(edgeMetrics)
             if (edgeMetrics === undefined){
-                console.log(sourceLabel)
-                console.log(targetLabel)
-                console.log(performanceMetricEdges)
                 newCount = 0
             } else {
                 switch(performanceMode){

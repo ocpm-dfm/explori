@@ -101,13 +101,23 @@ export const restoreUserSession = (fullOcelPath: string) =>
                     // which implies an existing object type selection which we don't want to overwrite!
                     alreadySelectedAllObjectTypesInitially: true,
                     highlightingMode: result.highlighting_mode || "none",
-                    graphHorizontal: result.graph_horizontal
+                    graphHorizontal: result.graph_horizontal,
+                    performanceMode: result.performance_mode,
+                    alignmentMode: result.alignment_mode
                 } as SessionState
             });
         }
         else {
             throw new Error("No session associated with this OCEL exists.");
         }
+    }
+
+export const restoreSavedUserSession = (sessionState: SessionState) =>
+    async (dispatch: Function) => {
+        return dispatch({
+            type: RESTORE_USER_SESSION,
+            payload: sessionState
+        });
     }
 
 
