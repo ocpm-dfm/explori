@@ -108,29 +108,60 @@ export function UserSession(props: {storeOrRestore: string, userSessionState?: S
 
     let content;
     if (storeOrRestore === "store" && userSessionState) {
+
+        const sessionColumns = [
+            { name: 'key', header: 'Key', defaultFlex: 5 },
+            { name: 'value', header: 'Value', defaultFlex: 10 }
+        ]
+        const data = [
+            { key: "OCEL", value: userSessionState.ocel},
+            { key: "Threshold", value: userSessionState.threshold},
+            { key: "Selected object types", value: JSON.stringify(userSessionState.selectedObjectTypes)},
+            { key: "Graph orientation", value: userSessionState.graphHorizontal? 'Top to down': 'Left to right'},
+            { key: "Highlighting mode", value: userSessionState.highlightingMode},
+            { key: "Legend position", value: userSessionState.legendPosition},
+            { key: "Alignment mode", value: userSessionState.alignmentMode},
+            { key: "Performance indicator", value: userSessionState.performanceMode},
+        ]
         content = (
-            <Stack spacing={3} direction="row" justifyContent="center">
-                <TextField
-                    label={"Name"}
-                    sx={{'top': '10px', 'color': 'rgb(var(--color1))'}}
-                    id="outlined-basic"
-                    value={fileName}
-                    onChange={handleChange}
-                    variant="outlined"
-                />
-                <div className={'NavbarButton UserSessionStore-Button'}
-                     onClick={() => {
-                         if (fileName)
-                             storeSession(fileName, userSessionState);
-                         else
-                             storeSession('default', userSessionState);
-                         setUpdated(!updated);
-                     }}
-                >
-                    <FontAwesomeIcon icon={faSave} className="NavbarButton-Icon"/>
-                    Store Session
-                </div>
-            </Stack>
+            <React.Fragment>
+                <Stack spacing={3} direction="row" justifyContent="center">
+                    <TextField
+                        label={"Name"}
+                        sx={{'top': '10px', 'color': 'rgb(var(--color1))'}}
+                        id="outlined-basic"
+                        value={fileName}
+                        onChange={handleChange}
+                        variant="outlined"
+                    />
+                    <div className={'NavbarButton UserSessionStore-Button'}
+                         onClick={() => {
+                             if (fileName)
+                                 storeSession(fileName, userSessionState);
+                             else
+                                 storeSession('default', userSessionState);
+                             setUpdated(!updated);
+                         }}
+                    >
+                        <FontAwesomeIcon icon={faSave} className="NavbarButton-Icon"/>
+                        Store Session
+                    </div>
+                </Stack>
+                What will be saved:
+                <ReactDataGrid
+                    idProperty={"id"}
+                    theme={"blue-light"}
+                    columns={sessionColumns}
+                    dataSource={data}
+                    rowHeight={50}
+                    style={{
+                        minHeight: 500,
+                        marginTop: 16,
+                        width: "100%",
+                        minWidth: "20cm"
+                    }}
+                ></ReactDataGrid>
+            </React.Fragment>
         );
     } else if (storeOrRestore === "restore" && stateChangeCallback) {
         content = (
