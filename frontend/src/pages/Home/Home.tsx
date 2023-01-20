@@ -218,8 +218,17 @@ export const Home = connect<StateProps, DispatchProps, HomeProps, RootState>(map
                     }}>
                         <CircularProgress/>
                     </Box>
-                )
-                }
+                )}
+                {!performanceQuery.result && performanceQuery.preliminary && (
+                    <Box sx={{
+                        display: 'flex',
+                        position: 'absolute',
+                        top: '7rem',
+                        right: '2rem'
+                    }}>
+                        <CircularProgress/>
+                    </Box>
+                )}
                 {dfm_query.failed && (
                     <Alert severity="error" sx={{'z-index': 999, 'padding-bottom': 0, 'padding-top': 0}}>Task failed due
                         to server related reasons. (Received 200)</Alert>

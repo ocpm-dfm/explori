@@ -411,6 +411,8 @@ export const FilteredCytoDFM = forwardRef((props: CytoDFMProps, ref: ForwardedRe
                 const edges = dfm.subgraphs[objectType];
                 let hasDisplayedEdge = false;
 
+                console.log(dfm.nodes)
+
                 for (const edge of edges) {
                     let count: number | string = getCountAtThreshold(edge.counts, thresh);
                     const sourceLabel = dfm.nodes[edge.source].label;

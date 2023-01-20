@@ -267,7 +267,20 @@ export const AlignmentsData = connect<StateProps, DispatchProps, AlignmentsDataP
         }
     }
 
-    return null
+    return (
+        <React.Fragment>
+            {!alignmentsQuery.result && alignmentsQuery.preliminary && (
+                <Box sx={{
+                    display: 'flex',
+                    position: 'absolute',
+                    top: '1rem',
+                    right: '1rem'
+                }}>
+                    <CircularProgress/>
+                </Box>
+            )}
+        </React.Fragment>
+    )
 });
 
 function getLastAndNextActivity(alignment: TraceAlignment, index: number): AlignElement[] {

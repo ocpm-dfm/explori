@@ -1,7 +1,7 @@
 import React, {useEffect, useRef} from 'react';
 import './App.css';
 import { Home } from "./pages/Home/Home";
-import { Routes, Route, useNavigate } from "react-router-dom";
+import {Routes, Route, useNavigate, Link} from "react-router-dom";
 import { QueryClient, QueryClientProvider } from 'react-query';
 import {Alignments} from "./pages/Alignments/Alignments";
 
@@ -72,6 +72,7 @@ export function App(props: Props) {
     useEffect(() => {
         (async () => {
             const currentOcel = localStorage.getItem("explori-currentOcel");
+            console.log(currentOcel)
             if (!currentOcel) {
                 navigateTo("/session")
                 return;
@@ -123,9 +124,10 @@ export function App(props: Props) {
                 <Route path="/alignments" element={<Alignments />}></Route>
                 <Route path="/performance" element={<PerformanceMetricsPage />} />
                 <Route path="/session" element={<NewSessionPage switchOcelCallback={loadSessionOrStartNewOne} />} />
-                <Route path="/help" element={<Help/>} />
+                <Route path="/help" element={<Help resetQueryState={props.resetQueryStates}/>} />
                 <Route path="/user-session/store" element={<UserSession storeOrRestore={"store"} userSessionState={props.session}/>}></Route>
                 <Route path="/user-session/restore" element={<UserSession storeOrRestore={"restore"} stateChangeCallback={restoreSession}/>}></Route>
+                <Route path='/docs' element={<a href="localhost:8080/docs"></a>}/>
             </Routes>
         </QueryClientProvider>
     );
