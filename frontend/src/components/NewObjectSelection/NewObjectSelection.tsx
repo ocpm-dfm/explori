@@ -75,7 +75,9 @@ export const NewObjectSelection = (props: ObjectSelectionProps) => {
                                       selected={props.selectedObjectTypes.includes(objectType)}
                                       checkColor={otColor}
                                       disabled={onlyOT}
-                                      title={onlyOT ? "At least one object type has to be selected at all times. Please select another object type first to unselect this object time." : ""}
+                                      title={onlyOT ?
+                                          "At least one object type has to be selected at all times. Please select another object type first to unselect this object time." :
+                                          "Double-click to de-select all but one."}
 
                                       onClick={() => toggleObjectType(objectType)}
                                       onDoubleClick={() => selectOnlyObjectType(objectType)}/>

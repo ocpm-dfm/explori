@@ -278,7 +278,7 @@ const VizSettings = (props: VizSettingsProps) => {
     return (
         <React.Fragment>
             <NavbarDropdown buttonIcon={faDiagramProject} buttonText="Information">
-                <div className="VizSettings-Label">Show alignments</div>
+                <div className="VizSettings-Label" title={"Select mode for showing alignments in the graph."}>Show alignments</div>
                 <DropdownCheckbox
                     selected={props.selectedAlignmentMode === AlignmentModeName.NoAlignments}
                     label="None"
@@ -291,7 +291,7 @@ const VizSettings = (props: VizSettingsProps) => {
                     selected={props.selectedAlignmentMode === AlignmentModeName.Expansive}
                     label="Extended"
                     onClick={() => props.setAlignmentMode(AlignmentModeName.Expansive)}/>
-                <div className="VizSettings-Label">Performance metrics</div>
+                <div className="VizSettings-Label" title={"Select mode for showing performance metrics on the edges."}>Performance metrics</div>
                 <DropdownCheckbox
                     selected={props.selectedPerformanceMode === PerformanceMetricsModeName.Counts}
                     label="Counts (Default)"
@@ -312,7 +312,7 @@ const VizSettings = (props: VizSettingsProps) => {
                     selected={props.selectedPerformanceMode === PerformanceMetricsModeName.Total}
                     label="Total time"
                     onClick={() => props.setPerformanceMode(PerformanceMetricsModeName.Total)}/>
-                <div className="VizSettings-Label">Highlighting</div>
+                <div className="VizSettings-Label" title={"Select highlighting mode for the edges."}>Highlighting</div>
                 <DropdownCheckbox
                     selected={props.selectedHighlightingMode === HighlightingModeName.NoHighlighting}
                     label="None"
@@ -335,7 +335,7 @@ const VizSettings = (props: VizSettingsProps) => {
                     onClick={() => props.setSelectedHighlightingMode(HighlightingModeName.MaxTime)}/>
             </NavbarDropdown>
             <NavbarDropdown buttonIcon={faBrush} buttonText="Settings">
-                <div className="VizSettings-Label">Graph direction</div>
+                <div className="VizSettings-Label" title={"Select the direction in which the graph is rendered."}>Graph direction</div>
                 <DropdownCheckbox
                     selected={!props.graphHorizontal}
                     label="Top to down"
@@ -344,7 +344,7 @@ const VizSettings = (props: VizSettingsProps) => {
                     selected={props.graphHorizontal}
                     label="Left to right"
                     onClick={() => props.setGraphHorizontal(true)}/>
-                <div className="VizSettings-Label">Legend position</div>
+                <div className="VizSettings-Label" title={"Select the position of the object type legend."}>Legend position</div>
                 <DropdownCheckbox
                     selected={props.selectedLegendPosition === LegendPositionName.None}
                     label="None"
@@ -365,7 +365,7 @@ const VizSettings = (props: VizSettingsProps) => {
                     selected={props.selectedLegendPosition === LegendPositionName.BottomRight}
                     label="Bottom right"
                     onClick={() => props.setLegendPosition(LegendPositionName.BottomRight)}/>
-                <div className="VizSettings-Label">Infobox</div>
+                <div className="VizSettings-Label" title={"Toggle for the infobox shown when clicking on edges or nodes."}>Infobox</div>
                 <DropdownCheckbox
                     selected={props.infoboxEnabled}
                     label={props.infoboxEnabled ? "Enabled" : "Disabled"}
