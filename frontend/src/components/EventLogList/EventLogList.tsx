@@ -148,7 +148,8 @@ export const EventLogList = connect<StateProps, DispatchProps, EventLogListProps
                                selection={selected}
                                setSelection={onSelection}
                                setGridRef={setGridRef}
-                               deleteLog={(eventLog) => setEventLogToBeDeleted(eventLog)} />
+                               deleteLog={(eventLog) => setEventLogToBeDeleted(eventLog)}
+                />
                 <div className="EventLogList-Buttons">
                     <UploadLogButton onUpload={(eventLog) => {
                         if (eventLog.id !== undefined)

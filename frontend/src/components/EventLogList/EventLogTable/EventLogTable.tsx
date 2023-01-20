@@ -2,7 +2,7 @@ import {EventLogMetadata} from "../../../redux/EventLogs/eventLogs.types";
 import React, {useMemo} from "react";
 import ReactDataGrid from "@inovua/reactdatagrid-community";
 import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
-import {faCloudArrowUp, faHardDrive, faTrash} from "@fortawesome/free-solid-svg-icons";
+import {faCloudArrowUp, faHardDrive, faTrash, faEraser} from "@fortawesome/free-solid-svg-icons";
 
 import './EventLogTable.css';
 
@@ -48,12 +48,24 @@ export const EventLogTable = (props: EventLogTableProps) => {
                     <FontAwesomeIcon icon={faTrash}/>
                 </button>)
 
+            const clearCacheButton = (
+                <button className="EventLogTable-DeleteButton"
+                        onClick={(event) => {
+                            props.deleteLog(eventLog);
+                            event.stopPropagation();
+                        }}
+                        title={"Shows prompt for clearing cache of this mounted OCEL."}
+                >
+                    <FontAwesomeIcon icon={faEraser}/>
+                </button>
+            )
+
             return {
                 id: eventLog.id!,
                 displayName,
                 type: eventLog.type,
                 size: eventLog.size,
-                deleteButton: isUploaded ? deleteButton : null
+                deleteButton: isUploaded ? deleteButton : clearCacheButton
             }
         });
     }, [props.eventLogs])

@@ -165,12 +165,12 @@ async def upload_event_logs(file: UploadFile):
 
     }
 
-@router.get('/delete')
-def delete_event_log(file_path: str, uuid: str):
+def delete(file_path: str, uuid: str, delete_log: bool):
     file_path_extended = "data" + os.sep + file_path
     # Delete ocel and corresponding cache folder
     if os.path.exists(file_path_extended):
-        os.remove(file_path_extended)
+        if delete_log:
+            os.remove(file_path_extended)
         cache = get_long_term_cache()
         folder = cache.get_folder(file_path_extended)
         try:
@@ -197,13 +197,24 @@ def delete_event_log(file_path: str, uuid: str):
             # Get ocel name
             session_file = get_session_file(session_name)
             if not os.path.isfile(session_file):
-                #raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Wrong files in session storage.")
+                # raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Wrong files in session storage.")
                 continue
 
             with open(session_file, 'r') as f:
                 session = Session(**json.load(f))
                 if session.base_ocel == file_path:
                     os.remove(session_file)
+
+@router.get('/delete')
+def delete_event_log(file_path: str, uuid: str):
+    delete(file_path, uuid, True)
+    return {
+        "status": "successful"
+    }
+
+@router.get('/delete_cache')
+def delete_event_log(file_path: str, uuid: str):
+    delete(file_path, uuid, False)
     return {
         "status": "successful"
     }
