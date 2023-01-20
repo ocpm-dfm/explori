@@ -5,12 +5,13 @@ RUN apt-get install -y --no-install-recommends build-essential gcc
 RUN python -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 
+COPY utils/pip_install_dependencies.sh .
 COPY requirements.txt .
-RUN pip install -r requirements.txt
-RUN pip install pm4py==2.3.4
+RUN pip_install_dependencies.sh
 
 FROM python:3.10-slim AS build-image
 RUN apt-get update
+# libgomp1 needed for pm4py parallelism
 RUN apt-get install -y --no-install-recommends libgomp1
 COPY --from=compile-image /opt/venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
