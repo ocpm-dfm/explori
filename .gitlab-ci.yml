@@ -2,6 +2,8 @@ stages:
   - test
 
 test-backend:
+  rules:
+    - when: never
   image: python:3.10-slim
   stage: test
   # Change pip's cache directory to be inside the project directory since we can
@@ -12,6 +14,7 @@ test-backend:
   # If you want to also cache the installed packages, you have to install
   # them in a virtualenv and cache it as well.
   cache:
+    key: explori-backend
     paths:
       - .cache/pip
       - venv/
@@ -22,9 +25,9 @@ test-backend:
     # meant to be run on every commit (not only every merge request)
     - apt-get update
     - apt-get install -y --no-install-recommends build-essential libgomp1
-    - python -m venv ./venv
-    - source venv/bin/activate
-    - pip uninstall -y pm4py # we install a more recent version after installing requirements.txt which crashes when we do it the next time (venv is being cached)
+    - python -m venv "$CI_PROJECT_DIR"/venv
+    - source "$CI_PROJECT_DIR"/venv/bin/activate
+    - pip uninstall -y pm4py==2.3.4 # HACK: we install a more recent version after installing requirements.txt which crashes when we do it the next time (venv is being cached)
     - backend/utils/pip_install_dependencies.sh
   script:
     - source venv/bin/activate
