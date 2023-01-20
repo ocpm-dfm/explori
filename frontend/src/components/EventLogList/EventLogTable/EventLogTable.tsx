@@ -38,11 +38,13 @@ export const EventLogTable = (props: EventLogTableProps) => {
             </React.Fragment>
 
             const deleteButton = (
-                <button className="EventLogTable-DeleteButton" onClick={(event) => {
-                    props.deleteLog(eventLog);
-                    event.stopPropagation();
-                }
-                }>
+                <button className="EventLogTable-DeleteButton"
+                        onClick={(event) => {
+                            props.deleteLog(eventLog);
+                            event.stopPropagation();
+                        }}
+                        title={"Shows prompt for deletion of this uploaded OCEL."}
+                >
                     <FontAwesomeIcon icon={faTrash}/>
                 </button>)
 

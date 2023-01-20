@@ -129,7 +129,7 @@ export const Alignments = connect<StateProps, DispatchProps, AlignmentProps, Roo
                             </h2>
                             <div className={'NavbarButton AlignmentsTable-Button'}
                                  onClick={() => exportJSON(objectType)}
-                                 title={"Export"}>
+                                 title={"Export alignment data as json file."}>
                                 <FontAwesomeIcon icon={faShareFromSquare} className="NavbarButton-Icon"/>
                                 Export
                             </div>

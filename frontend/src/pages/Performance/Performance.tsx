@@ -133,7 +133,7 @@ function EdgeMetrics(props: {objectType: string, metrics: {[key:string]: {[key: 
     }
 
     const columns = [
-        {name: "source", header: "From"},
+        {name: "source", header: "From", title: "test"},
         {name: "target", header: "To"},
         {name: "mean", header: "Mean", render: renderTime, sort: sortTime},
         {name: "sum", header: "Total time", render: renderTime, sort: sortTime},
@@ -167,7 +167,7 @@ function EdgeMetrics(props: {objectType: string, metrics: {[key:string]: {[key: 
             <div className={'NavbarButton Performance-Button'}
                  onClick={exportCSV}
                  hidden
-                 title={"Export"}>
+                 title={"Export performance metrics data as csv file."}>
                 <FontAwesomeIcon icon={faShareFromSquare} className="NavbarButton-Icon"/>
                 Export
             </div>

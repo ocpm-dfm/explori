@@ -73,11 +73,13 @@ export function UserSession(props: {storeOrRestore: string, userSessionState?: S
             alignments: data[5],
             performance: data[6],
             deleteButton:
-                <button className="EventLogTable-DeleteButton" onClick={(event) => {
-                    setSessionToBeDeleted(data[0]);
-                    event.stopPropagation();
-                }
-                }>
+                <button className="EventLogTable-DeleteButton"
+                        onClick={(event) => {
+                            setSessionToBeDeleted(data[0]);
+                            event.stopPropagation();
+                        }}
+                        title={"Shows prompt for deletion of this saved session."}
+                >
                     <FontAwesomeIcon icon={faTrash}/>
                 </button>
         }
@@ -148,6 +150,7 @@ export function UserSession(props: {storeOrRestore: string, userSessionState?: S
                         variant="outlined"
                     />
                     <div className={'NavbarButton UserSessionStore-Button'}
+                         title={"Stores current session with values seen below."}
                          onClick={() => {
                              if (fileName)
                                  storeSession(fileName, userSessionState);
@@ -166,6 +169,7 @@ export function UserSession(props: {storeOrRestore: string, userSessionState?: S
                     theme={"blue-light"}
                     columns={sessionColumns}
                     dataSource={data}
+                    showCellBorders={'vertical'}
                     rowHeight={50}
                     style={{
                         minHeight: 500,
@@ -196,6 +200,7 @@ export function UserSession(props: {storeOrRestore: string, userSessionState?: S
                 ></ReactDataGrid>
                 <Stack spacing={3} direction="row" justifyContent="center">
                     <div className={'NavbarButton UserSessionRestore-Button'}
+                         title={"Restores selected session from cache and goes to Homepage."}
                          onClick={async () => {
                              await restoreSession(
                                  selected === null ? 'default' : String(dataSource[Number(selected)].name), stateChangeCallback
