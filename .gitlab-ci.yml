@@ -24,6 +24,7 @@ test-backend:
     - apt-get install -y --no-install-recommends build-essential libgomp1
     - python -m venv ./venv
     - source venv/bin/activate
+    - pip uninstall -y pm4py # we install a more recent version after installing requirements.txt which crashes when we do it the next time (venv is being cached)
     - backend/utils/pip_install_dependencies.sh
   script:
     - source venv/bin/activate
