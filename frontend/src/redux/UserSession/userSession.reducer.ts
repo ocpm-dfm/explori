@@ -4,12 +4,13 @@ import {
     CREATE_USER_SESSION,
     NO_CHANGE_USER_SESSION,
     RESTORE_USER_SESSION,
-    SAVE_USER_SESSION, SET_SELECTED_OBJECT_TYPES,
+    SAVE_USER_SESSION, SessionState, SET_GRAPH_HORIZONTAL, SET_HIGHLIGHTING_MODE, SET_SELECTED_OBJECT_TYPES,
     SET_THRESHOLD,
-    UPDATE_USER_SESSION
+    UPDATE_USER_SESSION,
+    SET_ALIGNMENT_MODE, SET_LEGEND_POSITION, SET_PERFORMANCE_MODE
 } from "./userSession.types";
 
-const sessionStateReducer = (session = USER_SESSION_INITIAL_STATE, action: AnyAction) => {
+const sessionStateReducer = (session = USER_SESSION_INITIAL_STATE, action: AnyAction): SessionState => {
     switch (action.type) {
         case CREATE_USER_SESSION:
             return {
@@ -47,6 +48,31 @@ const sessionStateReducer = (session = USER_SESSION_INITIAL_STATE, action: AnyAc
                 ...(action["alreadySelectedAllObjectTypesInitially"] !== undefined ?  {
                     alreadySelectedAllObjectTypesInitially: action.alreadySelectedAllObjectTypesInitially
                 } : {})
+            }
+        case SET_HIGHLIGHTING_MODE:
+            return {
+                ...session,
+                highlightingMode: action.payload
+            }
+        case SET_GRAPH_HORIZONTAL:
+            return {
+                ...session,
+                graphHorizontal: action.payload
+            }
+        case SET_ALIGNMENT_MODE:
+            return {
+                ...session,
+                alignmentMode: action.payload
+            }
+        case SET_LEGEND_POSITION:
+            return {
+                ...session,
+                legendPosition: action.payload
+            }
+        case SET_PERFORMANCE_MODE:
+            return {
+                ...session,
+                performanceMode: action.payload
             }
         case NO_CHANGE_USER_SESSION:
             return session

@@ -56,3 +56,13 @@
 .Home-NavbarButton--active {
     background-color: var(--border-color);
 }
+
+.VizSettings-Label {
+    padding: 0.25rem 1rem;
+    font-weight: bold;
+    margin-top: 1rem;
+}
+
+.VizSettings-Label:first-child {
+    margin-top: 0;
+}

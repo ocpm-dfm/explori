@@ -9,7 +9,12 @@ export const testUserSession = (store: any) => {
         ocel: "uploaded/test-redux.jsonocel",
         threshold: 50,
         selectedObjectTypes: ["Object1", "Object2"],
-        alreadySelectedAllObjectTypesInitially: true
+        alreadySelectedAllObjectTypesInitially: true,
+        highlightingMode: "none",
+        graphHorizontal: false,
+        alignmentMode: "none",
+        legendPosition: "none",
+        performanceMode: "Counts",
     }))
 
     store.dispatch(saveUserSession(store.getState().session))

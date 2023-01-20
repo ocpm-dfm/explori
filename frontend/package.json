@@ -25,6 +25,7 @@
     "axios": "^1.2.0",
     "cytoscape-dagre": "^2.5.0",
     "cytoscape-elk": "^2.1.0",
+    "deep-equal": "^2.2.0",
     "file-saver": "^2.0.5",
     "install": "^0.13.0",
     "npm": "^9.2.0",

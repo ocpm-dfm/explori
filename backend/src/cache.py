@@ -32,6 +32,10 @@ class ShortTermCache(ABC):
     def delete(self, key: str) -> bool:
         pass
 
+    @abstractmethod
+    def clear_cache(self):
+        pass
+
     def __getitem__(self, item: str) -> Any:
         return self.get(item)
 
@@ -73,6 +77,9 @@ class DictionaryBasedCache(ShortTermCache):
             self.__cache.pop(key)
             return True
 
+    def clear_cache(self):
+        pass
+
 
 class RedisCache(ShortTermCache):
     __redis_connection: Redis
@@ -94,6 +101,12 @@ class RedisCache(ShortTermCache):
 
     def delete(self, key: str) -> bool:
         return self.__redis_connection.delete(key) == 1
+
+    def clear_cache(self):
+        for key in self.__redis_connection.scan_iter("*ocel*"):
+            self.__redis_connection.delete(key)
+            print(f"Deleted {key}")
+        print("Done")
 
 
 __SHORT_TERM_CACHE = RedisCache("localhost", 6379)
@@ -222,6 +235,10 @@ def dfm(ignored_object_types: List[str] | None = None) -> str:
 
 def alignments(base_threshold: float, conformance_ocel: str, object_type: str | None, trace_id: int) -> str:
     return f"alignments-{hash_path(conformance_ocel)}-{hash(object_type)}-{base_threshold}-{trace_id}"
+
+
+def performance_metrics(process_ocel: str, base_threshold: float, object_type: str) -> str:
+    return f"performance-{hash_path(process_ocel)}-{hash(object_type)}-{base_threshold}"
 
 def hash(data: str) -> str:
     return sha256(data.encode('utf-8')).hexdigest()

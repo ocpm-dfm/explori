@@ -1,7 +1,10 @@
 import ReactDataGrid from "@inovua/reactdatagrid-community";
 import React from "react";
 import {TraceAlignment} from "../../redux/AlignmentsQuery/alignmentsquery.types";
-
+import {FontAwesomeIcon} from '@fortawesome/react-fontawesome'
+import {faShareFromSquare} from "@fortawesome/free-solid-svg-icons";
+import '../ExploriNavbar/NavbarButton/NavbarButton.css';
+import './AlignmentsTable.css';
 
 export function AlignmentTable(props: {objectType: string, traces: TraceAlignment[]}) {
     const objectType = props.objectType;
@@ -54,27 +57,29 @@ export function AlignmentTable(props: {objectType: string, traces: TraceAlignmen
     const rows = createRows(traces);
 
     return (
-        <ReactDataGrid
-            style={{
-                minHeight: 500,
-                marginTop: 16,
-                width: "100%",
-                minWidth: "20cm"
-            }}
-            rowHeight={50}
-            theme="blue-light"
-            idProperty="uniqueId"
-            dataSource={rows}
-            columns={columns}
-            editable={false}
-            pagination
-            showColumnMenuTool={false}
-            showZebraRows={false}
-            // autosizing columns only available in enterprise edition
-            // enableColumnAutosize={true}
-            defaultShowEmptyRows={false}
-            showHeader={false}
+        <React.Fragment>
+            <ReactDataGrid
+                style={{
+                    minHeight: 500,
+                    marginTop: 16,
+                    width: "100%",
+                    minWidth: "20cm"
+                }}
+                rowHeight={50}
+                theme="blue-light"
+                idProperty="uniqueId"
+                dataSource={rows}
+                columns={columns}
+                editable={false}
+                pagination
+                showColumnMenuTool={false}
+                showZebraRows={false}
+                // autosizing columns only available in enterprise edition
+                // enableColumnAutosize={true}
+                defaultShowEmptyRows={false}
+                showHeader={false}
 
-        />
+            />
+        </React.Fragment>
     )
 }

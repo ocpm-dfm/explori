@@ -12,9 +12,11 @@ import {connect} from "react-redux";
 import {EventLogTable} from "./EventLogTable/EventLogTable";
 import {DeleteEventLogModal} from "./DeleteEventLogModal/DeleteEventLogModal";
 import {UploadLogButton} from "./UploadLogButton/UploadLogButton";
-import {CSVSettings} from "./CSVSettings/CSVSettings";
+import {CSVSettings, CSVState} from "./CSVSettings/CSVSettings";
 import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
 import {faCircleCheck} from "@fortawesome/free-solid-svg-icons";
+import getUuid from "uuid-by-string";
+import {getURI} from "../../hooks";
 
 
 interface EventLogListProps {
@@ -55,6 +57,8 @@ export const EventLogList = connect<StateProps, DispatchProps, EventLogListProps
 
         const [selected, setSelected] = useState<number | null>(null);
         const [eventLogToBeDeleted, setEventLogToBeDeleted] = useState<EventLogMetadata | null>(null);
+        const [gridRef, setGridRef] = useState(null);
+        const [csvSettings, setCSVSettings] = useState<CSVState | null>(null);
 
         let selectedEventLog = null;
         if (selected != null && selected < props.eventLogs.length)
@@ -64,10 +68,71 @@ export const EventLogList = connect<StateProps, DispatchProps, EventLogListProps
             setSelected(selected);
         };
 
+        async function checkForChangeInCSV(): Promise<boolean>{
+            try {
+                if (selected !== null){
+                    const uri = getURI("/logs/restore", {name: props.eventLogs[selected].full_path});
+                    const response = await fetch(uri);
+                    if (response.status === 200) {
+                        const data: CSVState = await (await fetch(uri)).json();
+                        if (
+                            csvSettings !== null &&
+                            (
+                                data.activity !== csvSettings.activity ||
+                                data.id !== csvSettings.id ||
+                                data.separator !== csvSettings.separator ||
+                                data.timestamp !== csvSettings.timestamp ||
+                                data.objects.toString() !== csvSettings.objects.toString()
+                            )
+                        ) {
+                            return true;
+                        }
+                    }
+                    else if (response.status === 404) {
+                        return false;
+                    }
+                    else
+                        console.log("got an unexpected response:", response.status, await response.json())
+                }
+
+            }
+            catch (e) {
+                console.log("Got an unexpected error during loading CSV schema data");
+                console.error(e);
+            }
+            return false;
+        }
+
         const onSelect = () => {
-            if (selected !== null)
+            if (selected !== null) {
+                if (props.eventLogs[selected].type === "csv") {
+                    checkForChangeInCSV().then(function(success){
+                        if (success) {
+                            const ocel = String(props.eventLogs[selected].full_path);
+                            const uri = getURI("/logs/delete_csv_cache", {file_path: ocel, uuid: getUuid(ocel)});
+                            fetch(uri)
+                                .then((response) => response.json())
+                                .then((result) => {
+                                    console.log("All cached data was deleted");
+                                })
+                                .catch(err => console.log("Error in deleting ..."));
+                        }
+                    })
+                }
+
                 props.onSelect(props.eventLogs[selected].full_path);
+            }
+
         };
+
+        const findLog = (eventLog: EventLogMetadata) => {
+            for (let log of props.eventLogs){
+                if (eventLog.full_path === log.full_path){
+                    return log.id
+                }
+            }
+            return -1
+        }
 
         const csvSettingsEnabled = props.enableCSVSettings !== undefined ? props.enableCSVSettings : true;
 
@@ -82,11 +147,24 @@ export const EventLogList = connect<StateProps, DispatchProps, EventLogListProps
                 <EventLogTable eventLogs={props.eventLogs}
                                selection={selected}
                                setSelection={onSelection}
+                               setGridRef={setGridRef}
                                deleteLog={(eventLog) => setEventLogToBeDeleted(eventLog)} />
                 <div className="EventLogList-Buttons">
                     <UploadLogButton onUpload={(eventLog) => {
                         if (eventLog.id)
                             setSelected(eventLog.id);
+                        else {
+                            const id = findLog(eventLog)
+                            if (id !== undefined) {
+                                setSelected(id);
+                                if (gridRef !== null)
+                                    // TypeScript says gridRef is type "never", need to fix this
+                                    { // @ts-ignore
+                                        gridRef.current.scrollToId(id)
+                                    }
+                            }
+
+                        }
                     }
                     }/>
                     <div className="EventLogList-SelectButton" onClick={onSelect}>
@@ -94,7 +172,7 @@ export const EventLogList = connect<StateProps, DispatchProps, EventLogListProps
                         {props.selectText ? props.selectText : "Select" }
                     </div>
                 </div>
-                { csvSettingsEnabled && <CSVSettings selectedEventLog={selectedEventLog} /> }
+                { csvSettingsEnabled && <CSVSettings selectedEventLog={selectedEventLog} setCSVSettings={setCSVSettings}/> }
             </div>
         );
     });
