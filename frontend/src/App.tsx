@@ -127,7 +127,6 @@ export function App(props: Props) {
                 <Route path="/help" element={<Help resetQueryState={props.resetQueryStates}/>} />
                 <Route path="/user-session/store" element={<UserSession storeOrRestore={"store"} userSessionState={props.session}/>}></Route>
                 <Route path="/user-session/restore" element={<UserSession storeOrRestore={"restore"} stateChangeCallback={restoreSession}/>}></Route>
-                <Route path='/docs' element={<a href="localhost:8080/docs"></a>}/>
             </Routes>
         </QueryClientProvider>
     );

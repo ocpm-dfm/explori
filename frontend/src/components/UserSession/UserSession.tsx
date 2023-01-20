@@ -197,7 +197,6 @@ export function UserSession(props: {storeOrRestore: string, userSessionState?: S
                 <Stack spacing={3} direction="row" justifyContent="center">
                     <div className={'NavbarButton UserSessionRestore-Button'}
                          onClick={async () => {
-                             console.log("autosave-" + getUuid("uploaded/p2p-normal.jsonocel"))
                              await restoreSession(
                                  selected === null ? 'default' : String(dataSource[Number(selected)].name), stateChangeCallback
                              );
