@@ -14,8 +14,6 @@ import {SessionState} from "../../redux/UserSession/userSession.types";
 import { useNavigate } from "react-router-dom";
 import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
 import {faDownload, faSave, faShareFromSquare, faTrash} from "@fortawesome/free-solid-svg-icons";
-import {DeleteEventLogModal} from "../EventLogList/DeleteEventLogModal/DeleteEventLogModal";
-import getUuid from "uuid-by-string";
 
 type BackendSession = {
     base_ocel: string,
@@ -68,6 +66,7 @@ export function UserSession(props: {storeOrRestore: string, userSessionState?: S
         const ocel = data[2].split("/").pop().split(".").slice(0, -1)
         const objects = data[4].toString()
         return {
+            name_as_string: data[0],
             name: <div title={data[0]}>{data[0]}</div>,
             age: <div title={age}>{age}</div>,
             ocel: <div title={ocel}>{ocel}</div>,
@@ -206,7 +205,7 @@ export function UserSession(props: {storeOrRestore: string, userSessionState?: S
                          title={"Restores selected session from cache and goes to Homepage."}
                          onClick={async () => {
                              await restoreSession(
-                                 selected === null ? 'default' : String(dataSource[Number(selected)].name), stateChangeCallback
+                                 selected === null ? 'default' : String(dataSource[Number(selected)].name_as_string), stateChangeCallback
                              );
                              navigate("/");
                          }}
