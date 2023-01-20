@@ -7,7 +7,7 @@ ENV PATH="/opt/venv/bin:$PATH"
 
 COPY utils/pip_install_dependencies.sh .
 COPY requirements.txt .
-RUN pip_install_dependencies.sh
+RUN ./pip_install_dependencies.sh
 
 FROM python:3.10-slim AS build-image
 RUN apt-get update

@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/env sh
 
 BACKEND_DIR=$(dirname "$0")/../
 
