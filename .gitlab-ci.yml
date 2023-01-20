@@ -1,0 +1,29 @@
+stages:
+  - test
+
+test-backend:
+  image: python:3.10-slim
+  stage: test
+  # Change pip's cache directory to be inside the project directory since we can
+  # only cache local items.
+  variables:
+    PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+  # Pip's cache doesn't store the python packages
+  # If you want to also cache the installed packages, you have to install
+  # them in a virtualenv and cache it as well.
+  cache:
+    paths:
+      - .cache/pip
+      - venv/
+  before_script:
+    - cd backend/
+    # TODO: this is a bit ugly. we don't want to do replicate Dockerfile_backend but rather use that dockerfile to make
+    # sure we test under the same conditions as we run our application. Look into building the backend image and using
+    # it as base image for these tests.
+    - python -m venv ./venv
+    - source venv/bin/activate
+    - utils/pip_install_dependencies.sh
+    - apt-get update
+    - apt-get install -y --no-install-recommends libgomp1
+  script:
+    - python -m unittest discover -p *_tests.py
