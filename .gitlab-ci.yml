@@ -16,14 +16,14 @@ test-backend:
       - .cache/pip
       - venv/
   before_script:
-    - cd backend/
     # TODO: this is a bit ugly. we don't want to do replicate Dockerfile_backend but rather use that dockerfile to make
     # sure we test under the same conditions as we run our application. Look into building the backend image and using
     # it as base image for these tests.
     - apt-get update
-    - apt-get install -y --no-install-recommends build-essential gcc libgomp1
+    - apt-get install -y --no-install-recommends build-essential libgomp1
     - python -m venv ./venv
     - source venv/bin/activate
-    - utils/pip_install_dependencies.sh
+    - backend/utils/pip_install_dependencies.sh
   script:
+    - cd backend/
     - python -m unittest discover -p *_tests.py
