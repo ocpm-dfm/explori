@@ -44,7 +44,7 @@ export function UserSession(props: {storeOrRestore: string, userSessionState?: S
         { name: 'name', header: 'Session name', defaultFlex: 9 },
         { name: 'age', header: 'Last change date', defaultFlex: 4 },
         { name: 'ocel', header: 'Used OCEL', defaultFlex: 4 },
-        { name: 'threshold', header: 'Threshold', defaultFlex: 1 },
+        { name: 'threshold', header: 'Threshold', defaultFlex: 1.25 },
         { name: 'objects', header: 'Object types', defaultFlex: 4},
         { name: 'alignments', header: 'Alignments', defaultFlex: 2},
         { name: 'performance', header: 'Performance', defaultFlex: 2},
@@ -64,14 +64,17 @@ export function UserSession(props: {storeOrRestore: string, userSessionState?: S
     const gridStyle = { maxHeight: "70vh", maxWidth: "70vw" }
 
     const formatSessionMetadata = (data: any) => {
+        const age = new Date(data[1] * 1000).toLocaleString('en-US')
+        const ocel = data[2].split("/").pop().split(".").slice(0, -1)
+        const objects = data[4].toString()
         return {
-            name: data[0],
-            age: new Date(data[1] * 1000).toLocaleString('en-US'),
-            ocel: data[2].split("/").pop().split(".").slice(0, -1),
-            threshold: data[3],
-            objects: data[4].toString(),
-            alignments: data[5],
-            performance: data[6],
+            name: <div title={data[0]}>{data[0]}</div>,
+            age: <div title={age}>{age}</div>,
+            ocel: <div title={ocel}>{ocel}</div>,
+            threshold: <div title={data[3]}>{data[3]}</div>,
+            objects: <div title={objects}>{objects}</div>,
+            alignments: <div title={data[5]}>{data[5]}</div>,
+            performance: <div title={data[6]}>{data[6]}</div>,
             deleteButton:
                 <button className="EventLogTable-DeleteButton"
                         onClick={(event) => {

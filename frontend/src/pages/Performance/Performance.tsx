@@ -133,7 +133,7 @@ function EdgeMetrics(props: {objectType: string, metrics: {[key:string]: {[key: 
     }
 
     const columns = [
-        {name: "source", header: "From", title: "test"},
+        {name: "source", header: "From"},
         {name: "target", header: "To"},
         {name: "mean", header: "Mean", render: renderTime, sort: sortTime},
         {name: "sum", header: "Total time", render: renderTime, sort: sortTime},

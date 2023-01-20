@@ -1,5 +1,5 @@
 import {EventLogMetadata} from "../../../redux/EventLogs/eventLogs.types";
-import React, {useMemo} from "react";
+import React, {ReactElement, useMemo} from "react";
 import ReactDataGrid from "@inovua/reactdatagrid-community";
 import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
 import {faCloudArrowUp, faHardDrive, faTrash, faEraser} from "@fortawesome/free-solid-svg-icons";
@@ -15,10 +15,10 @@ type EventLogTableProps = {
 }
 
 type TableEventLog = {
-    id: number
-    displayName: any
-    type: string
-    size: string,
+    id: number,
+    displayName: any,
+    type: ReactElement,
+    size: ReactElement,
     deleteButton: any
 }
 
@@ -33,9 +33,9 @@ export const EventLogTable = (props: EventLogTableProps) => {
                 <FontAwesomeIcon icon={faHardDrive} title="This OCEL was provided using a folder mount"
                                  className="EventLogTable-LogSourceIcon"/>;
 
-            const displayName = <React.Fragment>
+            const displayName = <div title={eventLog.name}>
                 {icon} {eventLog.name}
-            </React.Fragment>
+            </div>
 
             const deleteButton = (
                 <button className="EventLogTable-DeleteButton"
@@ -63,8 +63,8 @@ export const EventLogTable = (props: EventLogTableProps) => {
             return {
                 id: eventLog.id!,
                 displayName,
-                type: eventLog.type,
-                size: eventLog.size,
+                type: <div title={eventLog.type}>{eventLog.type}</div>,
+                size: <div title={eventLog.size}>{eventLog.size}</div>,
                 deleteButton: isUploaded ? deleteButton : clearCacheButton
             }
         });
