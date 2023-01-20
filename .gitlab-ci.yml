@@ -26,4 +26,4 @@ test-backend:
     - backend/utils/pip_install_dependencies.sh
   script:
     - cd backend/
-    - python -m unittest discover -p *_tests.py
+    - PYTHONPATH=src/ python -m unittest discover -p *_tests.py
