@@ -1,5 +1,6 @@
 stages:
   - test
+  - build-docker
 
 test-frontend:
   stage: test
@@ -46,3 +47,23 @@ test-backend:
     - pip install -r requirements.txt
   script:
     - PYTHONPATH=src/ python -m unittest discover -p *_tests.py
+
+build-docker-dev:
+  stage: build-docker
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "web"'
+  image: docker:20.10.16
+  services:
+    - docker:20.10.16-dind
+  script:
+    docker-compose build _backend_base && docker-compose -f docker-compose.yml -f docker-compose.dev.yml build
+
+build-docker-prod:
+  stage: build-docker
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "web"'
+  image: docker:20.10.16
+  services:
+    - docker:20.10.16-dind
+  script:
+    docker-compose build _backend_base && docker-compose -f docker-compose.yml -f docker-compose.prod.yml build
