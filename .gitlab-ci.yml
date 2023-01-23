@@ -43,6 +43,6 @@ test-backend:
     - apt-get install -y --no-install-recommends build-essential libgomp1
     - python -m venv "$CI_PROJECT_DIR"/venv
     - source "$CI_PROJECT_DIR"/venv/bin/activate
-    - pip install -r backend/requirements.txt
+    - pip install -r requirements.txt
   script:
     - PYTHONPATH=src/ python -m unittest discover -p *_tests.py
