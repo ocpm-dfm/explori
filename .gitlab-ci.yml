@@ -1,11 +1,26 @@
 stages:
   - test
 
+test-frontend:
+  stage: test
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "web"'
+  image: node:18.13.0-slim
+  cache:
+    key: explori-frontend
+    paths:
+      - node_modules/
+  before_script:
+    - cd frontend/
+    - npm install
+  script:
+    - npm run test -- --ci --all
+
 test-backend:
+  stage: test
   rules:
     - if: '$CI_PIPELINE_SOURCE == "web"'
   image: python:3.10-slim
-  stage: test
   # Change pip's cache directory to be inside the project directory since we can
   # only cache local items.
   variables:
@@ -16,9 +31,10 @@ test-backend:
   cache:
     key: explori-backend
     paths:
-      - .cache/pip
+      - .cache/pip/
       - venv/
   before_script:
+    - cd backend/
     # TODO: this is a bit ugly. we don't want to do replicate Dockerfile_backend but rather use that dockerfile to make
     # sure we test under the same conditions as we run our application. Look into building the backend image and using
     # it as base image for these tests. Make sure the image doesn't get build every time, though! These tests are
@@ -29,5 +45,4 @@ test-backend:
     - source "$CI_PROJECT_DIR"/venv/bin/activate
     - pip install -r backend/requirements.txt
   script:
-    - cd backend/
     - PYTHONPATH=src/ python -m unittest discover -p *_tests.py
