@@ -47,7 +47,7 @@ parso==0.8.3
 pexpect==4.8.0
 pickleshare==0.7.5
 Pillow==9.3.0
-pm4py==2.3.4
+pm4py==2.2.32
 prometheus-client==0.15.0
 prompt-toolkit==3.0.32
 ptyprocess==0.7.0
