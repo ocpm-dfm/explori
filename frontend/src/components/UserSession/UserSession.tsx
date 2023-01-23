@@ -160,6 +160,7 @@ export function UserSession(props: {storeOrRestore: string, userSessionState?: S
                              else
                                  storeSession('default', userSessionState);
                              setUpdated(!updated);
+                             navigate("/")
                          }}
                     >
                         <FontAwesomeIcon icon={faSave} className="NavbarButton-Icon"/>
