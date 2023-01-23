@@ -9,7 +9,7 @@ test-frontend:
   cache:
     key: explori-frontend
     paths:
-      - node_modules/
+      - frontend/node_modules/
   before_script:
     - cd frontend/
     - npm install
@@ -32,7 +32,7 @@ test-backend:
     key: explori-backend
     paths:
       - .cache/pip/
-      - venv/
+      - backend/venv/
   before_script:
     - cd backend/
     # TODO: this is a bit ugly. we don't want to do replicate Dockerfile_backend but rather use that dockerfile to make
