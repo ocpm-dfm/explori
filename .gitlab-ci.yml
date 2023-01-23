@@ -3,7 +3,7 @@ stages:
 
 test-backend:
   rules:
-    - when: never
+    - if: '$CI_PIPELINE_SOURCE == "web"'
   image: python:3.10-slim
   stage: test
   # Change pip's cache directory to be inside the project directory since we can
