@@ -1,14 +1,247 @@
 import datetime
 from unittest import TestCase
 
-from pandas import DataFrame
+from pandas import DataFrame, Timestamp
 
 from worker.tasks.alignments import TraceAlignment, AlignElement, SKIP_MOVE
 from worker.tasks.dfm import START_TOKEN, STOP_TOKEN
-from worker.tasks.performance import align_log
+from worker.tasks.performance import align_log, determine_aligned_activation_times, align_case, ProjectedEventTime, \
+    AlignedEdgeTimes
 
 
 class PerformanceTests(TestCase):
+
+    def test_activation_time_determination(self):
+        alignments = [
+            {
+                "log_alignment": [
+                    {
+                        "activity": "|EXPLORI_START|"
+                    },
+                    {
+                        "activity": "Create Purchase Requisition"
+                    },
+                    {
+                        "activity": "Create Purchase Order"
+                    },
+                    {
+                        "activity": "Receive Goods"
+                    },
+                    {
+                        "activity": "Issue Goods Receipt"
+                    },
+                    {
+                        "activity": "Plan Goods Issue"
+                    },
+                    {
+                        "activity": "Verify Material"
+                    },
+                    {
+                        "activity": ">>"
+                    },
+                    {
+                        "activity": "Goods Issue"
+                    },
+                    {
+                        "activity": "|EXPLORI_END|"
+                    }
+                ],
+                "model_alignment": [
+                    {
+                        "activity": "|EXPLORI_START|"
+                    },
+                    {
+                        "activity": "Create Purchase Requisition"
+                    },
+                    {
+                        "activity": "Create Purchase Order"
+                    },
+                    {
+                        "activity": "Receive Goods"
+                    },
+                    {
+                        "activity": "Issue Goods Receipt"
+                    },
+                    {
+                        "activity": ">>"
+                    },
+                    {
+                        "activity": "Verify Material"
+                    },
+                    {
+                        "activity": "Plan Goods Issue"
+                    },
+                    {
+                        "activity": "Goods Issue"
+                    },
+                    {
+                        "activity": "|EXPLORI_END|"
+                    }
+                ]
+            },
+            {
+                "log_alignment": [
+                    {
+                        "activity": "|EXPLORI_START|"
+                    },
+                    {
+                        "activity": "Create Purchase Requisition"
+                    },
+                    {
+                        "activity": "Create Purchase Order"
+                    },
+                    {
+                        "activity": "Receive Goods"
+                    },
+                    {
+                        "activity": "Issue Goods Receipt"
+                    },
+                    {
+                        "activity": "Verify Material"
+                    },
+                    {
+                        "activity": "Plan Goods Issue"
+                    },
+                    {
+                        "activity": "Goods Issue"
+                    },
+                    {
+                        "activity": "|EXPLORI_END|"
+                    }
+                ],
+                "model_alignment": [
+                    {
+                        "activity": "|EXPLORI_START|"
+                    },
+                    {
+                        "activity": "Create Purchase Requisition"
+                    },
+                    {
+                        "activity": "Create Purchase Order"
+                    },
+                    {
+                        "activity": "Receive Goods"
+                    },
+                    {
+                        "activity": "Issue Goods Receipt"
+                    },
+                    {
+                        "activity": "Verify Material"
+                    },
+                    {
+                        "activity": "Plan Goods Issue"
+                    },
+                    {
+                        "activity": "Goods Issue"
+                    },
+                    {
+                        "activity": "|EXPLORI_END|"
+                    }
+                ]
+            }
+        ]
+
+        print(determine_aligned_activation_times("data/mounted/p2p-normal.jsonocel", "MATERIAL", alignments))
+
+    def test_align_case_with_synchronized_moves_only(self):
+        dt1 = Timestamp('2023-01-01 00:00:00')
+        dt2 = Timestamp('2023-01-02 00:00:00')
+        dt3 = Timestamp('2023-01-03 00:00:00')
+        case = DataFrame({
+            "concept:name": ["a", "b", "c"],
+            "event_explori:ocel_event_id": [0, 1, 2],
+            "time:timestamp": [dt1, dt2, dt3]
+        })
+        alignments = {
+            ('a', 'b', 'c'): TraceAlignment(log_alignment=[
+                AlignElement(activity="a"),
+                AlignElement(activity="b"),
+                AlignElement(activity="c"),
+            ], model_alignment=[
+                AlignElement(activity="a"),
+                AlignElement(activity="b"),
+                AlignElement(activity="c"),
+            ])
+        }
+
+        aligned_times = align_case(case, alignments)
+
+        at1 = ProjectedEventTime(dt1, 0)
+        at2 = ProjectedEventTime(dt2, 0)
+        at3 = ProjectedEventTime(dt3, 0)
+        expected_result = {
+            0: AlignedEdgeTimes(None, None, at1),
+            1: AlignedEdgeTimes("a", at1, at2),
+            2: AlignedEdgeTimes("b", at2, at3)
+        }
+        self.assertEqual(expected_result, aligned_times)
+        print(aligned_times)
+
+    def test_align_case_with_log_move(self):
+        dt1 = Timestamp('2023-01-01 00:00:00')
+        dt2 = Timestamp('2023-01-02 00:00:00')
+        dt3 = Timestamp('2023-01-03 00:00:00')
+        case = DataFrame({
+            "concept:name": ["a", "b", "c"],
+            "event_explori:ocel_event_id": [0, 1, 2],
+            "time:timestamp": [dt1, dt2, dt3]
+        })
+        alignments = {
+            ('a', 'b', 'c'): TraceAlignment(log_alignment=[
+                AlignElement(activity="a"),
+                AlignElement(activity="b"),
+                AlignElement(activity="c"),
+            ], model_alignment=[
+                AlignElement(activity="a"),
+                AlignElement(activity=SKIP_MOVE),
+                AlignElement(activity="c"),
+            ])
+        }
+
+        aligned_times = align_case(case, alignments)
+
+        at1 = ProjectedEventTime(dt1, 0)
+        at2 = ProjectedEventTime(dt2, 0)
+        at3 = ProjectedEventTime(dt3, 0)
+        expected_result = {
+            0: AlignedEdgeTimes(None, None, at1),
+            2: AlignedEdgeTimes("a", at1, at3)
+        }
+        self.assertEqual(expected_result, aligned_times)
+        print(aligned_times)
+
+    def test_align_case_with_model_move(self):
+        dt1 = Timestamp('2023-01-01 00:00:00')
+        dt2 = Timestamp('2023-01-02 00:00:00')
+        dt3 = Timestamp('2023-01-03 00:00:00')
+        case = DataFrame({
+            "concept:name": ["a", "c"],
+            "event_explori:ocel_event_id": [0, 2],
+            "time:timestamp": [dt1, dt3]
+        })
+        alignments = {
+            ('a', 'c'): TraceAlignment(log_alignment=[
+                AlignElement(activity="a"),
+                AlignElement(activity=SKIP_MOVE),
+                AlignElement(activity="c"),
+            ], model_alignment=[
+                AlignElement(activity="a"),
+                AlignElement(activity="b"),
+                AlignElement(activity="c"),
+            ])
+        }
+
+        aligned_times = align_case(case, alignments)
+
+        at1 = ProjectedEventTime(dt1, 0)
+        at2 = ProjectedEventTime(dt2, 0)
+        at3 = ProjectedEventTime(dt3, 1)
+        expected_result = {
+            0: AlignedEdgeTimes(None, None, at1),
+            2: AlignedEdgeTimes("a", at1, at3)
+        }
+        self.assertEqual(expected_result, aligned_times)
+        print(aligned_times)
 
     def test_align_log(self):
         dt1 = datetime.datetime(2023, 1, 1)

@@ -113,6 +113,7 @@ def project_ocel(ocel_filename: str, build_metadata: bool = True) -> Dict[str, E
 
     # Prepare event log for projection to object types.
     df: DataFrame = ocel.log.log
+    df['event_explori:ocel_event_id'] = df.index
     exploded_df = succint_mdl_to_exploded_mdl(df)
 
     result = {}
