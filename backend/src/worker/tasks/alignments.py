@@ -22,6 +22,7 @@ from pm4py.objects.petri_net.utils.final_marking import discover_final_marking
 from pm4py.objects.petri_net.utils.check_soundness import check_wfnet
 from pm4py.objects.petri_net.utils.petri_utils import PetriNet, add_place, add_transition, add_arc_from_to
 from pm4py.objects.conversion.log import converter as log_conv_factory
+import pm4py.algo.conformance.alignments.petri_net.algorithm as alignment_algorithm
 
 
 Edge = namedtuple("Edge", ['source', 'target'])
@@ -100,10 +101,11 @@ def compute_alignments(process_ocel: str, threshold: float, object_type: str, tr
     dfg = filter_threshold_of_graph_notation(dfm, object_type, threshold)
 
     projected_log = build_trace_event_log(trace)
-    # petrinet, initial_marking, final_marking = build_petrinet(dfg)
-    petrinet, initial_marking, final_marking = build_pm4py_dfg(dfg)
+    petrinet, initial_marking, final_marking = build_petrinet(dfg)
+    # petrinet, initial_marking, final_marking = build_pm4py_dfg(dfg)
 
-    aligned_traces = conformance_diagnostics_alignments(projected_log, petrinet, initial_marking, final_marking)
+    # aligned_traces = conformance_diagnostics_alignments(projected_log, petrinet, initial_marking, final_marking)
+    aligned_traces = alignment_algorithm.apply(projected_log, petrinet, initial_marking, final_marking, variant=alignment_algorithm.VERSION_DIJKSTRA_LESS_MEMORY)
 
     return rearrange_alignment(aligned_traces[0]['alignment']).dict()
 
