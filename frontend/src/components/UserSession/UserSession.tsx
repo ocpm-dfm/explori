@@ -49,11 +49,11 @@ export function UserSession(props: {storeOrRestore: string, userSessionState?: S
         { name: 'deleteButton', header: '', defaultFlex: .25}
     ]
 
-    let compareDates = (a: { age: number; }, b: { age: number; }) => {
-        if (a.age < b.age) {
+    let compareDates = (a: { age_as_number: number; }, b: { age_as_number: number; }) => {
+        if (a.age_as_number < b.age_as_number) {
             return 1;
         }
-        if (a.age > b.age) {
+        if (a.age_as_number > b.age_as_number) {
             return -1;
         }
         return 0;
@@ -67,6 +67,7 @@ export function UserSession(props: {storeOrRestore: string, userSessionState?: S
         const objects = data[4].toString()
         return {
             name_as_string: data[0],
+            age_as_number: age,
             name: <div title={data[0]}>{data[0]}</div>,
             age: <div title={age}>{age}</div>,
             ocel: <div title={ocel}>{ocel}</div>,
