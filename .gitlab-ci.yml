@@ -22,14 +22,12 @@ test-backend:
     # TODO: this is a bit ugly. we don't want to do replicate Dockerfile_backend but rather use that dockerfile to make
     # sure we test under the same conditions as we run our application. Look into building the backend image and using
     # it as base image for these tests. Make sure the image doesn't get build every time, though! These tests are
-    # meant to be run on every commit (not only every merge request)
+    # meant to be run on every commit (not only every merge request). This also removes the need for the hack below.
     - apt-get update
     - apt-get install -y --no-install-recommends build-essential libgomp1
     - python -m venv "$CI_PROJECT_DIR"/venv
     - source "$CI_PROJECT_DIR"/venv/bin/activate
-    - pip uninstall -y pm4py==2.3.4 # HACK: we install a more recent version after installing requirements.txt which crashes when we do it the next time (venv is being cached)
-    - backend/utils/pip_install_dependencies.sh
+    - pip install -r backend/requirements.txt
   script:
-    - source venv/bin/activate
     - cd backend/
     - PYTHONPATH=src/ python -m unittest discover -p *_tests.py

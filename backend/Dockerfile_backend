@@ -5,9 +5,10 @@ RUN apt-get install -y --no-install-recommends build-essential
 RUN python -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 
-COPY utils/pip_install_dependencies.sh .
+ENV PIP_DISABLE_PIP_VERSION_CHECK=1
+ENV PIP_ROOT_USER_ACTION=ignore
 COPY requirements.txt .
-RUN ./pip_install_dependencies.sh
+RUN pip install -r requirements.txt
 
 FROM python:3.10-slim AS build-image
 RUN apt-get update
