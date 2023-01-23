@@ -18,7 +18,12 @@ import {AlignmentsData} from "../../pages/Alignments/Alignments";
 import {AlignElement} from "../../redux/AlignmentsQuery/alignmentsquery.types";
 import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
 import {faCircleXmark} from "@fortawesome/free-regular-svg-icons";
-import {EdgePerformance, PerformanceMetrics} from "../../redux/PerformanceQuery/performancequery.types";
+import {
+    EdgePerformance,
+    ObjectTypePerformanceMetrics,
+    PerformanceMetrics,
+    ObjectTypePerformanceMetricsEdges
+} from "../../redux/PerformanceQuery/performancequery.types";
 import React from "react";
 
 const fileSaver = require('file-saver');
@@ -63,6 +68,7 @@ export type CytoDFMProps = {
     graphHorizontal: boolean,
     alignmentMode: string,
     legendPosition: string,
+    performanceMode: string,
     infoboxEnabled: boolean
 }
 
@@ -380,6 +386,7 @@ export const FilteredCytoDFM = forwardRef((props: CytoDFMProps, ref: ForwardedRe
         const thresh = boxedThreshold;
         const selectedObjectTypes = props.selectedObjectTypes;
         const edgeHighlightingMode = props.highlightingMode;
+        const performanceMetrics = props.performanceMetrics? props.performanceMetrics: null;
 
         console.log("Filtering", dfm, selectedObjectTypes, thresh);
 
@@ -398,12 +405,20 @@ export const FilteredCytoDFM = forwardRef((props: CytoDFMProps, ref: ForwardedRe
         Object.keys(dfm.subgraphs).forEach((objectType, i) => {
             if (selectedObjectTypes.includes(objectType)) {
                 const objectTypeColor = getObjectTypeColor(numberOfColorsNeeded, i);
+                const performanceMetric = (performanceMetrics && performanceMetrics[objectType] !== null)? performanceMetrics[objectType]: null;
+                const performanceMetricEdges = performanceMetric? performanceMetric.edges : null
 
                 const edges = dfm.subgraphs[objectType];
                 let hasDisplayedEdge = false;
 
                 for (const edge of edges) {
-                    const count = getCountAtThreshold(edge.counts, thresh);
+                    let count: number | string = getCountAtThreshold(edge.counts, thresh);
+                    const sourceLabel = dfm.nodes[edge.source].label;
+                    const targetLabel = dfm.nodes[edge.target].label;
+                    if (performanceMetricEdges){
+                        count = getPerformanceCount(props.performanceMode, performanceMetricEdges, sourceLabel, targetLabel, count)
+                    }
+
                     // Ignore edges below the threshold.
                     if (count === 0)
                         continue
@@ -522,7 +537,10 @@ export const FilteredCytoDFM = forwardRef((props: CytoDFMProps, ref: ForwardedRe
                     const nodeLength: number = dfm.nodes.length + alignmentNodes.length
                     const sourceNodeIndex: number = nodeLength + 1
                     const targetNodeIndex: number = nodeLength + 2
-                    let count: number = findMatchingTracesCount(traceNodeIndices, objectType, dfm.traces)
+                    let count: number | string = findMatchingTracesCount(traceNodeIndices, objectType, dfm.traces)
+                    if (props.performanceMode !== "Counts"){
+                        count = ""
+                    }
 
                     if (props.alignmentMode === "expansive") {
                         // need node between lastNode and intermediateNode
@@ -585,10 +603,19 @@ export const FilteredCytoDFM = forwardRef((props: CytoDFMProps, ref: ForwardedRe
                     for (const [source, target, metaSource, metaTarget] of neededEdges) {
                         let classes = "log-move"
                         if (props.alignmentMode === "expansive") {
+                            const performanceMetric = (performanceMetrics && performanceMetrics[objectType] !== null)? performanceMetrics[objectType]: null;
+                            const performanceMetricEdges = performanceMetric? performanceMetric.edges : null
                             // first edge
                             if ((source === lastNodeIndex && target === sourceNodeIndex) || (source === sourceNodeIndex && target === intermediateNodeIndex)) {
                                 if (matchingFirstEdge !== null) {
                                     count = getCountAtThreshold(matchingFirstEdge.counts, thresh);
+                                    if (props.performanceMode !== "Counts"){
+                                        const sourceLabel = dfm.nodes[matchingFirstEdge.source].label;
+                                        const targetLabel = dfm.nodes[matchingFirstEdge.target].label;
+                                        if (performanceMetricEdges){
+                                            count = getPerformanceCount(props.performanceMode, performanceMetricEdges, sourceLabel, targetLabel, count)
+                                        }
+                                    }
                                     classes = "edge"
                                 }
                             }
@@ -596,6 +623,15 @@ export const FilteredCytoDFM = forwardRef((props: CytoDFMProps, ref: ForwardedRe
                             if ((source === intermediateNodeIndex && target === targetNodeIndex) || (source === targetNodeIndex && target === nextNodeIndex)) {
                                 if (matchingSecondEdge !== null) {
                                     count = getCountAtThreshold(matchingSecondEdge.counts, thresh);
+                                    if (props.performanceMode !== "Counts"){
+                                        const performanceMetric = (performanceMetrics && performanceMetrics[objectType] !== null)? performanceMetrics[objectType]: null;
+                                        const performanceMetricEdges = performanceMetric? performanceMetric.edges : null
+                                        const sourceLabel = dfm.nodes[matchingSecondEdge.source].label;
+                                        const targetLabel = dfm.nodes[matchingSecondEdge.target].label;
+                                        if (performanceMetricEdges){
+                                            count = getPerformanceCount(props.performanceMode, performanceMetricEdges, sourceLabel, targetLabel, count)
+                                        }
+                                    }
                                     classes = "edge"
                                 }
                             }
@@ -649,7 +685,10 @@ export const FilteredCytoDFM = forwardRef((props: CytoDFMProps, ref: ForwardedRe
 
                     const nodeLength: number = dfm.nodes.length + alignmentNodes.length
                     const sourceNodeIndex: number = nodeLength + 1
-                    const count: number = findMatchingTracesCount(traceNodeIndices, objectType, dfm.traces)
+                    let count: number | string = findMatchingTracesCount(traceNodeIndices, objectType, dfm.traces)
+                    if (props.performanceMode !== "Counts"){
+                        count = ""
+                    }
 
                     if (props.alignmentMode === "expansive") {
                         // need node between lastNode and nextNode
@@ -726,7 +765,7 @@ export const FilteredCytoDFM = forwardRef((props: CytoDFMProps, ref: ForwardedRe
         console.log(elements)
 
         return [elements, legendObjectTypeColors];
-    }, [props.dfm, boxedThreshold, props.selectedObjectTypes, props.highlightingMode, modelAlignments, logAlignments, props.alignmentMode, props.performanceMetrics]);
+    }, [props.dfm, boxedThreshold, props.selectedObjectTypes, props.highlightingMode, modelAlignments, logAlignments, props.alignmentMode, props.performanceMetrics, props.performanceMode]);
 
 
     const [selectedTraces, selectedPerformanceMetrics]: [SelectedTracesData, { [key: string]: EdgePerformance } | null] = useMemo(() => {
@@ -953,6 +992,8 @@ export const FilteredCytoDFM = forwardRef((props: CytoDFMProps, ref: ForwardedRe
     const hasSelectedObject = selection.selectedNode !== null || selection.selectedEdge !== null;
 
     console.log("Pan position: ", softState.current.pan)
+
+    console.log(props.performanceMetrics)
 
     return (
         <div className="CytoDFM-container" id="DFM-container">
@@ -1181,4 +1222,41 @@ function InfoboxTraces(props: { title: string, traces: { [key: string]: RenderTr
                 </React.Fragment>)
         })}
     </React.Fragment>
+}
+
+function getPerformanceCount(performanceMode: string, performanceMetricEdges: ObjectTypePerformanceMetricsEdges, sourceLabel: string, targetLabel: string, count: number ){
+    let newCount: number | string = count
+    if (performanceMode !== "Counts") {
+        if(performanceMetricEdges
+            && sourceLabel !== "|EXPLORI_START|"
+            && targetLabel !== "|EXPLORI_END|"
+        ){
+            const edgeMetrics = performanceMetricEdges[sourceLabel]? performanceMetricEdges[sourceLabel][targetLabel] : undefined
+            console.log(edgeMetrics)
+            if (edgeMetrics === undefined){
+                console.log(sourceLabel)
+                console.log(targetLabel)
+                console.log(performanceMetricEdges)
+                newCount = 0
+            } else {
+                switch(performanceMode){
+                    case "Minimum":
+                        newCount = secondsToHumanReadableFormat(edgeMetrics.min, 2)
+                        break;
+                    case "Mean":
+                        newCount = secondsToHumanReadableFormat(edgeMetrics.mean, 2)
+                        break;
+                    case "Maximum":
+                        newCount = secondsToHumanReadableFormat(edgeMetrics.max, 2)
+                        break;
+                    case "Total":
+                        newCount = secondsToHumanReadableFormat(edgeMetrics.sum, 2)
+                        break;
+                }
+            }
+        } else {
+            newCount = secondsToHumanReadableFormat(0, 2)
+        }
+    }
+    return newCount
 }

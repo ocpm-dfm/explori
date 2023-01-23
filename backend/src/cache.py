@@ -32,6 +32,10 @@ class ShortTermCache(ABC):
     def delete(self, key: str) -> bool:
         pass
 
+    @abstractmethod
+    def clear_cache(self):
+        pass
+
     def __getitem__(self, item: str) -> Any:
         return self.get(item)
 
@@ -73,6 +77,9 @@ class DictionaryBasedCache(ShortTermCache):
             self.__cache.pop(key)
             return True
 
+    def clear_cache(self):
+        pass
+
 
 class RedisCache(ShortTermCache):
     __redis_connection: Redis
@@ -94,6 +101,12 @@ class RedisCache(ShortTermCache):
 
     def delete(self, key: str) -> bool:
         return self.__redis_connection.delete(key) == 1
+
+    def clear_cache(self):
+        for key in self.__redis_connection.scan_iter("*ocel*"):
+            self.__redis_connection.delete(key)
+            print(f"Deleted {key}")
+        print("Done")
 
 
 REDIS_HOST = os.environ.get('EXPLORI_REDIS_HOST', default='localhost')

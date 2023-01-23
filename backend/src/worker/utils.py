@@ -51,7 +51,9 @@ def get_projected_traces(ocel_filename: str, object_type: str, build_if_non_exis
 
     # Create the traces:
     event_log = get_projected_event_log(ocel_filename, object_type)
-    traces = [(variant, n_cases) for (variant, n_cases) in pm4py.get_variants_as_tuples(event_log).items()]
+    # In pm4py 2.2, n_cases is a list with all traces, from pm4py 2.3 upwards, n_cases is just the number of cases of that variant. Because we switched between
+    # pm4py versions in development, we just implemented it this way, to be compatible with all pm4py versions.
+    traces = [(variant, n_cases) if isinstance(n_cases, int) else (variant, len(n_cases)) for (variant, n_cases) in pm4py.get_variants_as_tuples(event_log).items()]
     cache.set(ocel_filename, projected_log_traces(object_type), traces)
     return traces
 

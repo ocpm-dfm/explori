@@ -16,6 +16,7 @@ import {resetAlignmentQueryState} from "./redux/AlignmentsQuery/alingmentsquery"
 import {NewSessionPage} from "./pages/NewSession/NewSessionPage";
 import {PerformanceMetricsPage} from "./pages/Performance/Performance";
 import {resetPerformanceQueryState} from "./redux/PerformanceQuery/performancequery";
+import {Help} from "./pages/Help/Help";
 
 export type StateChangeCallback = (update: any) => void;
 export type SwitchOcelsCallback = (newOcel: string) => Promise<void>;
@@ -99,6 +100,7 @@ export function App(props: Props) {
                 graphHorizontal: false,
                 alignmentMode: "none",
                 legendPosition: "top-left",
+                performanceMode: "Counts",
             });
         }
         localStorage.setItem("explori-currentOcel", newOcel);
@@ -112,6 +114,7 @@ export function App(props: Props) {
                 <Route path="/alignments" element={<Alignments />}></Route>
                 <Route path="/performance" element={<PerformanceMetricsPage />} />
                 <Route path="/session" element={<NewSessionPage switchOcelCallback={loadSessionOrStartNewOne} />} />
+                <Route path="/help" element={<Help/>} />
             </Routes>
         </QueryClientProvider>
     );

@@ -16,7 +16,7 @@ from pydantic import BaseModel
 from starlette import status
 
 from server.task_manager import TaskStatus
-from cache import get_long_term_cache
+from cache import get_long_term_cache, get_short_term_cache
 
 router = APIRouter(prefix='/logs',
                    tags=['Log management'])
@@ -259,6 +259,43 @@ def delete_csv_cache(file_path: str, uuid: str):
     autosave_path = "cache" + os.sep + "sessions" + os.sep + "autosave-" + uuid + ".json"
     if os.path.exists(autosave_path):
         os.remove(autosave_path)
+
+    return {
+        "status": "successful"
+    }
+
+@router.get('/clear_cache')
+def delete_cache():
+    dir_path = "cache"
+    # clear all OCEL caches
+    for directory in [x[0] for x in os.walk(dir_path)]:
+        if directory != dir_path and directory != dir_path + os.sep + "csv_columns" and directory != dir_path + os.sep + "sessions":
+            try:
+                shutil.rmtree(directory)
+            except OSError as e:
+                print("Error: %s - %s." % (e.filename, e.strerror))
+
+    # clear csv_columns:
+    csv_dir_path = dir_path + os.sep + "csv_columns"
+    for directory in [x[2] for x in os.walk(csv_dir_path)]:
+        for file in directory:
+            try:
+                os.remove(csv_dir_path + os.sep + file)
+            except OSError as e:
+                print("Error: %s - %s." % (e.filename, e.strerror))
+
+    # Clear autosaves
+    autosave_dir_path = "cache" + os.sep + "sessions"
+    for directory in [x[2] for x in os.walk(autosave_dir_path)]:
+        for file in directory:
+            try:
+                os.remove(autosave_dir_path + os.sep + file)
+            except OSError as e:
+                print("Error: %s - %s." % (e.filename, e.strerror))
+
+    # Clear redis tasks
+    redis = get_short_term_cache()
+    redis.clear_cache()
 
     return {
         "status": "successful"

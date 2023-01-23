@@ -3,10 +3,13 @@ fastapi==0.86.0
 lxml==4.9.1
 ocpa==1.2
 pandas==1.5.1
-# HACKY: currently simply being installed afterwards as ocpa1.2 requires pm4py<2.3.0
-# pm4py==2.3.4
+pm4py==2.2.32
 pydantic==1.10.2
 redis==4.3.4
 starlette==0.20.4
 uvicorn==0.19.0
 python-multipart==0.0.5
+flower==1.2.0
+humanize==4.4.0
+prometheus-client==0.15.0
+tornado==6.2

@@ -89,6 +89,7 @@ def compute_alignments(process_ocel: str = Query(example="uploaded/p2p-normal.js
 
     result.result = reformat_output(result.result)
     result.preliminary = reformat_output(result.preliminary)
+    print(result.json())
     return result
 
 
@@ -130,7 +131,6 @@ def compute_performance_metrics(process_ocel: str = Query(example="uploaded/p2p-
     }
 
     return task_manager.cached_group(tasks)
-
 
 def get_dfm(ocel: str, task_manager: TaskManager, ignore_cache: bool = False) -> FrontendFriendlyDFM | None:
     task = run_dfm_task(ocel, task_manager, ignore_cache)

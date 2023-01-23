@@ -11,5 +11,9 @@ export type ObjectTypePerformanceMetrics = {
     edges: {[key: string]: {[key:string]: EdgePerformance}}
 }
 
+export type ObjectTypePerformanceMetricsEdges = {
+    [key: string]: {[key:string]: EdgePerformance}
+}
+
 
 export type PerformanceMetrics = {[key:string]: ObjectTypePerformanceMetrics}

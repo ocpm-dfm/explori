@@ -20,6 +20,7 @@ import {
     setThreshold,
     setAlignmentMode,
     setLegendPosition,
+    setPerformanceMode,
 } from "../../redux/UserSession/userSession.actions";
 import {setDfmQueryState} from "../../redux/DFMQuery/dfmquery";
 import {resetAlignmentQueryState} from "../../redux/AlignmentsQuery/alingmentsquery";
@@ -41,6 +42,14 @@ enum HighlightingModeName {
     LogarithmicCount = "logarithmicEdgeCounts",
     MeanTime = "MeanWaitingTime",
     MaxTime = "MaxWaitingTime"
+}
+
+enum PerformanceMetricsModeName {
+    Counts = "Counts",
+    Minimum = "Minimum",
+    Mean = "Mean",
+    Maximum = "Maximum",
+    Total = "Total"
 }
 
 enum AlignmentModeName {
@@ -85,6 +94,9 @@ const mapDispatchToProps = (dispatch: ThunkDispatch<any, any, any>, props: HomeP
     },
     setLegendPosition: async(position: string) => {
         dispatch(setLegendPosition(position))
+    },
+    setPerformanceMode: async(mode: string) => {
+        dispatch(setPerformanceMode(mode))
     },
     setDfmQuery: (state: AsyncApiState<DirectlyFollowsMultigraph>) => {
         dispatch(setDfmQueryState(state));
@@ -166,6 +178,8 @@ export const Home = connect<StateProps, DispatchProps, HomeProps, RootState>(map
                 setAlignmentMode={props.setAlignmentMode}
                 selectedLegendPosition={(props.session.legendPosition as LegendPositionName) || LegendPositionName.None}
                 setLegendPosition={props.setLegendPosition}
+                selectedPerformanceMode={(props.session.performanceMode as PerformanceMetricsModeName) || PerformanceMetricsModeName.Counts}
+                setPerformanceMode={props.setPerformanceMode}
                 infoboxEnabled={infoboxEnabled}
                 setInfoboxEnabled={(enabled) => setInfoboxEnabled(enabled)}
             />
@@ -190,6 +204,7 @@ export const Home = connect<StateProps, DispatchProps, HomeProps, RootState>(map
                                  graphHorizontal={props.session.graphHorizontal}
                                  alignmentMode={props.session.alignmentMode}
                                  legendPosition={props.session.legendPosition}
+                                 performanceMode={props.session.performanceMode}
                                  infoboxEnabled={infoboxEnabled}
                                  ref={graphRef}/>
                 {!dfm_query.result && !dfm_query.failed && (
@@ -244,6 +259,8 @@ type VizSettingsProps = {
     setAlignmentMode: (mode: string) => void,
     selectedLegendPosition: LegendPositionName,
     setLegendPosition: (position: string) => void,
+    selectedPerformanceMode: PerformanceMetricsModeName,
+    setPerformanceMode: (mode: string) => void,
     infoboxEnabled: boolean,
     setInfoboxEnabled: (enabled: boolean) => void
 }
@@ -265,6 +282,27 @@ const VizSettings = (props: VizSettingsProps) => {
                     selected={props.selectedAlignmentMode === AlignmentModeName.Expansive}
                     label="Extended"
                     onClick={() => props.setAlignmentMode(AlignmentModeName.Expansive)}/>
+                <div className="VizSettings-Label">Performance metrics</div>
+                <DropdownCheckbox
+                    selected={props.selectedPerformanceMode === PerformanceMetricsModeName.Counts}
+                    label="Counts (Default)"
+                    onClick={() => props.setPerformanceMode(PerformanceMetricsModeName.Counts)}/>
+                <DropdownCheckbox
+                    selected={props.selectedPerformanceMode === PerformanceMetricsModeName.Minimum}
+                    label="Minimum"
+                    onClick={() => props.setPerformanceMode(PerformanceMetricsModeName.Minimum)}/>
+                <DropdownCheckbox
+                    selected={props.selectedPerformanceMode === PerformanceMetricsModeName.Mean}
+                    label="Mean"
+                    onClick={() => props.setPerformanceMode(PerformanceMetricsModeName.Mean)}/>
+                <DropdownCheckbox
+                    selected={props.selectedPerformanceMode === PerformanceMetricsModeName.Maximum}
+                    label="Maximum"
+                    onClick={() => props.setPerformanceMode(PerformanceMetricsModeName.Maximum)}/>
+                <DropdownCheckbox
+                    selected={props.selectedPerformanceMode === PerformanceMetricsModeName.Total}
+                    label="Total time"
+                    onClick={() => props.setPerformanceMode(PerformanceMetricsModeName.Total)}/>
                 <div className="VizSettings-Label">Highlighting</div>
                 <DropdownCheckbox
                     selected={props.selectedHighlightingMode === HighlightingModeName.NoHighlighting}
