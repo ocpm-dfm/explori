@@ -4,7 +4,7 @@ FROM node:18.13.0-slim as common_pre_build
 ONBUILD WORKDIR /explori/webserver
 ONBUILD COPY package.json .
 ONBUILD COPY package-lock.json .
-ONBUILD RUN npm ci --only=production
+ONBUILD RUN npm install
 
 FROM common_pre_build as prod_build
 ONBUILD COPY public/ public/
