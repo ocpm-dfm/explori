@@ -1,0 +1,9 @@
+version: "3.9"
+
+services:
+  celery:
+    volumes:
+      - ${OCEL_MOUNT_PATH}:/explori/celery/data/mounted:ro
+  fastapi:
+    volumes:
+      - ${OCEL_MOUNT_PATH}:/explori/fastapi/data/mounted:ro

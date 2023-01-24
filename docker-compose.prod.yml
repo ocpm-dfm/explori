@@ -10,16 +10,16 @@ services:
       args:
         BUILD_ENV: 'prod'
     volumes:
-      - cache:/explori/celery/cache
-      - data:/explori/celery/data
+      - explori-cache:/explori/celery/cache
+      - explori-uploaded:/explori/celery/data/uploaded
   fastapi:
     build:
       args:
         BUILD_ENV: 'prod'
     volumes:
-      - cache:/explori/fastapi/cache
-      - data:/explori/fastapi/data
+      - explori-cache:/explori/fastapi/cache
+      - explori-uploaded:/explori/fastapi/data/uploaded
 
 volumes:
-  cache:
-  data:
+  explori-cache:
+  explori-uploaded:
