@@ -5,7 +5,9 @@ stages:
 test-frontend:
   stage: test
   rules:
-    - if: '$CI_PIPELINE_SOURCE == "web"'
+  # TODO: frontend testing with jest is currently broken (there's no tests anyway, yet)
+#    - if: '$CI_PIPELINE_SOURCE == "web"'
+    - when: never
   image: node:18.13.0-slim
   cache:
     key: explori-frontend
