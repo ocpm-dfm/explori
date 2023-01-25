@@ -33,7 +33,7 @@ case "$RUN_COMMAND" in
         docker-compose stop
         ;;
     ("--remove")
-        docker-compose down
+        docker-compose down --volumes --rmi all
         ;;
     (*) 
         echo "Please provide a valid app command, e.g. --start. For more information, e.g. all available commands, see the user manual."
