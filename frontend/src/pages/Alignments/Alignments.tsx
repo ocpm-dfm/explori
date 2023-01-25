@@ -82,6 +82,15 @@ export const Alignments = connect<StateProps, DispatchProps, AlignmentProps, Roo
                     if (alignment) {
                         if (!object_type_alignments[objectType])
                             object_type_alignments[objectType] = [];
+                        // Need to check if alignments were not cut before already
+                        if (alignment['log_alignment'][0].activity === "|EXPLORI_START|")
+                            alignment['log_alignment'].shift()
+                        if (alignment['log_alignment'][alignment['log_alignment'].length-1].activity === "|EXPLORI_END|")
+                            alignment['log_alignment'].pop()
+                        if (alignment['model_alignment'][0].activity === "|EXPLORI_START|")
+                            alignment['model_alignment'].shift()
+                        if (alignment['model_alignment'][alignment['model_alignment'].length-1].activity === "|EXPLORI_END|")
+                            alignment['model_alignment'].pop()
                         object_type_alignments[objectType].push(alignment);
                     }
                 })
