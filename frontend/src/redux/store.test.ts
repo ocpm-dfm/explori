@@ -21,11 +21,4 @@ export const testUserSession = (store: any) => {
     }))
 
     store.dispatch(saveUserSession(store.getState().session))
-
 }
-
-// TODO: why does the frontend crash (`Uncaught ReferenceError: test is not defined`) when running our app via
-// `./app.sh --start` (production mode)? This doesn't happen when running via `./app.sh --start-dev` or running the tests locally.
-// test('tests user session (no crash)', () => {
-//     testUserSession(store);
-// });
