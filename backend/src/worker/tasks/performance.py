@@ -1,4 +1,5 @@
 from datetime import datetime
+from math import isnan
 from typing import Dict, Any, List, Tuple
 
 import pm4py
@@ -79,5 +80,8 @@ def align_log(log_cases: Dict[str, List[Tuple[str, datetime]]], alignments: List
 def expand_tuple_keys(metrics: Dict[Tuple[str, str], Dict[str, float]]) -> Dict[str, Dict[str, Dict[str, float]]]:
     result = {}
     for ((activity1, activity2), edge_metrics) in metrics.items():
+        # If there is only one trace going through an edge, the standard-deviation
+        if isnan(edge_metrics['stdev']):
+            edge_metrics['stdev'] = 0
         result.setdefault(activity1, {})[activity2] = edge_metrics
     return result
