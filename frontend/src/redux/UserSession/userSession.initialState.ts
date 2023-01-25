@@ -1,6 +1,6 @@
 import {SessionState} from "./userSession.types";
 
-const currentOcel = localStorage.getItem("explori-currentOcel") || "uploaded/p2p-normal.jsonocel";
+const currentOcel = localStorage.getItem("explori-currentOcel") || "uploaded/demo_ocel.jsonocel";
 
 const USER_SESSION_INITIAL_STATE = {
     ocel: currentOcel,

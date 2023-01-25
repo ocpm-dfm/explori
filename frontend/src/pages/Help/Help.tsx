@@ -27,7 +27,7 @@ interface Props {
 
 function resetLocalStorage(){
     // set to demo ocel
-    localStorage.setItem("explori-currentOcel", "uploaded/p2p-normal.jsonocel");
+    localStorage.setItem("explori-currentOcel", "uploaded/demo_ocel.jsonocel");
 }
 
 export function Help(props: Props) {
