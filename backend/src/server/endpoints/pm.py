@@ -89,7 +89,7 @@ def compute_alignments(process_ocel: str = Query(example="uploaded/p2p-normal.js
 
     result.result = reformat_output(result.result)
     result.preliminary = reformat_output(result.preliminary)
-    print(result.json())
+    #print(result.json())
     return result
 
 

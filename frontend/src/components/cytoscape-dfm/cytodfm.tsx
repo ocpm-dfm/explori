@@ -462,6 +462,7 @@ export const FilteredCytoDFM = forwardRef((props: CytoDFMProps, ref: ForwardedRe
 
         console.log(Array.from(allNodesOfSelectedObjectTypes));
 
+        let filteredNodesLabels: string[] = []
         // Filter the nodes by threshold and object type and prepare them for forcegraph.
         const filteredNodes = Array.from(allNodesOfSelectedObjectTypes)
             .map((i: number) => {
@@ -474,6 +475,7 @@ export const FilteredCytoDFM = forwardRef((props: CytoDFMProps, ref: ForwardedRe
                 if (count === 0)
                     return null;
 
+                filteredNodesLabels.push(node.label)
                 if (i === 0) {
                     return {
                         data: {
@@ -523,6 +525,15 @@ export const FilteredCytoDFM = forwardRef((props: CytoDFMProps, ref: ForwardedRe
             const nodeIndexDict = createNodeIndexDict(dfm.nodes)
             for (const [objectType, lastActivity, intermediateActivity, nextActivity, alignments] of logAlignments) {
                 if (selectedObjectTypes.includes(objectType)) {
+                    // check that indices are all in filteredNodes
+                    if (
+                        filteredNodesLabels.indexOf(lastActivity.activity) === -1 ||
+                        filteredNodesLabels.indexOf(intermediateActivity.activity) === -1 ||
+                        filteredNodesLabels.indexOf(nextActivity.activity) === -1
+                    ) {
+                        continue
+                    }
+
                     let traceNodeIndices = translateTracesToNodeIndex(alignments, nodeIndexDict)
                     const objectTypeColor = getObjectTypeColor(numberOfColorsNeeded, objectTypesList.indexOf(objectType));
 
@@ -673,6 +684,12 @@ export const FilteredCytoDFM = forwardRef((props: CytoDFMProps, ref: ForwardedRe
 
             for (const [objectType, lastActivity, nextActivity, alignments] of modelAlignments) {
                 if (selectedObjectTypes.includes(objectType)) {
+                    if (
+                        filteredNodesLabels.indexOf(lastActivity.activity) === -1 ||
+                        filteredNodesLabels.indexOf(nextActivity.activity) === -1
+                    ) {
+                        continue
+                    }
                     let traceNodeIndices = translateTracesToNodeIndex(alignments, nodeIndexDict)
                     const objectTypeColor = getObjectTypeColor(numberOfColorsNeeded, objectTypesList.indexOf(objectType));
 
@@ -996,6 +1013,10 @@ export const FilteredCytoDFM = forwardRef((props: CytoDFMProps, ref: ForwardedRe
     console.log("Pan position: ", softState.current.pan)
 
     console.log(props.performanceMetrics)
+
+    console.log(props.dfm.nodes)
+
+    console.log(elements)
 
     return (
         <div className="CytoDFM-container" id="DFM-container">

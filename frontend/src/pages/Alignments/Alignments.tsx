@@ -203,6 +203,9 @@ export const AlignmentsData = connect<StateProps, DispatchProps, AlignmentsDataP
     });
 
     const alignmentData = alignmentsQuery.preliminary ? alignmentsQuery.preliminary : alignmentsQuery.result;
+    // Reset alignments in cytodfm to prevent errors
+    props.setLogAlignments([]);
+    props.setModelAlignments([]);
     if (alignmentData) {
         try {
             let log_misalignments: [string, AlignElement, AlignElement, AlignElement, string[][]][] = [];
