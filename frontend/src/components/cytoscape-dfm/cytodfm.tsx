@@ -417,7 +417,7 @@ export const FilteredCytoDFM = forwardRef((props: CytoDFMProps, ref: ForwardedRe
                     let count: number | string = getCountAtThreshold(edge.counts, thresh);
                     const sourceLabel = dfm.nodes[edge.source].label;
                     const targetLabel = dfm.nodes[edge.target].label;
-                    if (performanceMetricEdges){
+                    if (count !== 0 && performanceMetricEdges){
                         count = getPerformanceCount(props.performanceMode, performanceMetricEdges, sourceLabel, targetLabel, count)
                     }
 
@@ -1015,8 +1015,6 @@ export const FilteredCytoDFM = forwardRef((props: CytoDFMProps, ref: ForwardedRe
     console.log(props.performanceMetrics)
 
     console.log(props.dfm.nodes)
-
-    console.log(elements)
 
     return (
         <div className="CytoDFM-container" id="DFM-container">
