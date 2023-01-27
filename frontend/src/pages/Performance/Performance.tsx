@@ -167,7 +167,7 @@ function EdgeMetrics(props: {objectType: string, metrics: {[key:string]: {[key: 
             <div className={'NavbarButton Performance-Button'}
                  onClick={exportCSV}
                  hidden
-                 title={"Export"}>
+                 title={"Export performance metrics data as csv file."}>
                 <FontAwesomeIcon icon={faShareFromSquare} className="NavbarButton-Icon"/>
                 Export
             </div>

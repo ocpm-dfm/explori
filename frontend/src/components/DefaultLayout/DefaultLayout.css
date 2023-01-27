@@ -4,13 +4,14 @@
 }
 
 .DefaultLayout-Content {
-    padding: 0 1rem 1rem 1rem;
+    padding: 0 1rem 2rem 1rem;
     margin: 2rem auto;
 
     max-width: 30cm;
     background-color: white;
 
     border-style: solid;
+    border-radius: 1rem;
     border-width: 1px;
     border-color: rgba(0, 0, 0, 0.1);
 }

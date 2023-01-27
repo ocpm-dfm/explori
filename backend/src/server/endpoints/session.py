@@ -22,6 +22,7 @@ class Session(BaseModel):
     graph_horizontal: bool = False
     legend_position: str = "top-left"
     alignment_mode: str = "none"
+    performance_mode: str = "Counts"
 
     class Config:
         schema_extra = {
@@ -54,9 +55,21 @@ def restore_session(name: str) -> Session:
     with open(session_file, 'r') as f:
         return Session(**json.load(f))
 
+@router.get('/delete')
+def delete_session(name: str):
+    session_file = get_session_file(name)
+    if not os.path.isfile(session_file):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Unknown session file.")
+
+    os.remove(session_file)
+
+    return {
+        "status": "successful"
+    }
+
 
 class AvailableSessionsResponseModel(BaseModel):
-    __root__: List[Tuple[str, float, str, float]]
+    __root__: List[Tuple[str, float, str, float, List[str], str, str]]
 
     class Config:
         schema_extra = {
@@ -89,7 +102,7 @@ def list_available_sessions():
 
             with open(session_file, 'r') as f:
                 session = Session(**json.load(f))
-            result.append((session_name, last_change, session.base_ocel, session.threshold))
+            result.append((session_name, last_change, session.base_ocel, session.threshold, session.object_types, session.alignment_mode, session.performance_mode))
     return result
 
 

@@ -1,8 +1,8 @@
 import {EventLogMetadata} from "../../../redux/EventLogs/eventLogs.types";
-import React, {useMemo} from "react";
+import React, {ReactElement, useMemo} from "react";
 import ReactDataGrid from "@inovua/reactdatagrid-community";
 import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
-import {faCloudArrowUp, faHardDrive, faTrash} from "@fortawesome/free-solid-svg-icons";
+import {faCloudArrowUp, faHardDrive, faTrash, faEraser} from "@fortawesome/free-solid-svg-icons";
 
 import './EventLogTable.css';
 
@@ -15,10 +15,10 @@ type EventLogTableProps = {
 }
 
 type TableEventLog = {
-    id: number
-    displayName: any
-    type: string
-    size: string,
+    id: number,
+    displayName: any,
+    type: ReactElement,
+    size: ReactElement,
     deleteButton: any
 }
 
@@ -33,25 +33,39 @@ export const EventLogTable = (props: EventLogTableProps) => {
                 <FontAwesomeIcon icon={faHardDrive} title="This OCEL was provided using a folder mount"
                                  className="EventLogTable-LogSourceIcon"/>;
 
-            const displayName = <React.Fragment>
+            const displayName = <div title={eventLog.name}>
                 {icon} {eventLog.name}
-            </React.Fragment>
+            </div>
 
             const deleteButton = (
-                <button className="EventLogTable-DeleteButton" onClick={(event) => {
-                    props.deleteLog(eventLog);
-                    event.stopPropagation();
-                }
-                }>
+                <button className="EventLogTable-DeleteButton"
+                        onClick={(event) => {
+                            props.deleteLog(eventLog);
+                            event.stopPropagation();
+                        }}
+                        title={"Shows prompt for deletion of this uploaded OCEL."}
+                >
                     <FontAwesomeIcon icon={faTrash}/>
                 </button>)
+
+            const clearCacheButton = (
+                <button className="EventLogTable-DeleteButton"
+                        onClick={(event) => {
+                            props.deleteLog(eventLog);
+                            event.stopPropagation();
+                        }}
+                        title={"Shows prompt for clearing cache of this mounted OCEL."}
+                >
+                    <FontAwesomeIcon icon={faEraser}/>
+                </button>
+            )
 
             return {
                 id: eventLog.id!,
                 displayName,
-                type: eventLog.type,
-                size: eventLog.size,
-                deleteButton: isUploaded ? deleteButton : null
+                type: <div title={eventLog.type}>{eventLog.type}</div>,
+                size: <div title={eventLog.size}>{eventLog.size}</div>,
+                deleteButton: isUploaded ? deleteButton : clearCacheButton
             }
         });
     }, [props.eventLogs])
