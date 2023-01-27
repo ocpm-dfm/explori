@@ -103,6 +103,7 @@ class AggregatedMetric(BaseModel):
     max: int
     mean: int
     stdev: float
+    sum: int
 
 
 class NodePerformanceMetrics(BaseModel):
@@ -261,10 +262,15 @@ def aggregate_times_to_frontend_friendly(collected_times: CollectedTimes) -> Fro
             raise ValueError()
         times.sort()
         min_time, median_time, max_time = times[0], times[len(times) // 2], times[-1]
-        average_time = round(sum(times) / len(times))
+        time_sum = sum(times)
+        average_time = round(time_sum / len(times))
         standard_deviation = math.sqrt(sum([(t - average_time) ** 2 for t in times]) / len(times))
-        return AggregatedMetric(min=min_time, median=median_time, max=max_time, mean=average_time,
-                                stdev=standard_deviation)
+        return AggregatedMetric(min=min_time,
+                                median=median_time,
+                                max=max_time,
+                                mean=average_time,
+                                stdev=standard_deviation,
+                                sum=time_sum)
 
     def get_aggegated_node_metric_if_available(metrics: Dict[Node, List[int]], node: Node) -> AggregatedMetric | None:
         if node in metrics:
