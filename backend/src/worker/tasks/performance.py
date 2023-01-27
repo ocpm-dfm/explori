@@ -46,7 +46,7 @@ def align_case(case: DataFrame, alignments: Dict[Any, TraceAlignment]) -> Dict[O
 
     alignment = alignments[tuple(case['concept:name'])]
     last_activity = None
-    last_time = None
+    finish_time_of_previous_activity = None
 
     case_position = 0
     for (log_move, model_move) in zip(alignment.log_alignment, alignment.model_alignment):
@@ -68,15 +68,16 @@ def align_case(case: DataFrame, alignments: Dict[Any, TraceAlignment]) -> Dict[O
         assert log_move == model_move
         event = case.iloc[case_position]
         ocel_event_id = event['event_id']
-        timestamp = event['time:timestamp']
+        start_timestamp = event['event_start_timestamp']
+        finish_timestamp = event['time:timestamp']
 
-        current_time = ProjectedEventTime(timestamp, model_move_counter)
-        result[ocel_event_id] = AlignedEdgeTimes(previous_activity=last_activity, activation_time=last_time,
-                                                 execution_time=current_time)
+        result[ocel_event_id] = AlignedEdgeTimes(previous_activity=last_activity,
+                                                 activation_time=finish_time_of_previous_activity,
+                                                 execution_time=ProjectedEventTime(start_timestamp, model_move_counter))
 
         case_position += 1
         last_activity = event['concept:name']
-        last_time = current_time
+        finish_time_of_previous_activity = ProjectedEventTime(finish_timestamp, model_move_counter)
     return result
 
 
@@ -230,7 +231,7 @@ def collect_times(ocel: DataFrame, aligned_times: Dict[ObjectType, Dict[str, Dic
             waiting_time = event_start_timestamp - last_ot_activation_time
             sojourn_time = waiting_time + service_time
             lagging_time = last_ot_activation_time - first_ot_activation_time
-            synchronization_time = event_start_timestamp - event_first_activation
+            synchronization_time = last_ot_activation_time - event_first_activation
             flow_time = synchronization_time + service_time
 
             waiting_times.setdefault(event_activity, []).append(round(waiting_time.total_seconds()))

@@ -1,0 +1,128 @@
+[
+  {
+    "log_alignment": [
+      {
+        "activity": "|EXPLORI_START|"
+      },
+      {
+        "activity": "Create Purchase Requisition"
+      },
+      {
+        "activity": "Create Purchase Order"
+      },
+      {
+        "activity": "Receive Goods"
+      },
+      {
+        "activity": "Issue Goods Receipt"
+      },
+      {
+        "activity": "Plan Goods Issue"
+      },
+      {
+        "activity": "Verify Material"
+      },
+      {
+        "activity": ">>"
+      },
+      {
+        "activity": "Goods Issue"
+      },
+      {
+        "activity": "|EXPLORI_END|"
+      }
+    ],
+    "model_alignment": [
+      {
+        "activity": "|EXPLORI_START|"
+      },
+      {
+        "activity": "Create Purchase Requisition"
+      },
+      {
+        "activity": "Create Purchase Order"
+      },
+      {
+        "activity": "Receive Goods"
+      },
+      {
+        "activity": "Issue Goods Receipt"
+      },
+      {
+        "activity": ">>"
+      },
+      {
+        "activity": "Verify Material"
+      },
+      {
+        "activity": "Plan Goods Issue"
+      },
+      {
+        "activity": "Goods Issue"
+      },
+      {
+        "activity": "|EXPLORI_END|"
+      }
+    ]
+  },
+  {
+    "log_alignment": [
+      {
+        "activity": "|EXPLORI_START|"
+      },
+      {
+        "activity": "Create Purchase Requisition"
+      },
+      {
+        "activity": "Create Purchase Order"
+      },
+      {
+        "activity": "Receive Goods"
+      },
+      {
+        "activity": "Issue Goods Receipt"
+      },
+      {
+        "activity": "Verify Material"
+      },
+      {
+        "activity": "Plan Goods Issue"
+      },
+      {
+        "activity": "Goods Issue"
+      },
+      {
+        "activity": "|EXPLORI_END|"
+      }
+    ],
+    "model_alignment": [
+      {
+        "activity": "|EXPLORI_START|"
+      },
+      {
+        "activity": "Create Purchase Requisition"
+      },
+      {
+        "activity": "Create Purchase Order"
+      },
+      {
+        "activity": "Receive Goods"
+      },
+      {
+        "activity": "Issue Goods Receipt"
+      },
+      {
+        "activity": "Verify Material"
+      },
+      {
+        "activity": "Plan Goods Issue"
+      },
+      {
+        "activity": "Goods Issue"
+      },
+      {
+        "activity": "|EXPLORI_END|"
+      }
+    ]
+  }
+]
