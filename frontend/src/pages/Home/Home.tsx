@@ -205,7 +205,7 @@ export const Home = connect<StateProps, DispatchProps, HomeProps, RootState>(map
                                  graphHorizontal={props.session.graphHorizontal}
                                  alignmentMode={props.session.alignmentMode}
                                  legendPosition={props.session.legendPosition}
-                                 performanceMode={props.session.edgeLabelMode}
+                                 edgeLabelMode={props.session.edgeLabelMode}
                                  infoboxEnabled={infoboxEnabled}
                                  ref={graphRef}/>
                 {!dfm_query.result && !dfm_query.failed && (
