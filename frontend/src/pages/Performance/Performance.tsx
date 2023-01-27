@@ -16,6 +16,7 @@ import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
 import {faShareFromSquare} from "@fortawesome/free-solid-svg-icons";
 import '../../components/ExploriNavbar/NavbarButton/NavbarButton.css';
 import './Performance.css';
+import {DefaultLayout} from "../../components/DefaultLayout/DefaultLayout";
 
 type PerformanceProps = {
 }
@@ -89,9 +90,11 @@ export const PerformanceMetricsPage = connect<StateProps, DispatchProps, Perform
    //     </div>
    // )
     return (
-        <div>
-            Under construction 👷
-        </div>
+        <DefaultLayout>
+            <div>
+                Under construction 👷
+            </div>
+        </DefaultLayout>
     )
 });
 
