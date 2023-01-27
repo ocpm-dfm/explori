@@ -55,64 +55,64 @@ function countBasedHighlighting(countTransform?: ((count: number) => number)): E
         }
     })
 }
-
-function performanceBasedHighlighting(aspect: string): EdgeHighlightingMode {
-    return clampOutput({
-        createInitialData(dfm: DirectlyFollowsMultigraph, props: CytoDFMProps): any {
-            if (!props.performanceMetrics)
-                return null;
-
-            const activityToNodeMap: {[key:string]: number} = {};
-            dfm.nodes.forEach((node, index) => {
-                activityToNodeMap[node.label] = index;
-            })
-
-            let maxValue = 1;
-            let edgeValues: EdgeDict<number> = {};
-
-            Object.keys(props.performanceMetrics).forEach((objectType) => {
-                if (!props.performanceMetrics || !props.performanceMetrics[objectType])
-                    return;
-
-                const edgeMetrics = props.performanceMetrics[objectType].edges;
-                Object.keys(edgeMetrics).forEach((source) => {
-                    const sourceIndex = activityToNodeMap[source];
-                    if (!edgeValues[sourceIndex])
-                        edgeValues[sourceIndex] = {};
-
-                    Object.keys(edgeMetrics[source]).forEach((target) => {
-                        const value = (edgeMetrics[source][target] as any)[aspect] as number;
-
-                        if (value > maxValue)
-                            maxValue = value;
-
-                        const targetIndex = activityToNodeMap[target];
-                        if (!edgeValues[sourceIndex][targetIndex])
-                            edgeValues[sourceIndex][targetIndex] = {};
-                        edgeValues[sourceIndex][targetIndex][objectType] = value;
-                    })
-                })
-            });
-
-            const result: TraceCountInitialData = {
-                maxCount: maxValue,
-                edgeCounts: edgeValues
-            }
-            return result;
-        },
-        edgeWidth(source: number, target: number, objectType: string, initialData: any): number {
-            if (!initialData)
-                return 1;
-
-            const data = initialData as TraceCountInitialData;
-
-            if (!data.edgeCounts[source] || !data.edgeCounts[source][target] || data.edgeCounts[source][target][objectType] === undefined)
-                return 1;
-
-            return 1.5 * data.edgeCounts[source][target][objectType] / data.maxCount;
-        }
-    })
-}
+//
+// function performanceBasedHighlighting(aspect: string): EdgeHighlightingMode {
+//     return clampOutput({
+//         createInitialData(dfm: DirectlyFollowsMultigraph, props: CytoDFMProps): any {
+//             if (!props.performanceMetrics)
+//                 return null;
+//
+//             const activityToNodeMap: {[key:string]: number} = {};
+//             dfm.nodes.forEach((node, index) => {
+//                 activityToNodeMap[node.label] = index;
+//             })
+//
+//             let maxValue = 1;
+//             let edgeValues: EdgeDict<number> = {};
+//
+//             Object.keys(props.performanceMetrics).forEach((objectType) => {
+//                 if (!props.performanceMetrics || !props.performanceMetrics[objectType])
+//                     return;
+//
+//                 const edgeMetrics = props.performanceMetrics[objectType].edges;
+//                 Object.keys(edgeMetrics).forEach((source) => {
+//                     const sourceIndex = activityToNodeMap[source];
+//                     if (!edgeValues[sourceIndex])
+//                         edgeValues[sourceIndex] = {};
+//
+//                     Object.keys(edgeMetrics[source]).forEach((target) => {
+//                         const value = (edgeMetrics[source][target] as any)[aspect] as number;
+//
+//                         if (value > maxValue)
+//                             maxValue = value;
+//
+//                         const targetIndex = activityToNodeMap[target];
+//                         if (!edgeValues[sourceIndex][targetIndex])
+//                             edgeValues[sourceIndex][targetIndex] = {};
+//                         edgeValues[sourceIndex][targetIndex][objectType] = value;
+//                     })
+//                 })
+//             });
+//
+//             const result: TraceCountInitialData = {
+//                 maxCount: maxValue,
+//                 edgeCounts: edgeValues
+//             }
+//             return result;
+//         },
+//         edgeWidth(source: number, target: number, objectType: string, initialData: any): number {
+//             if (!initialData)
+//                 return 1;
+//
+//             const data = initialData as TraceCountInitialData;
+//
+//             if (!data.edgeCounts[source] || !data.edgeCounts[source][target] || data.edgeCounts[source][target][objectType] === undefined)
+//                 return 1;
+//
+//             return 1.5 * data.edgeCounts[source][target][objectType] / data.maxCount;
+//         }
+//     })
+// }
 
 function clampOutput(mode: EdgeHighlightingMode, clampMin: number = 0.2, clampMax: number = 1.5): EdgeHighlightingMode {
     return {
@@ -142,5 +142,5 @@ export const LOGARITHMIC_EDGE_COUNT_HIGHLIGHTING = countBasedHighlighting((count
         return Math.log2(count) / Math.log2(1.1)
     return count
 });
-export const MEAN_WAITING_TIME_HIGHLIGHTING = performanceBasedHighlighting("mean");
-export const MAX_WAITING_TIME_HIGHLIGHTING = performanceBasedHighlighting("max");
+// export const MEAN_WAITING_TIME_HIGHLIGHTING = performanceBasedHighlighting("mean");
+// export const MAX_WAITING_TIME_HIGHLIGHTING = performanceBasedHighlighting("max");

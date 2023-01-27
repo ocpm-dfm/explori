@@ -13,7 +13,7 @@ import {
     SET_GRAPH_HORIZONTAL,
     SET_ALIGNMENT_MODE,
     SET_LEGEND_POSITION,
-    SET_PERFORMANCE_MODE,
+    SET_EDGE_LABEL_MODE, EdgeLabelMode,
 } from './userSession.types'
 import {ThunkDispatch} from "@reduxjs/toolkit";
 import {RootState} from "../store";
@@ -30,7 +30,7 @@ export const saveUserSession = (session: SessionState) => async (dispatch: Thunk
         highlighting_mode: session.highlightingMode,
         graph_horizontal: session.graphHorizontal,
         alignment_mode: session.alignmentMode,
-        performance_mode: session.performanceMode
+        performance_mode: session.edgeLabelMode
     }
 
     await fetch(uri, {
@@ -102,7 +102,7 @@ export const restoreUserSession = (fullOcelPath: string) =>
                     alreadySelectedAllObjectTypesInitially: true,
                     highlightingMode: result.highlighting_mode || "none",
                     graphHorizontal: result.graph_horizontal,
-                    performanceMode: result.performance_mode,
+                    edgeLabelMode: result.performance_mode,
                     alignmentMode: result.alignment_mode
                 } as SessionState
             });
@@ -164,9 +164,9 @@ export const setLegendPosition = (position: string) => (dispatch: Function) => {
     })
 }
 
-export const setPerformanceMode = (mode: string) => (dispatch: Function) => {
+export const setEdgeLabelMode = (mode:  EdgeLabelMode) => (dispatch: Function) => {
     dispatch({
-        type: SET_PERFORMANCE_MODE,
+        type: SET_EDGE_LABEL_MODE,
         payload: mode,
     })
 }

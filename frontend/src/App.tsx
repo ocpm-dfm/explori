@@ -104,7 +104,10 @@ export function App(props: Props) {
                 graphHorizontal: false,
                 alignmentMode: "none",
                 legendPosition: "top-left",
-                performanceMode: "Counts",
+                edgeLabelMode: {
+                    metric: "count",
+                    aggregate: "sum"
+                },
             });
         }
         localStorage.setItem("explori-currentOcel", newOcel);

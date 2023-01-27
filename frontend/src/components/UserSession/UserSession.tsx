@@ -10,7 +10,7 @@ import ReactDataGrid from '@inovua/reactdatagrid-community';
 import '@inovua/reactdatagrid-community/index.css';
 import '@inovua/reactdatagrid-community/theme/blue-light.css';
 import { TypeDataSource } from '@inovua/reactdatagrid-community/types';
-import {SessionState} from "../../redux/UserSession/userSession.types";
+import {EdgeLabelMode, SessionState} from "../../redux/UserSession/userSession.types";
 import { useNavigate } from "react-router-dom";
 import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
 import {faDownload, faSave, faShareFromSquare, faTrash} from "@fortawesome/free-solid-svg-icons";
@@ -23,7 +23,7 @@ type BackendSession = {
     graph_horizontal: boolean,
     alignment_mode: string,
     legend_position: string,
-    performance_mode: string,
+    edge_label: EdgeLabelMode,
 }
 
 export function UserSession(props: {storeOrRestore: string, userSessionState?: SessionState, stateChangeCallback?: any}) {
@@ -139,7 +139,7 @@ export function UserSession(props: {storeOrRestore: string, userSessionState?: S
             { key: "Highlighting mode", value: userSessionState.highlightingMode},
             { key: "Legend position", value: userSessionState.legendPosition},
             { key: "Alignment mode", value: userSessionState.alignmentMode},
-            { key: "Performance indicator", value: userSessionState.performanceMode},
+            { key: "Edge labels", value: userSessionState.edgeLabelMode},
         ]
         content = (
             <React.Fragment>
@@ -273,7 +273,7 @@ function translateToBackend(session: SessionState): BackendSession{
         graph_horizontal: session.graphHorizontal,
         alignment_mode: session.alignmentMode,
         legend_position: session.legendPosition,
-        performance_mode: session.performanceMode,
+        edge_label: session.edgeLabelMode,
     }
 }
 
@@ -289,6 +289,6 @@ function translateToFrontend(session: BackendSession): SessionState {
         graphHorizontal: session.graph_horizontal,
         alignmentMode: session.alignment_mode,
         legendPosition: session.legend_position,
-        performanceMode: session.performance_mode,
+        edgeLabelMode: session.edge_label,
     }
 }

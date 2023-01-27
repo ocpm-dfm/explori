@@ -7,7 +7,7 @@ import {
     SAVE_USER_SESSION, SessionState, SET_GRAPH_HORIZONTAL, SET_HIGHLIGHTING_MODE, SET_SELECTED_OBJECT_TYPES,
     SET_THRESHOLD,
     UPDATE_USER_SESSION,
-    SET_ALIGNMENT_MODE, SET_LEGEND_POSITION, SET_PERFORMANCE_MODE
+    SET_ALIGNMENT_MODE, SET_LEGEND_POSITION, SET_EDGE_LABEL_MODE
 } from "./userSession.types";
 
 const sessionStateReducer = (session = USER_SESSION_INITIAL_STATE, action: AnyAction): SessionState => {
@@ -69,10 +69,10 @@ const sessionStateReducer = (session = USER_SESSION_INITIAL_STATE, action: AnyAc
                 ...session,
                 legendPosition: action.payload
             }
-        case SET_PERFORMANCE_MODE:
+        case SET_EDGE_LABEL_MODE:
             return {
                 ...session,
-                performanceMode: action.payload
+                edgeLabelMode: action.payload
             }
         case NO_CHANGE_USER_SESSION:
             return session

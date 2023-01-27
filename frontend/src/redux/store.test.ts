@@ -14,7 +14,10 @@ export const testUserSession = (store: any) => {
         graphHorizontal: false,
         alignmentMode: "none",
         legendPosition: "none",
-        performanceMode: "Counts",
+        edgeLabelMode: {
+            metric: "count",
+            aggregate: "sum"
+        },
     }))
 
     store.dispatch(saveUserSession(store.getState().session))
