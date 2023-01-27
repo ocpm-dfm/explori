@@ -129,7 +129,6 @@ export const CSVSettings = (props: CSVSettingProps) => {
             const response = await fetch(uri);
             if (response.status === 200) {
                 const data: CSVState = await (await fetch(uri)).json();
-                console.log(data);
                 props.setCSVSettings(data);
                 setObjectTypes(data.objects);
                 setActivityName(data.activity);

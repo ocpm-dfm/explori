@@ -72,7 +72,6 @@ export function App(props: Props) {
     useEffect(() => {
         (async () => {
             const currentOcel = localStorage.getItem("explori-currentOcel");
-            console.log(currentOcel)
             if (!currentOcel) {
                 navigateTo("/session")
                 return;

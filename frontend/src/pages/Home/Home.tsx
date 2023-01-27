@@ -28,8 +28,10 @@ import {NavbarButton} from "../../components/ExploriNavbar/NavbarButton/NavbarBu
 import {NewObjectSelection} from "../../components/NewObjectSelection/NewObjectSelection";
 import {
     NO_HIGHLIGHTING,
-    EDGE_COUNT_HIGHLIGHTING,
-    LOGARITHMIC_EDGE_COUNT_HIGHLIGHTING
+    PerformanceBasedHighlighting,
+    EdgeHighlightingMode,
+    CountBasedHighlighting,
+    OutputClamper
 } from "../../components/cytoscape-dfm/EdgeHighlighters";
 import {NavbarDropdown} from "../../components/ExploriNavbar/NavbarDropdown/NavbarDropdown";
 import {DropdownCheckbox} from "../../components/ExploriNavbar/NavbarDropdown/DropdownCheckbox/DropdownCheckbox";
@@ -39,18 +41,8 @@ import {EdgeLabelMode} from "../../redux/UserSession/userSession.types";
 
 enum HighlightingModeName {
     NoHighlighting = "none",
-    CountBased = "edgeCounts",
-    LogarithmicCount = "logarithmicEdgeCounts",
-    MeanTime = "MeanWaitingTime",
-    MaxTime = "MaxWaitingTime"
-}
-
-enum PerformanceMetricsModeName {
-    Counts = "Counts",
-    Minimum = "Minimum",
-    Mean = "Mean",
-    Maximum = "Maximum",
-    Total = "Total"
+    Linear = "linear",
+    Logarithmic = "logarithmic"
 }
 
 enum AlignmentModeName {
@@ -141,22 +133,31 @@ export const Home = connect<StateProps, DispatchProps, HomeProps, RootState>(map
     const availableObjectTypes: string[] = dfm_query.result ? Object.keys(dfm_query.result.subgraphs) : [];
 
     const highlightingModeInstance = useMemo(() => {
-        switch (props.session.highlightingMode) {
-            case HighlightingModeName.NoHighlighting:
-                return NO_HIGHLIGHTING
-            case HighlightingModeName.CountBased:
-                return EDGE_COUNT_HIGHLIGHTING
-            case HighlightingModeName.LogarithmicCount:
-                return LOGARITHMIC_EDGE_COUNT_HIGHLIGHTING
-            case HighlightingModeName.MeanTime:
-                return NO_HIGHLIGHTING
-            case HighlightingModeName.MaxTime:
-                return NO_HIGHLIGHTING
-            case null:
-            default:
-                return NO_HIGHLIGHTING
+        if (props.session.highlightingMode === HighlightingModeName.Linear ||
+            props.session.highlightingMode === HighlightingModeName.Logarithmic)
+        {
+            let transform = undefined;
+            if (props.session.highlightingMode === HighlightingModeName.Logarithmic)
+                transform = (count: number) => {
+                    if (count > 0)
+                        return Math.log2(count) / Math.log2(1.1)
+                    return count
+                }
+
+            let mode: EdgeHighlightingMode;
+            if (props.session.edgeLabelMode && props.session.edgeLabelMode.metric !== "count") {
+                mode = new PerformanceBasedHighlighting(props.session.edgeLabelMode.metric,
+                    props.session.edgeLabelMode.aggregate,
+                    transform);
+            }
+            else
+                mode = new CountBasedHighlighting(transform);
+
+            return new OutputClamper(mode)
         }
-    }, [props.session.highlightingMode]);
+        else
+            return NO_HIGHLIGHTING
+    }, [props.session.highlightingMode, props.session.edgeLabelMode]);
 
     const navbarItems = (
         <React.Fragment>
@@ -356,13 +357,13 @@ const VizSettings = (props: VizSettingsProps) => {
                     label="None"
                     onClick={() => props.setSelectedHighlightingMode(HighlightingModeName.NoHighlighting)}/>
                 <DropdownCheckbox
-                    selected={props.selectedHighlightingMode === HighlightingModeName.CountBased}
+                    selected={props.selectedHighlightingMode === HighlightingModeName.Linear}
                     label="Linear"
-                    onClick={() => props.setSelectedHighlightingMode(HighlightingModeName.CountBased)}/>
+                    onClick={() => props.setSelectedHighlightingMode(HighlightingModeName.Linear)}/>
                 <DropdownCheckbox
-                    selected={props.selectedHighlightingMode === HighlightingModeName.LogarithmicCount}
+                    selected={props.selectedHighlightingMode === HighlightingModeName.Logarithmic}
                     label="Logarithmic"
-                    onClick={() => props.setSelectedHighlightingMode(HighlightingModeName.LogarithmicCount)}/>
+                    onClick={() => props.setSelectedHighlightingMode(HighlightingModeName.Logarithmic)}/>
             </NavbarDropdown>
             <NavbarDropdown buttonIcon={faBrush} buttonText="Settings">
                 <div className="VizSettings-Label" title={"Select the direction in which the graph is rendered."}>Graph direction</div>

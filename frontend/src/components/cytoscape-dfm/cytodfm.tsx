@@ -389,9 +389,6 @@ export const FilteredCytoDFM = forwardRef((props: CytoDFMProps, ref: ForwardedRe
         const edgeLabelMode = props.edgeLabelMode || {metric: "count", aggregate: "sum"};
         const performanceMetrics = props.performanceMetrics ? props.performanceMetrics : null;
 
-        console.log("Filtering", dfm, selectedObjectTypes, thresh);
-
-
         if (!dfm)
             return [[], []];
 
@@ -995,12 +992,7 @@ export const FilteredCytoDFM = forwardRef((props: CytoDFMProps, ref: ForwardedRe
     }
 
     const hasSelectedObject = selection.selectedNode !== null || selection.selectedEdge !== null;
-
-    console.log("Pan position: ", softState.current.pan)
-
-    console.log(props.performanceMetrics)
-
-    console.log(props.dfm.nodes)
+    const availableObjectTypes = Object.keys(props.dfm.subgraphs);
 
     return (
         <div className="CytoDFM-container" id="DFM-container">
@@ -1061,7 +1053,7 @@ export const FilteredCytoDFM = forwardRef((props: CytoDFMProps, ref: ForwardedRe
 
                     <InfoboxPerformanceMetrics metrics={selectedPerformanceMetrics}
                                                selection={selection}
-                                               legendObjectTypeColors={legendObjectTypeColors}/>
+                                               availableObjectTypes={availableObjectTypes}/>
 
                     <div className="CytoDFM-Infobox-Traces-Grid">
                         <InfoboxTraces traces={selectedTraces.shown}
@@ -1166,7 +1158,10 @@ function findMatchingTracesCount(alignmentTraces: number[][], objectType: string
     return matchingTracesCount
 }
 
-function InfoboxPerformanceMetrics(props: { metrics: NodePerformanceMetrics | EdgePerformanceMetrics | null, selection: { selectedNode: any }, legendObjectTypeColors: [string, string][] }) {
+function InfoboxPerformanceMetrics(props: {
+    metrics: NodePerformanceMetrics | EdgePerformanceMetrics | null,
+    selection: { selectedNode: any },
+    availableObjectTypes: string[] }) {
     if (!props.metrics)
         return <React.Fragment/>
 
@@ -1180,16 +1175,16 @@ function InfoboxPerformanceMetrics(props: { metrics: NodePerformanceMetrics | Ed
                     {props.title}
                 </div>
                 <div className="CytoDFM-Infobox-Metrics-Cell">
-                    {secondsToHumanReadableFormat(props.metric.min, 3)}
+                    {secondsToHumanReadableFormat(props.metric.min, 2)}
                 </div>
                 <div className="CytoDFM-Infobox-Metrics-Cell">
-                    {secondsToHumanReadableFormat(props.metric.mean, 3)}
+                    {secondsToHumanReadableFormat(props.metric.mean, 2)}
                 </div>
                 <div className="CytoDFM-Infobox-Metrics-Cell">
-                    {secondsToHumanReadableFormat(props.metric.max, 3)}
+                    {secondsToHumanReadableFormat(props.metric.max, 2)}
                 </div>
                 <div className="CytoDFM-Infobox-Metrics-Cell">
-                    {secondsToHumanReadableFormat(props.metric.sum, 3)}
+                    {secondsToHumanReadableFormat(props.metric.sum, 2)}
                 </div>
             </React.Fragment>
         )
@@ -1234,9 +1229,12 @@ function InfoboxPerformanceMetrics(props: { metrics: NodePerformanceMetrics | Ed
                                     Pooling time
                                 </div>
                                 {
-                                    Object.keys(nodeMetric.pooling_times).map((objectType) => {
-                                        const color = props.legendObjectTypeColors.find(([ot, _]) => (ot === objectType))![1];
+                                    props.availableObjectTypes.map((objectType, index) => {
                                         const metric = nodeMetric.pooling_times[objectType];
+                                        if (!metric)
+                                            return <React.Fragment />
+
+                                        const color = getObjectTypeColor(props.availableObjectTypes.length, index);
                                         const metricTitle = (
                                             <React.Fragment>
                                                 <div className="CytoDFM-Legend-Circle" style={{backgroundColor: color}}>
@@ -1245,7 +1243,7 @@ function InfoboxPerformanceMetrics(props: { metrics: NodePerformanceMetrics | Ed
                                             </React.Fragment>
                                         )
 
-                                        return <AggregatedMetricRow metric={metric} title={metricTitle}/>;
+                                        return <AggregatedMetricRow metric={metric} title={metricTitle} key={`pooling-time-${objectType}`} />;
                                     })
                                 }
                             </React.Fragment>
@@ -1334,7 +1332,6 @@ function getEdgePerformanceLabel(labelMode: EdgeLabelMode,
         return "";
     const edgeMetrics = performanceMetrics.edges[source][target][object_type] as any;
     const metric = edgeMetrics[labelMode.metric][labelMode.aggregate] as number;
-    console.log(source, target, object_type, metric, edgeMetrics);
     if (labelMode.aggregate !== "stdev")
         return secondsToHumanReadableFormat(metric, 2);
     else
