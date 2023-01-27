@@ -5,6 +5,7 @@ from typing import Any, List
 class TaskName(Enum):
     CREATE_DFM = "create_dfm"
     COMPUTE_ALIGNMENTS = "compute_alignments"
+    ALIGN_TIMES = "align_times"
     PERFORMANCE_METRICS = "performance_metrics"
 
     def with_attributes(self, **kwargs) -> str:

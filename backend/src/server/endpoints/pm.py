@@ -5,14 +5,15 @@ from fastapi import APIRouter, Depends, Query, HTTPException
 from pydantic import BaseModel
 from starlette import status
 
-from cache import dfm as dfm_cache_key, alignments, performance_metrics
+from cache import dfm as dfm_cache_key, alignments, performance_metrics, aligned_times, ocel_performance_metrics
 from server.task_manager import get_task_manager, TaskManager, TaskStatus, TaskDefinition
 from server.utils import ocel_filename_from_query, secure_ocel_filename
 from shared_types import FrontendFriendlyDFM
 from task_names import TaskName
 from worker.tasks.dfm import dfm as dfm_task
 from worker.tasks.alignments import compute_alignments as alignment_task, TraceAlignment
-from worker.tasks.performance import calculate_performance_metrics as performance_task
+from worker.tasks.performance import calculate_performance_metrics as performance_task, ocel_performance_metrics_task
+from worker.tasks.performance import align_projected_log_times_task
 
 router = APIRouter(prefix="/pm",
                    tags=['Process Mining'])
@@ -131,6 +132,61 @@ def compute_performance_metrics(process_ocel: str = Query(example="uploaded/p2p-
     }
 
     return task_manager.cached_group(tasks)
+
+
+@router.get('/ocel-performance', response_model=TaskStatus[Any])
+def compute_ocel_performance_metrics(process_ocel: str = Query(example="uploaded/p2p-normal.jsonocel"),
+                                     metrics_ocel: str = Query(example="uploaded/p2p-normal.jsonocel"),
+                                     threshold: float = Query(example=0.75),
+                                     task_manager: TaskManager = Depends(get_task_manager)):
+    process_ocel = secure_ocel_filename(process_ocel)
+    metrics_ocel = secure_ocel_filename(metrics_ocel)
+
+    process_dfm = get_dfm(process_ocel, task_manager)
+    metrics_dfm = get_dfm(metrics_ocel, task_manager)
+
+    if process_dfm is None or metrics_dfm is None:
+        return TaskStatus(status="running", result=None, preliminary=None)
+
+    alignments_status = run_alignment_tasks(process_ocel, metrics_ocel, process_dfm, metrics_dfm, threshold,
+                                            task_manager)
+    if alignments_status.status != "done":
+        return TaskStatus(status="running", preliminary=None, result=None)
+
+    alignments_by_object_type = {}
+    for ((object_type, _), alignment) in alignments_status.result.items():
+        alignments_by_object_type.setdefault(object_type, []).append(alignment)
+
+    threshold = box_threshold(process_dfm, threshold)
+
+    align_times_tasks = {
+        object_type: TaskDefinition(metrics_ocel,
+                                    TaskName.ALIGN_TIMES.with_attributes(process_ocel=process_ocel,
+                                                                         metrics_ocel=metrics_ocel,
+                                                                         threshold=threshold,
+                                                                         object_type=object_type),
+                                    align_projected_log_times_task, [metrics_ocel, object_type, alignments],
+                                    aligned_times(process_ocel, threshold, object_type),
+                                    result_version="1")
+        for (object_type, alignments) in alignments_by_object_type.items()
+    }
+
+    aligned_times_status = task_manager.cached_group(align_times_tasks)
+    if aligned_times_status.status != "done":
+        return TaskStatus(status="running", preliminary=None, result=None)
+
+    object_types = sorted(list(aligned_times_status.result.keys()))
+    ocel_metrics_task = TaskDefinition(metrics_ocel,
+                                       TaskName.PERFORMANCE_METRICS.with_attributes(
+                                           process_ocel=process_ocel,
+                                           metrics_ocel=metrics_ocel,
+                                           threshold=threshold,
+                                           object_types=object_types),
+                                       ocel_performance_metrics_task, [metrics_ocel, aligned_times_status.result],
+                                       ocel_performance_metrics(process_ocel, threshold, object_types),
+                                       result_version="1")
+    return task_manager.cached_task(ocel_metrics_task)
+
 
 def get_dfm(ocel: str, task_manager: TaskManager, ignore_cache: bool = False) -> FrontendFriendlyDFM | None:
     task = run_dfm_task(ocel, task_manager, ignore_cache)

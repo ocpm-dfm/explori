@@ -113,7 +113,6 @@ def project_ocel(ocel_filename: str, build_metadata: bool = True) -> Dict[str, E
 
     # Prepare event log for projection to object types.
     df: DataFrame = ocel.log.log
-    df['event_explori:ocel_event_id'] = df.index
     exploded_df = succint_mdl_to_exploded_mdl(df)
 
     result = {}
@@ -123,7 +122,8 @@ def project_ocel(ocel_filename: str, build_metadata: bool = True) -> Dict[str, E
                   LongTermCacheEntryType.CLASSIC_EVENT_LOG)
     return result
 
-def get_ocel(ocel_filename: str):
+
+def get_ocel(ocel_filename: str) -> OCEL:
     # Use saved csv column data to properly import OCEL
     if ocel_filename.split(".")[-1] == "csv":
         csv_path = get_csv_file_name(ocel_filename)

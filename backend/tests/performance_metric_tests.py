@@ -1,17 +1,19 @@
 import datetime
+import json
 from unittest import TestCase
 
 from pandas import DataFrame, Timestamp
 
+from cache import get_long_term_cache, aligned_times
 from worker.tasks.alignments import TraceAlignment, AlignElement, SKIP_MOVE
 from worker.tasks.dfm import START_TOKEN, STOP_TOKEN
-from worker.tasks.performance import align_log, determine_aligned_activation_times, align_case, ProjectedEventTime, \
-    AlignedEdgeTimes
+from worker.tasks.performance import align_log, align_projected_log_times_task, align_case, ProjectedEventTime, \
+    AlignedEdgeTimes, ocel_performance_metrics_task
 
 
 class PerformanceTests(TestCase):
 
-    def test_activation_time_determination(self):
+    def test_run_activation_time_determination(self):
         alignments = [
             {
                 "log_alignment": [
@@ -141,7 +143,16 @@ class PerformanceTests(TestCase):
             }
         ]
 
-        print(determine_aligned_activation_times("data/mounted/p2p-normal.jsonocel", "MATERIAL", alignments))
+        print(align_projected_log_times_task("data/mounted/p2p-normal.jsonocel", "MATERIAL", alignments))
+
+    def test_run_ocel_performance_metrics_task(self):
+        ocel = "data/mounted/p2p-normal.jsonocel"
+        object_types = ['MATERIAL', 'PURCHORD', 'PURCHREQ', 'INVOICE', 'GDSRCPT']
+        long_term_cache = get_long_term_cache()
+        loaded_aligned_times = {ot: long_term_cache.get(ocel, aligned_times(ocel, 0.0, ot))['result'] for ot in object_types}
+
+        print(ocel_performance_metrics_task(ocel, loaded_aligned_times).json())
+
 
     def test_align_case_with_synchronized_moves_only(self):
         dt1 = Timestamp('2023-01-01 00:00:00')
@@ -149,7 +160,7 @@ class PerformanceTests(TestCase):
         dt3 = Timestamp('2023-01-03 00:00:00')
         case = DataFrame({
             "concept:name": ["a", "b", "c"],
-            "event_explori:ocel_event_id": [0, 1, 2],
+            "event_id": [0, 1, 2],
             "time:timestamp": [dt1, dt2, dt3]
         })
         alignments = {
@@ -183,7 +194,7 @@ class PerformanceTests(TestCase):
         dt3 = Timestamp('2023-01-03 00:00:00')
         case = DataFrame({
             "concept:name": ["a", "b", "c"],
-            "event_explori:ocel_event_id": [0, 1, 2],
+            "event_id": [0, 1, 2],
             "time:timestamp": [dt1, dt2, dt3]
         })
         alignments = {
@@ -216,7 +227,7 @@ class PerformanceTests(TestCase):
         dt3 = Timestamp('2023-01-03 00:00:00')
         case = DataFrame({
             "concept:name": ["a", "c"],
-            "event_explori:ocel_event_id": [0, 2],
+            "event_id": [0, 2],
             "time:timestamp": [dt1, dt3]
         })
         alignments = {
