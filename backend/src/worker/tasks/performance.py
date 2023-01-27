@@ -151,8 +151,16 @@ def collect_times(ocel: DataFrame, aligned_times: Dict[ObjectType, Dict[str, Dic
     for _, event in ocel.iterrows():
         event_id = str(event['event_id'])
         event_activity = event['event_activity']
+
         event_start_timestamp: Timestamp = event['event_start_timestamp']
-        service_time: Timedelta = event['event_timestamp'] - event['event_start_timestamp']
+        if not isinstance(event_start_timestamp, Timestamp):
+            event_start_timestamp = Timestamp(ts_input=event_start_timestamp)
+
+        event_end_timestamp: Timestamp = event['event_timestamp']
+        if not isinstance(event_end_timestamp, Timestamp):
+            event_end_timestamp = Timestamp(ts_input=event_end_timestamp)
+
+        service_time: Timedelta = event_end_timestamp - event_start_timestamp
 
         event_first_activation: Timestamp | None = None
         ot_activation_times: List[Timestamp] = []
