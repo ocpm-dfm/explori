@@ -5,7 +5,6 @@ from unittest import TestCase
 
 from pandas import DataFrame, Timestamp
 
-from cache import get_long_term_cache, aligned_times, FileBasedLongTermCache
 from worker.tasks.alignments import TraceAlignment, AlignElement, SKIP_MOVE
 from worker.tasks.dfm import START_TOKEN, STOP_TOKEN
 from worker.tasks.performance import align_log, align_projected_log_times_task, align_case, ProjectedEventTime, \
@@ -28,10 +27,14 @@ class PerformanceTests(TestCase):
         dt1 = Timestamp('2023-01-01 00:00:00')
         dt2 = Timestamp('2023-01-02 00:00:00')
         dt3 = Timestamp('2023-01-03 00:00:00')
+        dt4 = Timestamp('2023-01-04 00:00:00')
+        dt5 = Timestamp('2023-01-05 00:00:00')
+        dt6 = Timestamp('2023-01-06 00:00:00')
         case = DataFrame({
             "concept:name": ["a", "b", "c"],
             "event_id": [0, 1, 2],
-            "time:timestamp": [dt1, dt2, dt3]
+            "event_start_timestamp": [dt1, dt3, dt5],
+            "time:timestamp": [dt2, dt4, dt6]
         })
         alignments = {
             ('a', 'b', 'c'): TraceAlignment(log_alignment=[
@@ -47,13 +50,10 @@ class PerformanceTests(TestCase):
 
         aligned_times = align_case(case, alignments)
 
-        at1 = ProjectedEventTime(dt1, 0)
-        at2 = ProjectedEventTime(dt2, 0)
-        at3 = ProjectedEventTime(dt3, 0)
         expected_result = {
-            0: AlignedEdgeTimes(None, None, at1),
-            1: AlignedEdgeTimes("a", at1, at2),
-            2: AlignedEdgeTimes("b", at2, at3)
+            0: AlignedEdgeTimes(None, None, ProjectedEventTime(dt1, 0)),
+            1: AlignedEdgeTimes("a", ProjectedEventTime(dt2, 0), ProjectedEventTime(dt3, 0)),
+            2: AlignedEdgeTimes("b", ProjectedEventTime(dt4, 0), ProjectedEventTime(dt5, 0))
         }
         self.assertEqual(expected_result, aligned_times)
         print(aligned_times)
@@ -62,10 +62,14 @@ class PerformanceTests(TestCase):
         dt1 = Timestamp('2023-01-01 00:00:00')
         dt2 = Timestamp('2023-01-02 00:00:00')
         dt3 = Timestamp('2023-01-03 00:00:00')
+        dt4 = Timestamp('2023-01-03 00:00:00')
+        dt5 = Timestamp('2023-01-03 00:00:00')
+        dt6 = Timestamp('2023-01-03 00:00:00')
         case = DataFrame({
             "concept:name": ["a", "b", "c"],
             "event_id": [0, 1, 2],
-            "time:timestamp": [dt1, dt2, dt3]
+            'event_start_timestamp': [dt1, dt3, dt5],
+            "time:timestamp": [dt2, dt4, dt6]
         })
         alignments = {
             ('a', 'b', 'c'): TraceAlignment(log_alignment=[
@@ -81,12 +85,9 @@ class PerformanceTests(TestCase):
 
         aligned_times = align_case(case, alignments)
 
-        at1 = ProjectedEventTime(dt1, 0)
-        at2 = ProjectedEventTime(dt2, 0)
-        at3 = ProjectedEventTime(dt3, 0)
         expected_result = {
-            0: AlignedEdgeTimes(None, None, at1),
-            2: AlignedEdgeTimes("a", at1, at3)
+            0: AlignedEdgeTimes(None, None, ProjectedEventTime(dt1, 0)),
+            2: AlignedEdgeTimes("a", ProjectedEventTime(dt2, 0), ProjectedEventTime(dt3, 0))
         }
         self.assertEqual(expected_result, aligned_times)
         print(aligned_times)
@@ -95,10 +96,14 @@ class PerformanceTests(TestCase):
         dt1 = Timestamp('2023-01-01 00:00:00')
         dt2 = Timestamp('2023-01-02 00:00:00')
         dt3 = Timestamp('2023-01-03 00:00:00')
+        dt4 = Timestamp('2023-01-04 00:00:00')
+        dt5 = Timestamp('2023-01-05 00:00:00')
+        dt6 = Timestamp('2023-01-06 00:00:00')
         case = DataFrame({
             "concept:name": ["a", "c"],
             "event_id": [0, 2],
-            "time:timestamp": [dt1, dt3]
+            "event_start_timestamp": [dt1, dt5],
+            "time:timestamp": [dt2, dt6]
         })
         alignments = {
             ('a', 'c'): TraceAlignment(log_alignment=[
@@ -114,12 +119,9 @@ class PerformanceTests(TestCase):
 
         aligned_times = align_case(case, alignments)
 
-        at1 = ProjectedEventTime(dt1, 0)
-        at2 = ProjectedEventTime(dt2, 0)
-        at3 = ProjectedEventTime(dt3, 1)
         expected_result = {
-            0: AlignedEdgeTimes(None, None, at1),
-            2: AlignedEdgeTimes("a", at1, at3)
+            0: AlignedEdgeTimes(None, None, ProjectedEventTime(dt1, 0)),
+            2: AlignedEdgeTimes("a", ProjectedEventTime(dt2, 0), ProjectedEventTime(dt5, 1))
         }
         self.assertEqual(expected_result, aligned_times)
         print(aligned_times)
@@ -327,6 +329,127 @@ class PerformanceTests(TestCase):
                 }
             }
         })
+
+    def test_collect_times_with_log_move(self):
+        ocel = DataFrame.from_records(data=[
+            {
+                'event_id': '0',
+                'event_activity': 'Act 1',
+                'event_start_timestamp': Timestamp(ts_input='2023-01-01T00:00:00+01:00'),
+                'event_timestamp': Timestamp(ts_input='2023-01-01T01:00:00+01:00'),
+                'A': ['A0'],
+                'B': []
+            },
+            {
+                'event_id': '1',
+                'event_activity': 'Act 2',
+                'event_start_timestamp': Timestamp(ts_input='2023-01-01T01:30:00+01:00'),
+                'event_timestamp': Timestamp(ts_input='2023-01-01T02:23:00+01:00'),
+                'A': ['A0'],
+                'B': []
+            },
+            {
+                'event_id': '2',
+                'event_activity': 'Act 3',
+                'event_start_timestamp': Timestamp(ts_input='2023-01-01T02:00:00+01:00'),
+                'event_timestamp': Timestamp(ts_input='2023-01-01T03:00:00+01:00'),
+                'A': ['A0'],
+                'B': []
+            }
+        ])
+
+        aligned_times = {
+            'A': {
+                '0': {
+                    "A0": [
+                        None,
+                        None,
+                        [
+                            "2023-01-01T00:00:00+01:00",
+                            0
+                        ]
+                    ]
+                },
+                '2': {
+                    'A0': [
+                        "Act 1",
+                        [
+                            "2023-01-01T01:00:00+01:00",
+                            0
+                        ],
+                        [
+                            "2023-01-01T02:00:00+01:00",
+                            0
+                        ]
+                    ]
+                }
+            }
+        }
+
+        collected_times = collect_times(ocel, aligned_times)
+
+        self.assertEqual(collected_times.edge_waiting_times, {
+            'Act 1': {
+                'Act 3': {
+                    'A': [3600]
+                }
+            }
+        })
+        self.assertEqual(collected_times.waiting_times, {
+            'Act 3': [3600]
+        })
+
+    def test_collect_times_with_model_move(self):
+        ocel = DataFrame.from_records(data=[
+            {
+                'event_id': '0',
+                'event_activity': 'Act 1',
+                'event_start_timestamp': Timestamp(ts_input='2023-01-01T00:00:00+01:00'),
+                'event_timestamp': Timestamp(ts_input='2023-01-01T01:00:00+01:00'),
+                'A': ['A0'],
+                'B': []
+            },
+            {
+                'event_id': '2',
+                'event_activity': 'Act 3',
+                'event_start_timestamp': Timestamp(ts_input='2023-01-01T02:00:00+01:00'),
+                'event_timestamp': Timestamp(ts_input='2023-01-01T03:00:00+01:00'),
+                'A': ['A0'],
+                'B': []
+            }
+        ])
+
+        aligned_times = {
+            'A': {
+                '0': {
+                    "A0": [
+                        None,
+                        None,
+                        [
+                            "2023-01-01T00:00:00+01:00",
+                            0
+                        ]
+                    ]
+                },
+                '2': {
+                    'A0': [
+                        "Act 1",
+                        [
+                            "2023-01-01T01:00:00+01:00",
+                            0
+                        ],
+                        [
+                            "2023-01-01T02:00:00+01:00",
+                            1
+                        ]
+                    ]
+                }
+            }
+        }
+
+        collected_times = collect_times(ocel, aligned_times)
+        self.assertEqual(collected_times.waiting_times, {})
+        self.assertEqual(collected_times.edge_waiting_times, {})
     # endregion
 
     # region Legacy tests
