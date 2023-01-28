@@ -23,6 +23,8 @@ import {setDfmQueryState} from "../../redux/DFMQuery/dfmquery";
 
 type PerformanceProps = {}
 
+const EXPORT_AGGREGATE_ORDER = ["min", "mean", "median", "max", "sum", "stdev"];
+
 const mapStateToProps = (state: RootState, _: PerformanceProps) => ({
     modelOcel: state.session.ocel,
     threshold: state.session.threshold,
@@ -54,7 +56,7 @@ export const PerformanceMetricsPage = connect<StateProps, DispatchProps, Perform
     });
     const metrics = metricsQuery.result ? metricsQuery.result : metricsQuery.preliminary;
 
-    // We need the total number of object types. Therefore we fetch the graph, most likely from the Redux state.
+    // We need the total number of object types. Therefore, we fetch the graph, most likely from the Redux state.
     const dfmQuery = useAsyncAPI<DirectlyFollowsMultigraph>("/pm/dfm", {ocel: props.modelOcel},
         {state: props.dfmState, setState: props.setDfmState});
     const objectTypeColors: { [key: string]: string } = {}
@@ -74,6 +76,12 @@ export const PerformanceMetricsPage = connect<StateProps, DispatchProps, Perform
                         <h2 className="Alignments-Card-Title">
                             Node metrics
                         </h2>
+                        <div className={'NavbarButton AlignmentsTable-Button'}
+                             onClick={() => exportNodeMetrics(metrics)}
+                             title={"Export alignment data as json file."}>
+                            <FontAwesomeIcon icon={faShareFromSquare} className="NavbarButton-Icon"/>
+                            Export
+                        </div>
                     </div>
                     <NodeMetrics metrics={metrics}/>
                 </div>
@@ -82,6 +90,12 @@ export const PerformanceMetricsPage = connect<StateProps, DispatchProps, Perform
                         <h2 className="Alignments-Card-Title">
                             Pooling times
                         </h2>
+                        <div className={'NavbarButton AlignmentsTable-Button'}
+                             onClick={() => exportNodePoolingTimes(metrics)}
+                             title={"Export alignment data as json file."}>
+                            <FontAwesomeIcon icon={faShareFromSquare} className="NavbarButton-Icon"/>
+                            Export
+                        </div>
                     </div>
                     <PoolingTimes metrics={metrics} objectTypeColors={objectTypeColors}/>
                 </div>
@@ -90,6 +104,12 @@ export const PerformanceMetricsPage = connect<StateProps, DispatchProps, Perform
                         <h2 className="Alignments-Card-Title">
                             Edge metrics
                         </h2>
+                        <div className={'NavbarButton AlignmentsTable-Button'}
+                             onClick={() => exportEdgeMetrics(metrics)}
+                             title={"Export alignment data as json file."}>
+                            <FontAwesomeIcon icon={faShareFromSquare} className="NavbarButton-Icon"/>
+                            Export
+                        </div>
                     </div>
                     <EdgeMetrics metrics={metrics} objectTypeColors={objectTypeColors}/>
                 </div>
@@ -300,7 +320,8 @@ function PoolingTimes(props: { metrics: PerformanceMetrics, objectTypeColors: { 
         Object.entries(nodeMetrics.pooling_times).forEach(([objectType, poolingTime]) => {
             const otCell = (
                 <div className="Performance-Pooling-OT" key={`Pooling-Time-${node}-${objectType}`}>
-                    <div className="Performance-Pooling-OTCircle" style={{backgroundColor: props.objectTypeColors[objectType]}} />
+                    <div className="Performance-Pooling-OTCircle"
+                         style={{backgroundColor: props.objectTypeColors[objectType]}}/>
                     {objectType}
                 </div>)
             entries.push({
@@ -393,7 +414,8 @@ function EdgeMetrics(props: { metrics: PerformanceMetrics, objectTypeColors: { [
                 const edgeMetrics = props.metrics.edges[source][target][objectType];
                 const otCell = (
                     <div className="Performance-Pooling-OT" key={`Edge-OT-${source}-${target}-${objectType}`}>
-                        <div className="Performance-Pooling-OTCircle" style={{backgroundColor: props.objectTypeColors[objectType]}} />
+                        <div className="Performance-Pooling-OTCircle"
+                             style={{backgroundColor: props.objectTypeColors[objectType]}}/>
                         {objectType}
                     </div>)
                 entries.push({
@@ -522,4 +544,62 @@ function sortTime(a: number | null, b: number | null) {
     if (b === null)
         return 1;
     return a < b ? -1 : (a === b ? 0 : 1);
+}
+
+function aggreatedMetricToCommaSeperatedListForExport(metric: AggregatedMetric | null): string {
+    if (!metric)
+        return EXPORT_AGGREGATE_ORDER.map((agg) => "").join(',')
+    return EXPORT_AGGREGATE_ORDER.map((agg) => (metric as any)[agg]).join(',')
+}
+
+function exportNodeMetrics(metrics: PerformanceMetrics) {
+    const simpleMetrics = ["service_time", "waiting_time", "sojourn_time", "lagging_time", "synchronization_time", "flow_time"];
+    const header = ["node"]
+        .concat(
+            simpleMetrics
+                .map((metric) => EXPORT_AGGREGATE_ORDER.map((agg) => `${metric} ${agg}`).join(','))
+                .join(","))
+        .join(',')
+    const entries = Object.entries(metrics.nodes).map(([node, nodeMetric]) =>
+        [node]
+            .concat(simpleMetrics
+                .map((metric) => aggreatedMetricToCommaSeperatedListForExport((nodeMetric as any)[metric])))
+            .join(','));
+    const blob = new Blob([[header].concat(entries).join('\n')], {type: 'text/csv;charset=utf-8;'});
+    downloadBlob(blob, "node-metrics.csv");
+}
+
+function exportNodePoolingTimes(metrics: PerformanceMetrics) {
+    const header = ["node", "object_type"].concat(EXPORT_AGGREGATE_ORDER).join(',')
+    const entries = Object.entries(metrics.nodes)
+        .map(([node, nodeMetrics]) =>
+            Object.entries(nodeMetrics.pooling_times)
+                .map(([objectType, poolingTime]) =>
+                    [node, objectType].concat(aggreatedMetricToCommaSeperatedListForExport(poolingTime)).join(','))
+                .join('\n'))
+    const blob = new Blob([[header].concat(entries).join('\n')], {type: 'text/csv;charset=utf-8;'});
+    downloadBlob(blob, "node-pooling-times.csv");
+}
+
+function exportEdgeMetrics(metrics: PerformanceMetrics) {
+    const metricNames = ["pooling_time", "waiting_time"];
+    const header = ["node"]
+        .concat(
+            metricNames
+                .map((metric) => EXPORT_AGGREGATE_ORDER.map((agg) => `${metric} ${agg}`).join(','))
+                .join(","))
+        .join(',')
+    const entries: string[] = [];
+    Object.entries(metrics.edges).forEach(([source, targets]) => {
+         Object.entries(targets).forEach(([target, objectTypes]) => {
+             Object.entries(objectTypes).forEach(([objectType, edgeMetrics]) => {
+                entries.push([source, target, objectTypes]
+                    .concat(aggreatedMetricToCommaSeperatedListForExport(edgeMetrics.pooling_time))
+                    .concat(aggreatedMetricToCommaSeperatedListForExport(edgeMetrics.waiting_time))
+                    .join(','))
+             });
+        });
+    });
+    const blob = new Blob([[header].concat(entries).join('\n')], {type: 'text/csv;charset=utf-8;'});
+    downloadBlob(blob, "edge-metrics.csv");
 }
