@@ -29,3 +29,18 @@
 .Performance-Node-Metrics-Settings>div {
     padding: 0.25rem 0.25rem;
 }
+
+.Performance-Pooling-OT {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+}
+
+.Performance-Pooling-OTCircle {
+    width: .75rem;
+    height: .75rem;
+    aspect-ratio: 1/1;
+    border-radius: 50%;
+
+    margin-right: .5rem;
+}

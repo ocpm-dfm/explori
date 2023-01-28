@@ -18,18 +18,24 @@ import '../../components/ExploriNavbar/NavbarButton/NavbarButton.css';
 import './Performance.css';
 import {DefaultLayout} from "../../components/DefaultLayout/DefaultLayout";
 import {DropdownCheckbox} from "../../components/ExploriNavbar/NavbarDropdown/DropdownCheckbox/DropdownCheckbox";
+import {DirectlyFollowsMultigraph} from "../../components/cytoscape-dfm/cytodfm";
+import {setDfmQueryState} from "../../redux/DFMQuery/dfmquery";
 
 type PerformanceProps = {}
 
 const mapStateToProps = (state: RootState, _: PerformanceProps) => ({
     modelOcel: state.session.ocel,
     threshold: state.session.threshold,
-    queryState: state.performanceQuery
+    queryState: state.performanceQuery,
+    dfmState: state.dfmQuery
 });
 
 const mapDispatchToProps = (dispatch: ThunkDispatch<any, any, any>, _: PerformanceProps) => ({
     setQueryState: (state: AsyncApiState<PerformanceMetrics>) => {
         dispatch(setPerformanceQueryState(state));
+    },
+    setDfmState: (state: AsyncApiState<DirectlyFollowsMultigraph>) => {
+        dispatch(setDfmQueryState(state))
     }
 });
 
@@ -38,7 +44,7 @@ type DispatchProps = ReturnType<typeof mapDispatchToProps>;
 type Props = PerformanceProps & StateProps & DispatchProps;
 
 export const PerformanceMetricsPage = connect<StateProps, DispatchProps, PerformanceProps, RootState>(mapStateToProps, mapDispatchToProps)((props: Props) => {
-    const query = useAsyncAPI<PerformanceMetrics>("/pm/ocel-performance", {
+    const metricsQuery = useAsyncAPI<PerformanceMetrics>("/pm/ocel-performance", {
         process_ocel: props.modelOcel,
         metrics_ocel: props.modelOcel,
         threshold: props.threshold / 100.0
@@ -46,21 +52,40 @@ export const PerformanceMetricsPage = connect<StateProps, DispatchProps, Perform
         state: props.queryState,
         setState: props.setQueryState
     });
-    const metrics = query.result ? query.result : query.preliminary;
-    //  console.log(metrics);
-    const hasMetrics = metrics != null;
+    const metrics = metricsQuery.result ? metricsQuery.result : metricsQuery.preliminary;
+
+    // We need the total number of object types. Therefore we fetch the graph, most likely from the Redux state.
+    const dfmQuery = useAsyncAPI<DirectlyFollowsMultigraph>("/pm/dfm", {ocel: props.modelOcel},
+        {state: props.dfmState, setState: props.setDfmState});
+    const objectTypeColors: { [key: string]: string } = {}
+    if (dfmQuery.result) {
+        const objectTypes = Object.keys(dfmQuery.result.subgraphs);
+        objectTypes.forEach((ot, index) =>
+            objectTypeColors[ot] = getObjectTypeColor(objectTypes.length, index));
+    }
+    const hasMetrics = dfmQuery.result != null && metrics != null;
 
     let content = null;
     if (hasMetrics) {
         content = (
-            <div className="DefaultLayout-Content Alignments-Card">
-                <div className="Alignments-Card-Title-Container">
-                    <h2 className="Alignments-Card-Title">
-                        Node metrics
-                    </h2>
+            <React.Fragment>
+                <div className="DefaultLayout-Content Alignments-Card">
+                    <div className="Alignments-Card-Title-Container">
+                        <h2 className="Alignments-Card-Title">
+                            Node metrics
+                        </h2>
+                    </div>
+                    <NodeMetrics metrics={metrics}/>
                 </div>
-                <NodeMetrics metrics={metrics}/>
-            </div>
+                <div className="DefaultLayout-Content Alignments-Card">
+                    <div className="Alignments-Card-Title-Container">
+                        <h2 className="Alignments-Card-Title">
+                            Pooling times
+                        </h2>
+                    </div>
+                    <PoolingTimes metrics={metrics} objectTypeColors={objectTypeColors}/>
+                </div>
+            </React.Fragment>
         )
     } else {
         content = (
@@ -94,7 +119,7 @@ function NodeMetrics(props: { metrics: PerformanceMetrics }) {
     });
 
     const aggregateOrder = ["min", "mean", "median", "max", "sum", "stdev"]
-    const [selectedAggregates, setSelectedAggregates] = useState<{[key:string]: boolean}>({
+    const [selectedAggregates, setSelectedAggregates] = useState<{ [key: string]: boolean }>({
         "min": false,
         "mean": true,
         "median": false,
@@ -102,7 +127,7 @@ function NodeMetrics(props: { metrics: PerformanceMetrics }) {
         "sum": false,
         "stdev": false
     });
-    const aggregateDisplayNames: {[key:string]: string} = {
+    const aggregateDisplayNames: { [key: string]: string } = {
         "min": "Min",
         "mean": "Mean",
         "median": "Median",
@@ -186,14 +211,6 @@ function NodeMetrics(props: { metrics: PerformanceMetrics }) {
         } as TableEntry)
     });
 
-    function renderTime(data: any) {
-        return secondsToHumanReadableFormat(data.value);
-    }
-
-    function sortTime(a: number, b: number) {
-        return a < b ? -1 : (a === b ? 0 : 1);
-    }
-
     const columns: any[] = [
         {name: "node", header: "Node"}
     ]
@@ -266,98 +283,77 @@ function NodeMetrics(props: { metrics: PerformanceMetrics }) {
                 <div className="Performance-Node-Metrics-Settings-Header">
                     Shown aggregates
                 </div>
-                <AggregateCheckbox aggregate="min" />
-                <AggregateCheckbox aggregate="mean" />
-                <AggregateCheckbox aggregate="median" />
-                <AggregateCheckbox aggregate="max" />
-                <AggregateCheckbox aggregate="sum" />
-                <AggregateCheckbox aggregate="stdev" />
+                <AggregateCheckbox aggregate="min"/>
+                <AggregateCheckbox aggregate="mean"/>
+                <AggregateCheckbox aggregate="median"/>
+                <AggregateCheckbox aggregate="max"/>
+                <AggregateCheckbox aggregate="sum"/>
+                <AggregateCheckbox aggregate="stdev"/>
             </div>
         </div>
     )
 }
 
-// function EdgeMetrics(props: {objectType: string, metrics: {[key:string]: {[key: string]: EdgePerformance}} | null}) {
-//     type TableEntry = {
-//         id: string
-//         source: string,
-//         target: string,
-//         mean: number,
-//         median: number,
-//         max: number,
-//         min: number,
-//         sum: number,
-//         stdev: number
-//     }
-//
-//     const entries: TableEntry[] = [];
-//     if (props.metrics) {
-//         Object.keys(props.metrics).forEach((source) => {
-//             if (!props.metrics)
-//                 return;
-//             Object.keys(props.metrics[source]).forEach((target) => {
-//                 if (!props.metrics)
-//                     return;
-//
-//                 const edgePerformance = props.metrics[source][target]
-//
-//                 entries.push({
-//                     id: source + "|" + target,
-//                     source,
-//                     target,
-//                     ...edgePerformance
-//                 })
-//             })
-//         });
-//     }
-//
-//     function renderTime(data: any)  {
-//         return secondsToHumanReadableFormat(data.value);
-//     }
-//
-//     function sortTime(a: number, b: number) {
-//         return a < b ? -1 : (a === b ? 0 : 1);
-//     }
-//
-//     const columns = [
-//         {name: "source", header: "From"},
-//         {name: "target", header: "To"},
-//         {name: "mean", header: "Mean", render: renderTime, sort: sortTime},
-//         {name: "sum", header: "Total time", render: renderTime, sort: sortTime},
-//         {name: "min", header: "Min", render: renderTime, sort: sortTime},
-//         {name: "median", header: "Median", render: renderTime, sort: sortTime},
-//         {name: "max", header: "Max", render: renderTime, sort: sortTime},
-//         {name: "stdev", header: "Standard deviation", render: renderTime, sort: sortTime},
-//     ]
-//
-//     const exportCSV = () => {
-//         const header = columns.map((c) => c.name).join(",");
-//         // @ts-ignore
-//         const CSVrows = entries.map((data) => columns.map((c) => data[c.name]).join(","));
-//
-//         const contents = [header].concat(CSVrows).join('\n');
-//         const blob = new Blob([contents], { type: 'text/csv;charset=utf-8;' });
-//
-//         downloadBlob(blob, "performance-data-" + props.objectType + ".csv");
-//     };
-//
-//
-//     return (
-//         <React.Fragment>
-//             <ReactDataGrid
-//                 idProperty="id"
-//                 theme={"blue-light"}
-//                 columns={columns}
-//                 dataSource={entries}
-//                 style={{ width: "100%" }}
-//             />
-//             <div className={'NavbarButton Performance-Button'}
-//                  onClick={exportCSV}
-//                  hidden
-//                  title={"Export performance metrics data as csv file."}>
-//                 <FontAwesomeIcon icon={faShareFromSquare} className="NavbarButton-Icon"/>
-//                 Export
-//             </div>
-//         </React.Fragment>
-//     )
-// }
+
+function PoolingTimes(props: { metrics: PerformanceMetrics, objectTypeColors: { [key: string]: string } }) {
+    type TableEntry = {
+        node: string,
+        objectType: any,
+        min: number,
+        mean: number,
+        median: number,
+        max: number,
+        sum: number,
+        stdev: number
+    }
+
+    const entries: TableEntry[] = [];
+    Object.keys(props.metrics.nodes).forEach((node) => {
+        const nodeMetrics = props.metrics.nodes[node];
+        Object.entries(nodeMetrics.pooling_times).forEach(([objectType, poolingTime]) => {
+            const otCell = (
+                <div className="Performance-Pooling-OT" key={`Pooling-Time-${node}-${objectType}`}>
+                    <div className="Performance-Pooling-OTCircle" style={{backgroundColor: props.objectTypeColors[objectType]}} />
+                    {objectType}
+                </div>)
+            entries.push({
+                node,
+                objectType: otCell,
+                min: poolingTime.min,
+                mean: poolingTime.mean,
+                median: poolingTime.median,
+                max: poolingTime.max,
+                sum: poolingTime.sum,
+                stdev: poolingTime.stdev
+            });
+        });
+    });
+
+    const columns = [
+        {name: "node", header: "Node"},
+        {name: "objectType", header: "Object Type"},
+        {name: "min", header: "Minimum", render: renderTime},
+        {name: "mean", header: "Mean", render: renderTime},
+        {name: "median", header: "Median", render: renderTime},
+        {name: "max", header: "Maximum", render: renderTime},
+        {name: "sum", header: "Total", render: renderTime},
+        {name: "stdev", header: "Standard deviation"},
+    ];
+
+    return <ReactDataGrid
+        idProperty="id"
+        theme={"blue-light"}
+        columns={columns}
+        dataSource={entries}
+        style={{width: "100%"}}
+    />
+}
+
+
+function renderTime(data: any) {
+    return secondsToHumanReadableFormat(data.value);
+}
+
+function sortTime(a: number, b: number) {
+    return a < b ? -1 : (a === b ? 0 : 1);
+}
