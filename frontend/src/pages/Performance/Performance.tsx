@@ -423,7 +423,7 @@ function EdgeMetrics(props: { metrics: PerformanceMetrics, objectTypeColors: { [
                     target,
                     objectType: otCell,
                     ...flatten_aggregated_metric(edgeMetrics.pooling_time, "pooling_time"),
-                    ...flatten_aggregated_metric(edgeMetrics.pooling_time, "waiting_time")
+                    ...flatten_aggregated_metric(edgeMetrics.waiting_time, "waiting_time")
                 } as TableEntry)
             })
         })
@@ -453,6 +453,9 @@ function EdgeMetrics(props: { metrics: PerformanceMetrics, objectTypeColors: { [
             })
         })
     });
+
+    console.log(columns)
+    console.log(entries)
 
     const MetricCheckbox = (p: { metric: string }) => (
         <DropdownCheckbox selected={selectedMetrics[p.metric]} label={metricDisplayNames[p.metric]}
