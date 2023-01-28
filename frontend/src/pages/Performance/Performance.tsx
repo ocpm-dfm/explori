@@ -85,6 +85,14 @@ export const PerformanceMetricsPage = connect<StateProps, DispatchProps, Perform
                     </div>
                     <PoolingTimes metrics={metrics} objectTypeColors={objectTypeColors}/>
                 </div>
+                <div className="DefaultLayout-Content Alignments-Card">
+                    <div className="Alignments-Card-Title-Container">
+                        <h2 className="Alignments-Card-Title">
+                            Edge metrics
+                        </h2>
+                    </div>
+                    <EdgeMetrics metrics={metrics} objectTypeColors={objectTypeColors}/>
+                </div>
             </React.Fragment>
         )
     } else {
@@ -177,27 +185,6 @@ function NodeMetrics(props: { metrics: PerformanceMetrics }) {
     }
 
     const entries: TableEntry[] = [];
-
-    function flatten_aggregated_metric(metric: AggregatedMetric | null, name: string) {
-        const result: { [key: string]: number | null } = {};
-        if (metric) {
-            result[`${name}.min`] = metric.min;
-            result[`${name}.mean`] = metric.mean;
-            result[`${name}.median`] = metric.median;
-            result[`${name}.max`] = metric.max;
-            result[`${name}.sum`] = metric.sum;
-            result[`${name}.stdev`] = metric.stdev;
-        } else {
-            result[`${name}.min`] = null;
-            result[`${name}.mean`] = null;
-            result[`${name}.median`] = null;
-            result[`${name}.max`] = null;
-            result[`${name}.sum`] = null;
-            result[`${name}.stdev`] = null;
-        }
-        return result;
-    }
-
     Object.keys(props.metrics.nodes).forEach((node) => {
         const nodeMetrics = props.metrics.nodes[node];
         entries.push({
@@ -350,10 +337,189 @@ function PoolingTimes(props: { metrics: PerformanceMetrics, objectTypeColors: { 
 }
 
 
+function EdgeMetrics(props: { metrics: PerformanceMetrics, objectTypeColors: { [key: string]: string } }) {
+    const metricsOrder = ["pooling_time", "waiting_time"];
+    const metricDisplayNames: { [key: string]: string } = {
+        "waiting_time": "Waiting time",
+        "pooling_time": "Pooling time",
+    }
+    const [selectedMetrics, setSelectedMetrics] = useState<{ [key: string]: boolean }>({
+        "pooling_time": true,
+        "waiting_time": true,
+    });
+
+    const aggregateOrder = ["min", "mean", "median", "max", "sum", "stdev"]
+    const [selectedAggregates, setSelectedAggregates] = useState<{ [key: string]: boolean }>({
+        "min": false,
+        "mean": true,
+        "median": false,
+        "max": true,
+        "sum": false,
+        "stdev": false
+    });
+    const aggregateDisplayNames: { [key: string]: string } = {
+        "min": "Min",
+        "mean": "Mean",
+        "median": "Median",
+        "max": "Max",
+        "sum": "Total",
+        "stdev": "Standard deviation"
+    }
+
+    type TableEntry = {
+        source: string,
+        target: string,
+        objectType: any,
+        "pooling_time.min": number
+        "pooling_time.mean": number
+        "pooling_time.median": number
+        "pooling_time.max": number
+        "pooling_time.sum": number
+        "pooling_time.stdev": number
+        "waiting_time.min": number
+        "waiting_time.mean": number
+        "waiting_time.median": number
+        "waiting_time.max": number
+        "waiting_time.sum": number
+        "waiting_time.stdev": number
+    }
+
+    const entries: TableEntry[] = [];
+
+
+    Object.keys(props.metrics.edges).forEach((source) => {
+        Object.keys(props.metrics.edges[source]).forEach((target) => {
+            Object.keys(props.metrics.edges[source][target]).forEach((objectType) => {
+                const edgeMetrics = props.metrics.edges[source][target][objectType];
+                const otCell = (
+                    <div className="Performance-Pooling-OT" key={`Edge-OT-${source}-${target}-${objectType}`}>
+                        <div className="Performance-Pooling-OTCircle" style={{backgroundColor: props.objectTypeColors[objectType]}} />
+                        {objectType}
+                    </div>)
+                entries.push({
+                    source,
+                    target,
+                    objectType: otCell,
+                    ...flatten_aggregated_metric(edgeMetrics.pooling_time, "pooling_time"),
+                    ...flatten_aggregated_metric(edgeMetrics.pooling_time, "waiting_time")
+                } as TableEntry)
+            })
+        })
+    });
+
+    const columns: any[] = [
+        {name: "source", header: "Source"},
+        {name: "target", header: "Target"},
+        {name: "objectType", header: "Object type"},
+    ]
+    metricsOrder.forEach(metric => {
+        if (!selectedMetrics[metric])
+            return;
+
+        aggregateOrder.forEach(aggregate => {
+            if (!selectedAggregates[aggregate])
+                return;
+
+            let render = undefined;
+            if (aggregate !== "stdev")
+                render = renderTime;
+            columns.push({
+                name: `${metric}.${aggregate}`,
+                header: `${aggregateDisplayNames[aggregate]} ${metricDisplayNames[metric]}`,
+                render: render,
+                sort: sortTime
+            })
+        })
+    });
+
+    const MetricCheckbox = (p: { metric: string }) => (
+        <DropdownCheckbox selected={selectedMetrics[p.metric]} label={metricDisplayNames[p.metric]}
+                          onClick={() => {
+                              setSelectedMetrics((oldMetrics) => {
+                                  const result = {...oldMetrics};
+                                  result[p.metric] = !oldMetrics[p.metric];
+                                  return result;
+                              })
+                          }
+                          }/>
+    )
+
+    const AggregateCheckbox = (p: { aggregate: string }) => (
+        <DropdownCheckbox selected={selectedAggregates[p.aggregate]} label={aggregateDisplayNames[p.aggregate]}
+                          onClick={() => {
+                              setSelectedAggregates((oldAggregates) => {
+                                  const result = {...oldAggregates};
+                                  result[p.aggregate] = !oldAggregates[p.aggregate];
+                                  return result;
+                              })
+                          }
+                          }/>
+    )
+
+    return (
+        <div className="Performance-Node-Metrics-Container">
+            <ReactDataGrid
+                idProperty="id"
+                theme={"blue-light"}
+                columns={columns}
+                dataSource={entries}
+                style={{width: "100%"}}
+                className="Performance-Node-Metrics-Table"
+            />
+            <div className="Performance-Node-Metrics-Settings">
+                <div className="Performance-Node-Metrics-Settings-Header">
+                    Shown metrics
+                </div>
+                <MetricCheckbox metric="pooling_time"/>
+                <MetricCheckbox metric="waiting_time"/>
+            </div>
+            <div className="Performance-Node-Metrics-Settings">
+                <div className="Performance-Node-Metrics-Settings-Header">
+                    Shown aggregates
+                </div>
+                <AggregateCheckbox aggregate="min"/>
+                <AggregateCheckbox aggregate="mean"/>
+                <AggregateCheckbox aggregate="median"/>
+                <AggregateCheckbox aggregate="max"/>
+                <AggregateCheckbox aggregate="sum"/>
+                <AggregateCheckbox aggregate="stdev"/>
+            </div>
+        </div>
+    )
+}
+
+function flatten_aggregated_metric(metric: AggregatedMetric | null, name: string) {
+    const result: { [key: string]: number | null } = {};
+    if (metric) {
+        result[`${name}.min`] = metric.min;
+        result[`${name}.mean`] = metric.mean;
+        result[`${name}.median`] = metric.median;
+        result[`${name}.max`] = metric.max;
+        result[`${name}.sum`] = metric.sum;
+        result[`${name}.stdev`] = metric.stdev;
+    } else {
+        result[`${name}.min`] = null;
+        result[`${name}.mean`] = null;
+        result[`${name}.median`] = null;
+        result[`${name}.max`] = null;
+        result[`${name}.sum`] = null;
+        result[`${name}.stdev`] = null;
+    }
+    return result;
+}
+
 function renderTime(data: any) {
+    if (!data || data.value === null)
+        return "";
     return secondsToHumanReadableFormat(data.value);
 }
 
-function sortTime(a: number, b: number) {
+function sortTime(a: number | null, b: number | null) {
+    if (a === null && b === null)
+        return 0;
+    if (a === null)
+        return -1;
+    if (b === null)
+        return 1;
     return a < b ? -1 : (a === b ? 0 : 1);
 }
