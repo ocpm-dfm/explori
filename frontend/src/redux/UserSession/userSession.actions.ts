@@ -30,7 +30,7 @@ export const saveUserSession = (session: SessionState) => async (dispatch: Thunk
         highlighting_mode: session.highlightingMode,
         graph_horizontal: session.graphHorizontal,
         alignment_mode: session.alignmentMode,
-        performance_mode: session.edgeLabelMode
+        edge_label: session.edgeLabelMode
     }
 
     await fetch(uri, {
