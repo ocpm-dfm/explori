@@ -36,6 +36,8 @@ export function UserSession(props: {storeOrRestore: string, userSessionState?: S
     const [sessionToBeDeleted, setSessionToBeDeleted] = useState(null);
     const navigate = useNavigate();
 
+    console.log(userSessionState)
+
     let initialDataSource: TypeDataSource = [];
     const [dataSource, setDataSource] = useState(initialDataSource);
     const columns = [
@@ -45,7 +47,8 @@ export function UserSession(props: {storeOrRestore: string, userSessionState?: S
         { name: 'threshold', header: 'Threshold', defaultFlex: 1.25 },
         { name: 'objects', header: 'Object types', defaultFlex: 4},
         { name: 'alignments', header: 'Alignments', defaultFlex: 2},
-        { name: 'performance', header: 'Performance', defaultFlex: 2},
+        { name: 'edgeLabelMetric', header: 'Metric', defaultFlex: 2},
+        { name: 'edgeLabelAggregate', header: 'Aggregation', defaultFlex: 2},
         { name: 'deleteButton', header: '', defaultFlex: .25}
     ]
 
@@ -74,7 +77,8 @@ export function UserSession(props: {storeOrRestore: string, userSessionState?: S
             threshold: <div title={data[3]}>{data[3]}</div>,
             objects: <div title={objects}>{objects}</div>,
             alignments: <div title={data[5]}>{data[5]}</div>,
-            performance: <div title={data[6]}>{data[6]}</div>,
+            edgeLabelMetric: <div title={data[6]['metric']}>{data[6]['metric']}</div>,
+            edgeLabelAggregate: <div title={data[6]['aggregate']}>{data[6]['aggregate']}</div>,
             deleteButton:
                 <button className="EventLogTable-DeleteButton"
                         onClick={(event) => {
@@ -139,7 +143,8 @@ export function UserSession(props: {storeOrRestore: string, userSessionState?: S
             { key: "Highlighting mode", value: userSessionState.highlightingMode},
             { key: "Legend position", value: userSessionState.legendPosition},
             { key: "Alignment mode", value: userSessionState.alignmentMode},
-            { key: "Edge labels", value: userSessionState.edgeLabelMode},
+            { key: "Edge labels (Metric)", value: userSessionState.edgeLabelMode.metric},
+            { key: "Edge labels (Aggregation)", value: userSessionState.edgeLabelMode.aggregate},
         ]
         content = (
             <React.Fragment>
@@ -232,7 +237,6 @@ export function UserSession(props: {storeOrRestore: string, userSessionState?: S
 
 export async function storeSession(name: string, session: SessionState) {
     const uri = getURI("/session/store", {});
-
     await fetch(uri, {
         method: 'PUT',
         headers: {

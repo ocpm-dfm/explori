@@ -22,7 +22,10 @@ class Session(BaseModel):
     graph_horizontal: bool = False
     legend_position: str = "top-left"
     alignment_mode: str = "none"
-    performance_mode: str = "Counts"
+    edge_label: dict = {
+        "metric": "count",
+        "aggregate": "sum"
+    }
 
     class Config:
         schema_extra = {
@@ -69,7 +72,7 @@ def delete_session(name: str):
 
 
 class AvailableSessionsResponseModel(BaseModel):
-    __root__: List[Tuple[str, float, str, float, List[str], str, str]]
+    __root__: List[Tuple[str, float, str, float, List[str], str, dict]]
 
     class Config:
         schema_extra = {
@@ -102,7 +105,8 @@ def list_available_sessions():
 
             with open(session_file, 'r') as f:
                 session = Session(**json.load(f))
-            result.append((session_name, last_change, session.base_ocel, session.threshold, session.object_types, session.alignment_mode, session.performance_mode))
+            print(session.edge_label)
+            result.append((session_name, last_change, session.base_ocel, session.threshold, session.object_types, session.alignment_mode, session.edge_label))
     return result
 
 
