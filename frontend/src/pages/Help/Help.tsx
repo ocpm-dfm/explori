@@ -1,7 +1,7 @@
 import {ExploriNavbar} from "../../components/ExploriNavbar/ExploriNavbar";
 import  "../../components/DefaultLayout/DefaultLayout.css";
 import "./Help.css";
-import React, {useState} from "react";
+import React, {useEffect, useState} from "react";
 import {Button} from "@mui/material";
 import {getURI} from "../../hooks";
 import DialogTitle from "@mui/material/DialogTitle";
@@ -9,6 +9,13 @@ import DialogContent from "@mui/material/DialogContent";
 import DialogContentText from "@mui/material/DialogContentText";
 import DialogActions from "@mui/material/DialogActions";
 import Dialog from "@mui/material/Dialog";
+// @ts-ignore
+import { Document, Page, pdfjs } from "react-pdf/dist/esm/entry.webpack5";
+import 'react-pdf/dist/esm/Page/AnnotationLayer.css';
+import 'react-pdf/dist/esm/Page/TextLayer.css';
+//import samplePDF from './User_manual.pdf';
+// @ts-ignore
+import Pdf from '../Help/User_manual.pdf'
 
 async function clearCache(){
     const uri = getURI("/logs/clear_cache", {});
@@ -35,6 +42,21 @@ export function Help(props: Props) {
     const [panicButtonOpen, setPanicButtonOpen] = useState(false);
     const [localStorageOpen, setLocalStorageOpen] = useState(false);
     const [resetQueryOpen, setResetQueryOpen] = useState(false);
+    const [showAll, setShowAll] = useState(false);
+    const [numPages, setNumPages] = useState(null);
+    const [pageNumber, setPageNumber] = useState(1);
+
+    // @ts-ignore
+    const onDocumentLoadSuccess = ({numPages}) => {
+        setNumPages(numPages);
+    }
+
+    const goToPrevPage = () =>
+        setPageNumber(pageNumber - 1);
+    const goToNextPage = () =>
+        setPageNumber(pageNumber + 1);
+    const toggleShowAll = () =>
+        setShowAll(!showAll);
 
     const panicButtonText = (
         <React.Fragment>
@@ -84,9 +106,37 @@ export function Help(props: Props) {
 
     const resetQueryDialog = helpDialog(resetQueryOpen, setResetQueryOpen, resetQueryText, resetQueryTitle, props.resetQueryState)
 
+    useEffect(() => {
+        //pdfjs.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.js`;
+        pdfjs.GlobalWorkerOptions.workerSrc = 'pdf.worker.js';
+    });
+
+
     return (
         <div className="DefaultLayout-Container">
             <ExploriNavbar />
+            <div style={{ width: "80%", height: "80%" }}>
+                <Document file={Pdf} onLoadSuccess={onDocumentLoadSuccess}>
+                    {!showAll &&
+                        <Page pageNumber={pageNumber} size={10}></Page>
+                    }
+                    {showAll &&
+                        <div>
+                            {Array.from(new Array(numPages), (el, index) => (
+                                    <Page key={`page_${index + 1}`} pageNumber={index + 1} style={{ width: "80%", height: "80%" }}/>
+                                ))}
+                        </div>
+                    }
+                </Document>
+                <p>
+                    Page {pageNumber} of {numPages}
+                </p>
+                <nav>
+                    <button onClick={goToPrevPage}>Prev</button>
+                    <button onClick={goToNextPage}>Next</button>
+                    <button onClick={toggleShowAll}>Toggle all pages</button>
+                </nav>
+            </div>
             <div className={"Help"}>
                 <Button onClick={() => setPanicButtonOpen(true)} sx={{'background-color': 'red', 'color': 'white'}}>
                     Panic button
