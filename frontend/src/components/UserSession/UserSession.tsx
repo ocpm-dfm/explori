@@ -143,8 +143,8 @@ export function UserSession(props: {storeOrRestore: string, userSessionState?: S
             { key: "Highlighting mode", value: userSessionState.highlightingMode},
             { key: "Legend position", value: userSessionState.legendPosition},
             { key: "Alignment mode", value: userSessionState.alignmentMode},
-            { key: "Edge labels (Metric)", value: userSessionState.edgeLabelMode.metric},
-            { key: "Edge labels (Aggregation)", value: userSessionState.edgeLabelMode.aggregate},
+            { key: "Edge labels (Metric)", value: userSessionState.edgeLabelMode? userSessionState.edgeLabelMode.metric : 'count'},
+            { key: "Edge labels (Aggregation)", value: userSessionState.edgeLabelMode? userSessionState.edgeLabelMode.aggregate : 'sum'},
         ]
         content = (
             <React.Fragment>
