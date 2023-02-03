@@ -1,0 +1,88 @@
+{
+    "ocel:global-log": {
+        "ocel:attribute-names": [],
+        "ocel:object-types": [
+            "A",
+            "B"
+        ],
+        "ocel:version": [
+            "1.0"
+        ],
+        "ocel:ordering": [
+            "timestamp"
+        ]
+    },
+    "ocel:events": {
+        "0": {
+            "ocel:activity": "Act 2",
+            "ocel:timestamp": "2023-01-01T01:00:00+01:00",
+            "ocel:omap": [
+                "B0"
+            ],
+            "ocel:vmap": {
+                "start_timestamp": "2023-01-01T00:00:00+01:00"
+            }
+        },
+        "1": {
+            "ocel:activity": "Act 1",
+            "ocel:timestamp": "2023-01-01T01:45:00+01:00",
+            "ocel:omap": [
+                "A0"
+            ],
+            "ocel:vmap": {
+                "start_timestamp": "2023-01-01T00:30:00+01:00"
+            }
+        },
+        "2": {
+            "ocel:activity": "Act 1",
+            "ocel:timestamp": "2023-01-01T03:00:00+01:00",
+            "ocel:omap": [
+                "A1"
+            ],
+            "ocel:vmap": {
+                "start_timestamp": "2023-01-01T01:45:00+01:00"
+            }
+        },
+        "3": {
+            "ocel:activity": "Act 2",
+            "ocel:timestamp": "2023-01-01T05:00:00+01:00",
+            "ocel:omap": [
+                "B1"
+            ],
+            "ocel:vmap": {
+                "start_timestamp": "2023-01-01T04:00:00+01:00"
+            }
+        },
+        "4": {
+            "ocel:activity": "Act 3",
+            "ocel:timestamp": "2023-01-01T10:00:00+01:00",
+            "ocel:omap": [
+                "A0",
+                "A1",
+                "B0",
+                "B1"
+            ],
+            "ocel:vmap": {
+                "start_timestamp": "2023-01-01T08:00:00+01:00"
+            }
+        }
+    },
+    "ocel:objects": {
+        "A0": {
+            "ocel:type": "A",
+            "ocel:ovmap": {}
+        },
+        "A1": {
+            "ocel:type": "A",
+            "ocel:ovmap": {}
+        },
+        "B0": {
+            "ocel:type": "B",
+            "ocel:ovmap": {}
+        },
+        "B1": {
+            "ocel:type": "B",
+            "ocel:ovmap": {}
+        }
+    }
+}

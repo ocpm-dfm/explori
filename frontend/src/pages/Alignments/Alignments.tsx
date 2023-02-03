@@ -82,6 +82,15 @@ export const Alignments = connect<StateProps, DispatchProps, AlignmentProps, Roo
                     if (alignment) {
                         if (!object_type_alignments[objectType])
                             object_type_alignments[objectType] = [];
+                        // Need to check if alignments were not cut before already
+                        if (alignment['log_alignment'][0].activity === "|EXPLORI_START|")
+                            alignment['log_alignment'].shift()
+                        if (alignment['log_alignment'][alignment['log_alignment'].length-1].activity === "|EXPLORI_END|")
+                            alignment['log_alignment'].pop()
+                        if (alignment['model_alignment'][0].activity === "|EXPLORI_START|")
+                            alignment['model_alignment'].shift()
+                        if (alignment['model_alignment'][alignment['model_alignment'].length-1].activity === "|EXPLORI_END|")
+                            alignment['model_alignment'].pop()
                         object_type_alignments[objectType].push(alignment);
                     }
                 })
@@ -129,7 +138,7 @@ export const Alignments = connect<StateProps, DispatchProps, AlignmentProps, Roo
                             </h2>
                             <div className={'NavbarButton AlignmentsTable-Button'}
                                  onClick={() => exportJSON(objectType)}
-                                 title={"Export"}>
+                                 title={"Export alignment data as json file."}>
                                 <FontAwesomeIcon icon={faShareFromSquare} className="NavbarButton-Icon"/>
                                 Export
                             </div>
@@ -203,6 +212,9 @@ export const AlignmentsData = connect<StateProps, DispatchProps, AlignmentsDataP
     });
 
     const alignmentData = alignmentsQuery.preliminary ? alignmentsQuery.preliminary : alignmentsQuery.result;
+    // Reset alignments in cytodfm to prevent errors
+    props.setLogAlignments([]);
+    props.setModelAlignments([]);
     if (alignmentData) {
         try {
             let log_misalignments: [string, AlignElement, AlignElement, AlignElement, string[][]][] = [];
@@ -267,7 +279,20 @@ export const AlignmentsData = connect<StateProps, DispatchProps, AlignmentsDataP
         }
     }
 
-    return null
+    return (
+        <React.Fragment>
+            {!alignmentsQuery.result && alignmentsQuery.preliminary && (
+                <Box sx={{
+                    display: 'flex',
+                    position: 'absolute',
+                    top: '1rem',
+                    right: '1rem'
+                }}>
+                    <CircularProgress/>
+                </Box>
+            )}
+        </React.Fragment>
+    )
 });
 
 function getLastAndNextActivity(alignment: TraceAlignment, index: number): AlignElement[] {

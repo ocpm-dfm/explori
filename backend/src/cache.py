@@ -239,6 +239,13 @@ def alignments(base_threshold: float, conformance_ocel: str, object_type: str | 
     return f"alignments-{hash_path(conformance_ocel)}-{hash(object_type)}-{base_threshold}-{trace_id}"
 
 
+def aligned_times(process_ocel: str, base_threshold: float, object_type: str) -> str:
+    return f"aligned-times-{hash_path(process_ocel)}-{hash(object_type)}-{base_threshold}"
+
+
+def ocel_performance_metrics(process_ocel: str, base_threshold: float, object_types: List[str]) -> str:
+    return f"ocel-performance-{hash_path(process_ocel)}-{base_threshold}-{hash('_'.join([hash(object_type) for object_type in object_types]))}"
+
 def performance_metrics(process_ocel: str, base_threshold: float, object_type: str) -> str:
     return f"performance-{hash_path(process_ocel)}-{hash(object_type)}-{base_threshold}"
 

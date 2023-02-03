@@ -19,12 +19,12 @@ import {AlignElement} from "../../redux/AlignmentsQuery/alignmentsquery.types";
 import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
 import {faCircleXmark} from "@fortawesome/free-regular-svg-icons";
 import {
-    EdgePerformance,
-    ObjectTypePerformanceMetrics,
     PerformanceMetrics,
-    ObjectTypePerformanceMetricsEdges
+    EdgePerformanceMetrics,
+    NodePerformanceMetrics, AggregatedMetric
 } from "../../redux/PerformanceQuery/performancequery.types";
 import React from "react";
+import {EdgeLabelMode} from "../../redux/UserSession/userSession.types";
 
 const fileSaver = require('file-saver');
 
@@ -34,6 +34,7 @@ export type DirectlyFollowsMultigraph = {
     nodes: {
         label: string,
         counts: { [key: string]: [number, number][] }
+        ocel_counts: [number, number][]
         traces: number[]
     }[],
     subgraphs: {
@@ -68,7 +69,7 @@ export type CytoDFMProps = {
     graphHorizontal: boolean,
     alignmentMode: string,
     legendPosition: string,
-    performanceMode: string,
+    edgeLabelMode: EdgeLabelMode,
     infoboxEnabled: boolean
 }
 
@@ -386,10 +387,8 @@ export const FilteredCytoDFM = forwardRef((props: CytoDFMProps, ref: ForwardedRe
         const thresh = boxedThreshold;
         const selectedObjectTypes = props.selectedObjectTypes;
         const edgeHighlightingMode = props.highlightingMode;
-        const performanceMetrics = props.performanceMetrics? props.performanceMetrics: null;
-
-        console.log("Filtering", dfm, selectedObjectTypes, thresh);
-
+        const edgeLabelMode = props.edgeLabelMode || {metric: "count", aggregate: "sum"};
+        const performanceMetrics = props.performanceMetrics ? props.performanceMetrics : null;
 
         if (!dfm)
             return [[], []];
@@ -405,23 +404,21 @@ export const FilteredCytoDFM = forwardRef((props: CytoDFMProps, ref: ForwardedRe
         Object.keys(dfm.subgraphs).forEach((objectType, i) => {
             if (selectedObjectTypes.includes(objectType)) {
                 const objectTypeColor = getObjectTypeColor(numberOfColorsNeeded, i);
-                const performanceMetric = (performanceMetrics && performanceMetrics[objectType] !== null)? performanceMetrics[objectType]: null;
-                const performanceMetricEdges = performanceMetric? performanceMetric.edges : null
 
                 const edges = dfm.subgraphs[objectType];
                 let hasDisplayedEdge = false;
 
-                for (const edge of edges) {
-                    let count: number | string = getCountAtThreshold(edge.counts, thresh);
-                    const sourceLabel = dfm.nodes[edge.source].label;
-                    const targetLabel = dfm.nodes[edge.target].label;
-                    if (performanceMetricEdges){
-                        count = getPerformanceCount(props.performanceMode, performanceMetricEdges, sourceLabel, targetLabel, count)
-                    }
+                console.log(dfm.nodes)
 
+                for (const edge of edges) {
+                    let count: number = getCountAtThreshold(edge.counts, thresh);
                     // Ignore edges below the threshold.
                     if (count === 0)
                         continue
+
+                    const sourceLabel = dfm.nodes[edge.source].label;
+                    const targetLabel = dfm.nodes[edge.target].label;
+                    const label: string = getEdgePerformanceLabel(edgeLabelMode, performanceMetrics, sourceLabel, targetLabel, objectType, count);
 
                     hasDisplayedEdge = true;
 
@@ -437,7 +434,7 @@ export const FilteredCytoDFM = forwardRef((props: CytoDFMProps, ref: ForwardedRe
                                 {
                                     source: `${edge.source}`,
                                     target: `${edge.target}`,
-                                    label: `${count}`,
+                                    label,
                                     style: 'solid',
                                     color: objectTypeColor,
                                     width,
@@ -460,18 +457,26 @@ export const FilteredCytoDFM = forwardRef((props: CytoDFMProps, ref: ForwardedRe
 
         console.log(Array.from(allNodesOfSelectedObjectTypes));
 
+        let filteredNodesLabels: string[] = []
         // Filter the nodes by threshold and object type and prepare them for forcegraph.
         const filteredNodes = Array.from(allNodesOfSelectedObjectTypes)
             .map((i: number) => {
                 const node = dfm.nodes[i];
-                let count = Object.keys(node.counts)
+                // The filter count is the old displayed count, that basically was the sum of all incoming edge counts.
+                // We use this count to filter nodes, because the OCEL-count is invariant to the selected object types.
+                // Therefore, it might be possible that nodes have a display count > 0, but all object types connected
+                // to the node are disabled.
+                const filterCount = Object.keys(node.counts)
                     .filter((objectType) => selectedObjectTypes.includes(objectType))
                     .map((objectType) => getCountAtThreshold(node.counts[objectType], thresh))
                     .reduce((a, b) => a + b);
 
-                if (count === 0)
+                if (filterCount === 0)
                     return null;
 
+                const displayCount = getCountAtThreshold(node.ocel_counts, thresh);
+
+                filteredNodesLabels.push(node.label)
                 if (i === 0) {
                     return {
                         data: {
@@ -499,7 +504,7 @@ export const FilteredCytoDFM = forwardRef((props: CytoDFMProps, ref: ForwardedRe
                     {
                         data: {
                             id: `${i}`,
-                            label: `${node.label} (${count})`,
+                            label: `${node.label} (${displayCount})`,
                             numberId: i
                         },
                         classes: "activity",
@@ -521,6 +526,15 @@ export const FilteredCytoDFM = forwardRef((props: CytoDFMProps, ref: ForwardedRe
             const nodeIndexDict = createNodeIndexDict(dfm.nodes)
             for (const [objectType, lastActivity, intermediateActivity, nextActivity, alignments] of logAlignments) {
                 if (selectedObjectTypes.includes(objectType)) {
+                    // check that indices are all in filteredNodes
+                    if (
+                        filteredNodesLabels.indexOf(lastActivity.activity) === -1 ||
+                        filteredNodesLabels.indexOf(intermediateActivity.activity) === -1 ||
+                        filteredNodesLabels.indexOf(nextActivity.activity) === -1
+                    ) {
+                        continue
+                    }
+
                     let traceNodeIndices = translateTracesToNodeIndex(alignments, nodeIndexDict)
                     const objectTypeColor = getObjectTypeColor(numberOfColorsNeeded, objectTypesList.indexOf(objectType));
 
@@ -538,8 +552,8 @@ export const FilteredCytoDFM = forwardRef((props: CytoDFMProps, ref: ForwardedRe
                     const sourceNodeIndex: number = nodeLength + 1
                     const targetNodeIndex: number = nodeLength + 2
                     let count: number | string = findMatchingTracesCount(traceNodeIndices, objectType, dfm.traces)
-                    if (props.performanceMode !== "Counts"){
-                        count = ""
+                    if (edgeLabelMode.metric !== "count") {
+                        count = "";
                     }
 
                     if (props.alignmentMode === "expansive") {
@@ -603,18 +617,15 @@ export const FilteredCytoDFM = forwardRef((props: CytoDFMProps, ref: ForwardedRe
                     for (const [source, target, metaSource, metaTarget] of neededEdges) {
                         let classes = "log-move"
                         if (props.alignmentMode === "expansive") {
-                            const performanceMetric = (performanceMetrics && performanceMetrics[objectType] !== null)? performanceMetrics[objectType]: null;
-                            const performanceMetricEdges = performanceMetric? performanceMetric.edges : null
                             // first edge
                             if ((source === lastNodeIndex && target === sourceNodeIndex) || (source === sourceNodeIndex && target === intermediateNodeIndex)) {
                                 if (matchingFirstEdge !== null) {
                                     count = getCountAtThreshold(matchingFirstEdge.counts, thresh);
-                                    if (props.performanceMode !== "Counts"){
-                                        const sourceLabel = dfm.nodes[matchingFirstEdge.source].label;
-                                        const targetLabel = dfm.nodes[matchingFirstEdge.target].label;
-                                        if (performanceMetricEdges){
-                                            count = getPerformanceCount(props.performanceMode, performanceMetricEdges, sourceLabel, targetLabel, count)
-                                        }
+                                    if (edgeLabelMode.metric !== "count") {
+                                        // const sourceLabel = dfm.nodes[matchingFirstEdge.source].label;
+                                        // const targetLabel = dfm.nodes[matchingFirstEdge.target].label;
+                                        // count = getEdgePerformanceLabel(props.performanceMode, performanceMetrics, sourceLabel, targetLabel, objectType, count)
+                                        count = ""; // There won't be any performance metrics for edges involved in alignments.
                                     }
                                     classes = "edge"
                                 }
@@ -623,14 +634,11 @@ export const FilteredCytoDFM = forwardRef((props: CytoDFMProps, ref: ForwardedRe
                             if ((source === intermediateNodeIndex && target === targetNodeIndex) || (source === targetNodeIndex && target === nextNodeIndex)) {
                                 if (matchingSecondEdge !== null) {
                                     count = getCountAtThreshold(matchingSecondEdge.counts, thresh);
-                                    if (props.performanceMode !== "Counts"){
-                                        const performanceMetric = (performanceMetrics && performanceMetrics[objectType] !== null)? performanceMetrics[objectType]: null;
-                                        const performanceMetricEdges = performanceMetric? performanceMetric.edges : null
-                                        const sourceLabel = dfm.nodes[matchingSecondEdge.source].label;
-                                        const targetLabel = dfm.nodes[matchingSecondEdge.target].label;
-                                        if (performanceMetricEdges){
-                                            count = getPerformanceCount(props.performanceMode, performanceMetricEdges, sourceLabel, targetLabel, count)
-                                        }
+                                    if (edgeLabelMode.metric !== "count") {
+                                        // const sourceLabel = dfm.nodes[matchingSecondEdge.source].label;
+                                        // const targetLabel = dfm.nodes[matchingSecondEdge.target].label;
+                                        // count = getEdgePerformanceLabel(props.performanceMode, performanceMetrics, sourceLabel, targetLabel, objectType, count)
+                                        count = ""; // There won't be any performance metrics for edges involved in alignments.
                                     }
                                     classes = "edge"
                                 }
@@ -671,6 +679,12 @@ export const FilteredCytoDFM = forwardRef((props: CytoDFMProps, ref: ForwardedRe
 
             for (const [objectType, lastActivity, nextActivity, alignments] of modelAlignments) {
                 if (selectedObjectTypes.includes(objectType)) {
+                    if (
+                        filteredNodesLabels.indexOf(lastActivity.activity) === -1 ||
+                        filteredNodesLabels.indexOf(nextActivity.activity) === -1
+                    ) {
+                        continue
+                    }
                     let traceNodeIndices = translateTracesToNodeIndex(alignments, nodeIndexDict)
                     const objectTypeColor = getObjectTypeColor(numberOfColorsNeeded, objectTypesList.indexOf(objectType));
 
@@ -686,7 +700,7 @@ export const FilteredCytoDFM = forwardRef((props: CytoDFMProps, ref: ForwardedRe
                     const nodeLength: number = dfm.nodes.length + alignmentNodes.length
                     const sourceNodeIndex: number = nodeLength + 1
                     let count: number | string = findMatchingTracesCount(traceNodeIndices, objectType, dfm.traces)
-                    if (props.performanceMode !== "Counts"){
+                    if (edgeLabelMode.metric !== "count") {
                         count = ""
                     }
 
@@ -765,10 +779,10 @@ export const FilteredCytoDFM = forwardRef((props: CytoDFMProps, ref: ForwardedRe
         console.log(elements)
 
         return [elements, legendObjectTypeColors];
-    }, [props.dfm, boxedThreshold, props.selectedObjectTypes, props.highlightingMode, modelAlignments, logAlignments, props.alignmentMode, props.performanceMetrics, props.performanceMode]);
+    }, [props.dfm, boxedThreshold, props.selectedObjectTypes, props.highlightingMode, modelAlignments, logAlignments, props.alignmentMode, props.performanceMetrics, props.edgeLabelMode]);
 
 
-    const [selectedTraces, selectedPerformanceMetrics]: [SelectedTracesData, { [key: string]: EdgePerformance } | null] = useMemo(() => {
+    const [selectedTraces, selectedPerformanceMetrics]: [SelectedTracesData, NodePerformanceMetrics | EdgePerformanceMetrics | null] = useMemo(() => {
         const dfm = props.dfm;
         const thresh = boxedThreshold;
         let selectedObjectTypes = props.selectedObjectTypes;
@@ -831,26 +845,22 @@ export const FilteredCytoDFM = forwardRef((props: CytoDFMProps, ref: ForwardedRe
             hidden[objectType].sort((a, b) => a.count > b.count ? -1 : 1);
         });
 
-        let performanceMetrics: { [key: string]: EdgePerformance } | null = null;
-        if (selectedEdge != null && props.performanceMetrics != null) {
-            const source = dfm.nodes[selectedEdge.source].label;
-            const target = dfm.nodes[selectedEdge.target].label;
-            Object.keys(props.performanceMetrics).forEach((objectType) => {
-                if (!props.performanceMetrics || !props.performanceMetrics[objectType])
-                    return;
-                if (!props.selectedObjectTypes.includes(objectType))
-                    return;
-
-                const edges = props.performanceMetrics[objectType].edges;
-                if (!edges[source] || !edges[source][target])
-                    return;
-
-                if (!performanceMetrics)
-                    performanceMetrics = {};
-                performanceMetrics[objectType] = edges[source][target];
-            });
+        let performanceMetrics: EdgePerformanceMetrics | NodePerformanceMetrics | null = null;
+        if (props.performanceMetrics) {
+            if (selection.selectedNode) {
+                const selectedNodeLabel = dfm.nodes[selection.selectedNode].label;
+                if (props.performanceMetrics.nodes[selectedNodeLabel])
+                    performanceMetrics = props.performanceMetrics.nodes[selectedNodeLabel];
+            } else if (selectedEdge != null && selection.selectedEdge) {
+                const source = dfm.nodes[selectedEdge.source].label;
+                const target = dfm.nodes[selectedEdge.target].label;
+                const objectType = selection.selectedEdge[0];
+                if (props.performanceMetrics.edges[source] &&
+                    props.performanceMetrics.edges[source][target] &&
+                    props.performanceMetrics.edges[source][target][objectType])
+                    performanceMetrics = props.performanceMetrics.edges[source][target][objectType];
+            }
         }
-
 
         return [{
             shown,
@@ -958,8 +968,7 @@ export const FilteredCytoDFM = forwardRef((props: CytoDFMProps, ref: ForwardedRe
                     cytoscapeRef.current?.pan(expected)
                     // console.log("blocked pan")
                 }
-            }
-            else {
+            } else {
                 softState.current.pan = cytoscapeRef.current?.pan();
                 // console.log("Updated zoom pan");
             }
@@ -990,10 +999,7 @@ export const FilteredCytoDFM = forwardRef((props: CytoDFMProps, ref: ForwardedRe
     }
 
     const hasSelectedObject = selection.selectedNode !== null || selection.selectedEdge !== null;
-
-    console.log("Pan position: ", softState.current.pan)
-
-    console.log(props.performanceMetrics)
+    const availableObjectTypes = Object.keys(props.dfm.subgraphs);
 
     return (
         <div className="CytoDFM-container" id="DFM-container">
@@ -1003,7 +1009,7 @@ export const FilteredCytoDFM = forwardRef((props: CytoDFMProps, ref: ForwardedRe
                 layout={layout}
                 style={{width: '100%', height: '100%'}}
                 wheelSensitivity={0.2}
-                pan={softState.current.pan ? softState.current.pan : { x: 0, y: 0 }}
+                pan={softState.current.pan ? softState.current.pan : {x: 0, y: 0}}
                 zoom={softState.current.zoom ? softState.current.zoom : 1}
                 cy={registerEvents}
             />
@@ -1052,44 +1058,10 @@ export const FilteredCytoDFM = forwardRef((props: CytoDFMProps, ref: ForwardedRe
                         </div>
                     </div>
 
-                    {
-                        selectedPerformanceMetrics && (
-                            <div className="CytoDFM-Infobox-Waittime">
-                                <div className="CytoDFM-Infobox-Waittime-Header">Waiting time</div>
-                                <div className="CytoDFM-Infobox-Waittime-Header">Min</div>
-                                <div className="CytoDFM-Infobox-Waittime-Header">Mean</div>
-                                <div className="CytoDFM-Infobox-Waittime-Header">Max</div>
-                                <div className="CytoDFM-Infobox-Waittime-Header">Total</div>
+                    <InfoboxPerformanceMetrics metrics={selectedPerformanceMetrics}
+                                               selection={selection}
+                                               availableObjectTypes={availableObjectTypes}/>
 
-                                {Object.keys(selectedPerformanceMetrics).map((objectType) => {
-                                    const metrics: EdgePerformance = selectedPerformanceMetrics[objectType];
-                                    const color = legendObjectTypeColors.find(([ot, _]) => (ot === objectType))![1];
-                                    return (
-                                        <React.Fragment key={`performance-${objectType}`}>
-                                            <div className="CytoDFM-Infobox-Waittime-Cell CytoDFM-Infobox-Waittime-Cell-OT">
-                                                <div className="CytoDFM-Legend-Circle" style={{backgroundColor: color}}>
-                                                </div>
-                                                {objectType}
-                                            </div>
-                                            <div className="CytoDFM-Infobox-Waittime-Cell">
-                                                {secondsToHumanReadableFormat(metrics.min, 2)}
-                                            </div>
-                                            <div className="CytoDFM-Infobox-Waittime-Cell">
-                                                {secondsToHumanReadableFormat(metrics.mean, 2)}
-                                            </div>
-                                            <div className="CytoDFM-Infobox-Waittime-Cell">
-                                                {secondsToHumanReadableFormat(metrics.max, 2)}
-                                            </div>
-                                            <div className="CytoDFM-Infobox-Waittime-Cell">
-                                                {secondsToHumanReadableFormat(metrics.sum, 2)}
-                                            </div>
-                                        </React.Fragment>
-                                    )
-                                })
-                                }
-                            </div>
-                        )
-                    }
                     <div className="CytoDFM-Infobox-Traces-Grid">
                         <InfoboxTraces traces={selectedTraces.shown}
                                        title="Shown traces"
@@ -1181,7 +1153,7 @@ type traceType = {
 }
 
 
-function findMatchingTracesCount(alignmentTraces: number[][], objectType: string, traces: traceType[]) {
+function findMatchingTracesCount(alignmentTraces: number[][], objectType: string, traces: traceType[]): number {
     let matchingTracesCount: number = 0
     for (let alignmentTrace of alignmentTraces) {
         for (let trace of traces) {
@@ -1193,9 +1165,135 @@ function findMatchingTracesCount(alignmentTraces: number[][], objectType: string
     return matchingTracesCount
 }
 
+function InfoboxPerformanceMetrics(props: {
+    metrics: NodePerformanceMetrics | EdgePerformanceMetrics | null,
+    selection: { selectedNode: any },
+    availableObjectTypes: string[] }) {
+    if (!props.metrics)
+        return <React.Fragment/>
+
+    function AggregatedMetricRow(props: { metric: AggregatedMetric | null, title: any }) {
+        if (!props.metric)
+            return <React.Fragment/>
+
+        return (
+            <React.Fragment>
+                <div className="CytoDFM-Infobox-Metrics-Cell">
+                    {props.title}
+                </div>
+                <div className="CytoDFM-Infobox-Metrics-Cell">
+                    {secondsToHumanReadableFormat(props.metric.min, 2)}
+                </div>
+                <div className="CytoDFM-Infobox-Metrics-Cell">
+                    {secondsToHumanReadableFormat(props.metric.mean, 2)}
+                </div>
+                <div className="CytoDFM-Infobox-Metrics-Cell">
+                    {secondsToHumanReadableFormat(props.metric.max, 2)}
+                </div>
+                <div className="CytoDFM-Infobox-Metrics-Cell">
+                    {secondsToHumanReadableFormat(props.metric.sum, 2)}
+                </div>
+            </React.Fragment>
+        )
+    }
+
+    let metrics = <React.Fragment/>
+    if (props.selection.selectedNode) {
+        const nodeMetric = props.metrics as NodePerformanceMetrics;
+        const hasWaitingTime = !!nodeMetric.waiting_time;
+        metrics = (
+            <React.Fragment>
+                <React.Fragment>
+                    <div className="CytoDFM-Infobox-Metrics-Cell CytoDFM-Infobox-Metrics-Header">
+                        Metric
+                    </div>
+                    <div className="CytoDFM-Infobox-Metrics-Cell CytoDFM-Infobox-Metrics-Header">
+                        Min
+                    </div>
+                    <div className="CytoDFM-Infobox-Metrics-Cell CytoDFM-Infobox-Metrics-Header">
+                        Mean
+                    </div>
+                    <div className="CytoDFM-Infobox-Metrics-Cell CytoDFM-Infobox-Metrics-Header">
+                        Max
+                    </div>
+                    <div className="CytoDFM-Infobox-Metrics-Cell CytoDFM-Infobox-Metrics-Header">
+                        Total
+                    </div>
+                </React.Fragment>
+                <AggregatedMetricRow metric={nodeMetric.service_time} title="Service time"/>
+                {
+                    hasWaitingTime && (
+                        <React.Fragment>
+                            <AggregatedMetricRow metric={nodeMetric.waiting_time} title="Waiting time"/>
+                            <AggregatedMetricRow metric={nodeMetric.sojourn_time} title="Sojourn time"/>
+                            <div className="CytoDFM-Infobox-Metrics-Divider"/>
+                            <AggregatedMetricRow metric={nodeMetric.lagging_time} title="Lagging time"/>
+                            <AggregatedMetricRow metric={nodeMetric.synchronization_time} title="Sync time"/>
+                            <AggregatedMetricRow metric={nodeMetric.flow_time} title="Flow time"/>
+                            <div className="CytoDFM-Infobox-Metrics-Divider"/>
+                            <React.Fragment>
+                                <div className="CytoDFM-Infobox-Metrics-Cell CytoDFM-Infobox-Metrics-Divider">
+                                    Pooling time
+                                </div>
+                                {
+                                    props.availableObjectTypes.map((objectType, index) => {
+                                        const metric = nodeMetric.pooling_times[objectType];
+                                        if (!metric)
+                                            return <React.Fragment />
+
+                                        const color = getObjectTypeColor(props.availableObjectTypes.length, index);
+                                        const metricTitle = (
+                                            <React.Fragment>
+                                                <div className="CytoDFM-Legend-Circle" style={{backgroundColor: color}}>
+                                                </div>
+                                                {objectType}
+                                            </React.Fragment>
+                                        )
+
+                                        return <AggregatedMetricRow metric={metric} title={metricTitle} key={`pooling-time-${objectType}`} />;
+                                    })
+                                }
+                            </React.Fragment>
+                        </React.Fragment>
+                    )
+                }
+            </React.Fragment>)
+    }
+    else {
+        const edgeMetrics = props.metrics as EdgePerformanceMetrics;
+        metrics = (
+            <React.Fragment>
+                <React.Fragment>
+                    <div className="CytoDFM-Infobox-Metrics-Cell CytoDFM-Infobox-Metrics-Header">
+                        Metric
+                    </div>
+                    <div className="CytoDFM-Infobox-Metrics-Cell CytoDFM-Infobox-Metrics-Header">
+                        Min
+                    </div>
+                    <div className="CytoDFM-Infobox-Metrics-Cell CytoDFM-Infobox-Metrics-Header">
+                        Mean
+                    </div>
+                    <div className="CytoDFM-Infobox-Metrics-Cell CytoDFM-Infobox-Metrics-Header">
+                        Max
+                    </div>
+                    <div className="CytoDFM-Infobox-Metrics-Cell CytoDFM-Infobox-Metrics-Header">
+                        Total
+                    </div>
+                </React.Fragment>
+                <AggregatedMetricRow metric={edgeMetrics.pooling_time} title="Pooling time"/>
+                <AggregatedMetricRow metric={edgeMetrics.waiting_time} title="Waiting time"/>
+            </React.Fragment>)
+    }
+    return (
+        <div className="CytoDFM-Infobox-Metrics-Grid">
+            {metrics}
+        </div>
+    )
+}
+
 function InfoboxTraces(props: { title: string, traces: { [key: string]: RenderTraceData[] }, keyPrefix: string, legendColors: [string, string][] }) {
     if (Object.keys(props.traces).length === 0)
-        return <React.Fragment />
+        return <React.Fragment/>
 
     return <React.Fragment>
         <h4 className="CytoDFM-Infobox-Traces-Header">{props.title}</h4>
@@ -1209,54 +1307,40 @@ function InfoboxTraces(props: { title: string, traces: { [key: string]: RenderTr
                         </div>
                         {objectType}
                     </div>
-                        {traces.map((trace) => (
-                            <React.Fragment key={`${props.keyPrefix}-${objectType}-${trace.id}`}>
-                                <div className="CytoDFM-Infobox-Traces-Trace-Count">
-                                    {trace.count}x
-                                </div>
-                                <div>
-                                    {trace.activities.reduce((a, b) => a + ", " + b)}
-                                </div>
-                            </React.Fragment>
-                        ))}
+                    {traces.map((trace) => (
+                        <React.Fragment key={`${props.keyPrefix}-${objectType}-${trace.id}`}>
+                            <div className="CytoDFM-Infobox-Traces-Trace-Count">
+                                {trace.count}x
+                            </div>
+                            <div>
+                                {trace.activities.reduce((a, b) => a + ", " + b)}
+                            </div>
+                        </React.Fragment>
+                    ))}
                 </React.Fragment>)
         })}
     </React.Fragment>
 }
 
-function getPerformanceCount(performanceMode: string, performanceMetricEdges: ObjectTypePerformanceMetricsEdges, sourceLabel: string, targetLabel: string, count: number ){
-    let newCount: number | string = count
-    if (performanceMode !== "Counts") {
-        if(performanceMetricEdges
-            && sourceLabel !== "|EXPLORI_START|"
-            && targetLabel !== "|EXPLORI_END|"
-        ){
-            const edgeMetrics = performanceMetricEdges[sourceLabel]? performanceMetricEdges[sourceLabel][targetLabel] : undefined
-            console.log(edgeMetrics)
-            if (edgeMetrics === undefined){
-                console.log(sourceLabel)
-                console.log(targetLabel)
-                console.log(performanceMetricEdges)
-                newCount = 0
-            } else {
-                switch(performanceMode){
-                    case "Minimum":
-                        newCount = secondsToHumanReadableFormat(edgeMetrics.min, 2)
-                        break;
-                    case "Mean":
-                        newCount = secondsToHumanReadableFormat(edgeMetrics.mean, 2)
-                        break;
-                    case "Maximum":
-                        newCount = secondsToHumanReadableFormat(edgeMetrics.max, 2)
-                        break;
-                    case "Total":
-                        newCount = secondsToHumanReadableFormat(edgeMetrics.sum, 2)
-                        break;
-                }
-            }
-        } else {
-            newCount = secondsToHumanReadableFormat(0, 2)
-        }
-    }
-    return newCount
+function getEdgePerformanceLabel(labelMode: EdgeLabelMode,
+                                 performanceMetrics: PerformanceMetrics | null,
+                                 source: string, target: string, object_type: string,
+                                 count: number): string {
+    if (!labelMode || labelMode.metric === "count")
+        return count.toString();
+
+    if (!performanceMetrics)
+        return "";
+    if (!performanceMetrics.edges[source])
+        return "";
+    if (!performanceMetrics.edges[source][target])
+        return "";
+    if (!performanceMetrics.edges[source][target][object_type])
+        return "";
+    const edgeMetrics = performanceMetrics.edges[source][target][object_type] as any;
+    const metric = edgeMetrics[labelMode.metric][labelMode.aggregate] as number;
+    if (labelMode.aggregate !== "stdev")
+        return secondsToHumanReadableFormat(metric, 2);
+    else
+        return metric.toString()
 }

@@ -17,6 +17,7 @@ from starlette import status
 
 from server.task_manager import TaskStatus
 from cache import get_long_term_cache, get_short_term_cache
+from server.endpoints.session import SESSIONS_FOLDER, get_session_file, Session
 
 router = APIRouter(prefix='/logs',
                    tags=['Log management'])
@@ -167,12 +168,12 @@ async def upload_event_logs(file: UploadFile):
 
     }
 
-@router.get('/delete')
-def delete_event_log(file_path: str, uuid: str):
+def delete(file_path: str, uuid: str, delete_log: bool):
     file_path_extended = "data" + os.sep + file_path
     # Delete ocel and corresponding cache folder
     if os.path.exists(file_path_extended):
-        os.remove(file_path_extended)
+        if delete_log:
+            os.remove(file_path_extended)
         cache = get_long_term_cache()
         folder = cache.get_folder(file_path_extended)
         try:
@@ -192,8 +193,31 @@ def delete_event_log(file_path: str, uuid: str):
     if os.path.exists(autosave_path):
         os.remove(autosave_path)
 
-    # Delete hardsaved sessions ? TODO: if sessions make it into the final product
+    # Delete hardsaved sessions
+    for file in os.listdir(SESSIONS_FOLDER):
+        if file.endswith(".json"):
+            session_name = file[:-5]
+            # Get ocel name
+            session_file = get_session_file(session_name)
+            if not os.path.isfile(session_file):
+                # raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Wrong files in session storage.")
+                continue
 
+            with open(session_file, 'r') as f:
+                session = Session(**json.load(f))
+                if session.base_ocel == file_path:
+                    os.remove(session_file)
+
+@router.get('/delete')
+def delete_event_log(file_path: str, uuid: str):
+    delete(file_path, uuid, True)
+    return {
+        "status": "successful"
+    }
+
+@router.get('/delete_cache')
+def delete_event_log(file_path: str, uuid: str):
+    delete(file_path, uuid, False)
     return {
         "status": "successful"
     }
