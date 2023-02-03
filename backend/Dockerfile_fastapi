@@ -1,0 +1,13 @@
+ARG BUILD_ENV
+
+FROM explori-backend-base-image as common_pre_build
+ONBUILD WORKDIR /explori/fastapi
+
+FROM common_pre_build as prod_build
+ONBUILD COPY src/ src/
+
+FROM common_pre_build as dev_build
+ONBUILD ENV DEV=1
+
+FROM ${BUILD_ENV}_build
+CMD DEV=${DEV} PYTHONUNBUFFERED=1 EXPLORI_REDIS_HOST=${REDIS_HOST} EXPLORI_REDIS_PORT=${REDIS_PORT} PYTHONPATH="src/" uvicorn server.main:app --host 0.0.0.0 --port 8080

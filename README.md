@@ -3,48 +3,57 @@
 ## Description
 Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
 
-## Installation
-Goal: `docker compose up`, open link.
+## Requirements
+- docker, docker-compose
+
+## Getting started
+- Syntax:
+  - `./app.sh --start optional/path/to/event/logs/`: start app in production mode and optionally specify path to a folder containing event logs to mount into the application
+  - `./app.sh --start-dev`: start app in development mode
+  - `./app.sh --stop`: stop app
+  - `./app.sh --remove`: remove created containers, networks, volumes and images (everything)
 
 ## Development - Backend
 
 ### Requirements
-- Python >=3.10
-- Docker
+- python >=3.10 (for running native variant)
+- docker, docker-compose (for running docker variant)
 
-### 0. Changing directory 
-- Change directory to backend: `cd backend/` **(also needed for the following steps!)**
-
-### 1. Installing dependencies
+### 0. Installing dependencies (if at least one component of the following is run in "native" mode)
+- `cd backend/`
 - Create a new virtual environment: `python -m venv ./venv`
 - Activate said environment
   - Windows: `venv\Scripts\activate.bat` (or `activate.ps1` for powershell)
   - Most Linux shells: `source venv/bin/activate`
 - Install dependencies: `pip install -r requirements.txt`
 
-### 2. Setting up Redis using Docker
-- Create container: `docker create --name explori-redis -p 6379:6379 redis:alpine`
-- Start container: `docker start explori-redis`
+### 1. Redis (only docker)
+- `docker-compose -f docker-compose.yml -f docker-compose.dev.yml up --build --detach redis`
 
-### 3. Setting up Celery
-#### Celery "native" (this does __not__ work on Windows as Celery doesn't fully support Windows)
+### 2. Celery
+
+#### Native (this does __not__ work on Windows as Celery doesn't fully support Windows)
+- `cd backend/`
 - `PYTHONPATH="src/" celery -A worker.main.app worker --loglevel=INFO`
 
-#### Celery using Docker
-__Important:__ Run the following commands from inside the `backend/` directory! See `dev_setup/celery/build_docker.sh` for more information about the why.
-- Create container: `dev_setup/celery/build_docker.sh`
-- Start container: `docker start explori-celery`
-- In case of code changes: `docker restart explori-celery`
+#### Docker
+- `docker-compose build _backend_base && docker-compose -f docker-compose.yml -f docker-compose.dev.yml up --build --detach celery`
 
 It is sufficient to restart the docker container when updating celery worker related code on the host machine as the code 
-is mounted into the container (read-only). There's no need to rebuild the image or recreate the container, 
+is mounted into the container. There's no need to rebuild the image or recreate the container, 
 a simple restart is enough.
 
-### 4. Running the backend
+### 3. Fastapi
+
+#### Native
+- `cd backend/`
 - Start the backend server: `PYTHONPATH="src/" DEV=1 uvicorn server.main:app --host 0.0.0.0`
 - See backend address in terminal output
 
-### 5. Testing the backend
+#### Docker
+`docker-compose build _backend_base && docker-compose -f docker-compose.yml -f docker-compose.dev.yml up --build --detach fastapi`
+
+### 4. Testing the backend API
 - __Assuming__ step 4 above signaled Uvicorn running at `http://0.0.0.0:8000`: The fastapi openapi can be found at `http://0.0.0.0:8000/docs`
 
 ### Backend IDE Alternative
@@ -67,17 +76,20 @@ a simple restart is enough.
 ## Development - Frontend
 
 ### Requirements
-- Python >=3.10
 - Nodejs
 
-### 0. Changing directory
-- Change directory to frontend: `cd frontend/` **(also needed for the following steps!)**
-
-### 1. Installing dependencies
+### 0. Installing dependenciesn (if at least one component of the following is run in "native" mode)
+- `cd frontend/`
 - Install dependencies: `npm install`.
 
-### 2. Running the frontend
+### 1. Webserver
+
+#### Native
+- `cd frontend/`
 - Start the frontend server: `npm run start`
+
+#### Docker
+- `docker-compose -f docker-compose.yml -f docker-compose.dev.yml up --build --detach webserver`
 
 ### Frontend IDE Alternative
 - Install Jetbrains WebStorm

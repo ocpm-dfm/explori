@@ -52,7 +52,7 @@
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
-    "test-redux": "REACT_APP_STAGE=test_redux react-scripts start"
+    "test-redux": "cross-env REACT_APP_STAGE=test_redux react-scripts start"
   },
   "eslintConfig": {
     "extends": [
@@ -75,6 +75,7 @@
   "devDependencies": {
     "@types/react-cytoscapejs": "^1.2.2",
     "@types/redux-logger": "^3.0.9",
+    "cross-env": "^7.0.3",
     "web-worker": "^1.2.0"
   }
 }

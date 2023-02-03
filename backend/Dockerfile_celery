@@ -1,0 +1,12 @@
+ARG BUILD_ENV
+
+FROM explori-backend-base-image as common_pre_build
+ONBUILD WORKDIR /explori/celery
+
+FROM common_pre_build as prod_build
+ONBUILD COPY src/ src/
+
+FROM common_pre_build as dev_build
+
+FROM ${BUILD_ENV}_build
+CMD PYTHONUNBUFFERED=1 EXPLORI_REDIS_HOST=${REDIS_HOST} EXPLORI_REDIS_PORT=${REDIS_PORT} PYTHONPATH="src/" celery --app=worker.main.app worker --loglevel=INFO
