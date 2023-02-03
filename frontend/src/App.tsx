@@ -17,6 +17,7 @@ import {PerformanceMetricsPage} from "./pages/Performance/Performance";
 import {resetPerformanceQueryState} from "./redux/PerformanceQuery/performancequery";
 import {Help} from "./pages/Help/Help";
 import {UserSession} from "./components/UserSession/UserSession";
+import {getURI} from "./hooks";
 
 export type StateChangeCallback = (update: any) => void;
 export type SwitchOcelsCallback = (newOcel: string) => Promise<void>;
@@ -72,14 +73,39 @@ export function App(props: Props) {
     useEffect(() => {
         (async () => {
             const currentOcel = localStorage.getItem("explori-currentOcel");
+
             if (!currentOcel) {
                 navigateTo("/session")
                 return;
             }
 
+            let foundFlag: boolean = false;
+            if (currentOcel.split("/")[0] !== "uploaded") {
+                const availableURI = getURI("/session/available", {});
+                await fetch(availableURI)
+                    .then((response) => response.json())
+                    .then((result) => {
+                        if (result !== undefined) {
+                            for (let session of result) {
+                                if (session[2] === currentOcel){
+                                    foundFlag = true;
+                                    break;
+                                }
+                            }
+                        }
+                    })
+                    .catch(err => console.log("Error in fetching available sessions ..."))
+            } else {
+                foundFlag = true;
+            }
+
             try {
-                await props.loadSession(currentOcel);
-                autosaveEnabled.current = true;
+                if (foundFlag) {
+                    await props.loadSession(currentOcel);
+                    autosaveEnabled.current = true;
+                } else {
+                    navigateTo("/session");
+                }
             }
             catch (e) {
                 navigateTo("/session");
