@@ -2,7 +2,7 @@ import json
 import os
 import pprint
 from pathlib import PureWindowsPath
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, Any
 
 import pm4py
 from fastapi import HTTPException
@@ -12,6 +12,7 @@ from ocpa.objects.log.ocel import OCEL
 from ocpa.objects.log.importer.ocel import factory as ocel_import_factory
 from ocpa.objects.log.importer.csv import factory as ocel_import_factory_csv
 from pandas import DataFrame
+from pandas.core.groupby import DataFrameGroupBy
 from pm4py.objects.log.obj import EventLog
 from pydantic import BaseModel
 from starlette import status
@@ -24,7 +25,7 @@ class OCELMetadata(BaseModel):
     object_types: List[str]
 
 
-def get_all_projected_traces(ocel_filename: str, build_if_non_existent: bool = True) -> Dict[str, List[Tuple[List[str], int]]] | None:
+def get_all_projected_traces(ocel_filename: str, build_if_non_existent: bool = True) -> Dict[str, List[Tuple[List[str], int, List[List[int]]]]] | None:
     if build_if_non_existent:
         ensure_that_all_event_projected_logs_exist(ocel_filename)
 
@@ -41,7 +42,7 @@ def get_all_projected_traces(ocel_filename: str, build_if_non_existent: bool = T
     return traces
 
 
-def get_projected_traces(ocel_filename: str, object_type: str, build_if_non_existent: bool = True) -> List[Tuple[List[str], int]] | None:
+def get_projected_traces(ocel_filename: str, object_type: str, build_if_non_existent: bool = True) -> List[Tuple[List[str], int, List[List[int]]]] | None:
     cache = get_long_term_cache()
     if cache.has(ocel_filename, projected_log_traces(object_type)):
         return cache.get(ocel_filename, projected_log_traces(object_type))
@@ -50,10 +51,23 @@ def get_projected_traces(ocel_filename: str, object_type: str, build_if_non_exis
         return None  # Abort if we should not create the traces now.
 
     # Create the traces:
-    event_log = get_projected_event_log(ocel_filename, object_type)
-    # In pm4py 2.2, n_cases is a list with all traces, from pm4py 2.3 upwards, n_cases is just the number of cases of that variant. Because we switched between
-    # pm4py versions in development, we just implemented it this way, to be compatible with all pm4py versions.
-    traces = [(variant, n_cases) if isinstance(n_cases, int) else (variant, len(n_cases)) for (variant, n_cases) in pm4py.get_variants_as_tuples(event_log).items()]
+    event_log: EventLog = get_projected_event_log(ocel_filename, object_type)
+    event_log: DataFrame = pm4py.convert_to_dataframe(event_log)
+    event_log: DataFrameGroupBy = event_log.groupby("case:concept:name")
+
+    trace_event_ids: Dict[Any, List[List[int]]] = {}
+    for (case_id, case) in event_log:
+        trace = tuple(case['concept:name'].values)
+
+        # Initialize the state for this trace if it does not exist yet.
+        trace_event_ids.setdefault(trace, [[] for _ in range(len(trace))])
+
+        for (i, (_, event)) in enumerate(case.iterrows()):
+            trace_event_ids[trace][i].append(event['event_id'])
+
+    # traces: List[(Activities, nr_cases, event_ids_for_each_activity)]
+    traces = [(trace, len(event_ids[0]), event_ids) for (trace, event_ids) in trace_event_ids.items()]
+
     cache.set(ocel_filename, projected_log_traces(object_type), traces)
     return traces
 

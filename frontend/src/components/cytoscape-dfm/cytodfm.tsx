@@ -34,6 +34,7 @@ export type DirectlyFollowsMultigraph = {
     nodes: {
         label: string,
         counts: { [key: string]: [number, number][] }
+        ocel_counts: [number, number][]
         traces: number[]
     }[],
     subgraphs: {
@@ -461,13 +462,19 @@ export const FilteredCytoDFM = forwardRef((props: CytoDFMProps, ref: ForwardedRe
         const filteredNodes = Array.from(allNodesOfSelectedObjectTypes)
             .map((i: number) => {
                 const node = dfm.nodes[i];
-                let count = Object.keys(node.counts)
+                // The filter count is the old displayed count, that basically was the sum of all incoming edge counts.
+                // We use this count to filter nodes, because the OCEL-count is invariant to the selected object types.
+                // Therefore, it might be possible that nodes have a display count > 0, but all object types connected
+                // to the node are disabled.
+                const filterCount = Object.keys(node.counts)
                     .filter((objectType) => selectedObjectTypes.includes(objectType))
                     .map((objectType) => getCountAtThreshold(node.counts[objectType], thresh))
                     .reduce((a, b) => a + b);
 
-                if (count === 0)
+                if (filterCount === 0)
                     return null;
+
+                const displayCount = getCountAtThreshold(node.ocel_counts, thresh);
 
                 filteredNodesLabels.push(node.label)
                 if (i === 0) {
@@ -497,7 +504,7 @@ export const FilteredCytoDFM = forwardRef((props: CytoDFMProps, ref: ForwardedRe
                     {
                         data: {
                             id: `${i}`,
-                            label: `${node.label} (${count})`,
+                            label: `${node.label} (${displayCount})`,
                             numberId: i
                         },
                         classes: "activity",
