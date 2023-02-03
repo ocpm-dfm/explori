@@ -5,3 +5,57 @@
     margin-right: -50%;
     transform: translate(-50%, -50%);
 }
+
+
+.Help-Card {
+    width: calc(min(100vw - 4rem, 30cm));
+    margin-bottom: 2rem;
+}
+
+.Help-Card-Title {
+    --title-size: 1.2rem;
+    font-size: var(--title-size);
+    line-height: var(--title-size);
+
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+}
+
+.Help-Card-Title-Circle {
+    --circle-size: 1rem;
+    display: inline-block;
+
+    width: var(--circle-size);
+    height: var(--circle-size);
+    border-radius: 50%;
+
+    margin-right: .5rem;
+}
+
+.Help-Card-Title-Container {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.Help-Card-Docs-Container {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    margin-left: 7rem;
+}
+
+.PanicButton {
+    color: red;
+}
+.Help-a {
+    text-decoration: none;
+}
+
+.Help-a:visited {
+    color: inherit;
+    background-color: transparent;
+}
