@@ -148,7 +148,7 @@ def calculate_ocel_node_counts(projected_traces: Dict[ObjectType, List[Tuple[Lis
                                trace_thresholds: Dict[ObjectType, Dict[Tuple[Node], Tuple[int, float]]]) -> \
         Dict[Node, List[CountSeperator]]:
     def get_threshold(object_type: str, trace: Tuple[List[str], int, List[List[int]]]):
-        return trace_thresholds[object_type][tuple([START_TOKEN] + trace[0] + [STOP_TOKEN])][1]
+        return trace_thresholds[object_type][tuple([START_TOKEN] + list(trace[0]) + [STOP_TOKEN])][1]
 
     all_traces = [(ot, trace, get_threshold(ot, trace)) for (ot, ot_traces) in projected_traces.items() for trace in ot_traces]
     all_traces.sort(key=lambda x: x[2])
