@@ -172,13 +172,13 @@ export function Help(props: Props) {
                     </nav>
                     <Document file={Pdf} onLoadSuccess={onDocumentLoadSuccess} onLoadError={console.error}>
                         {!showAll &&
-                            <Page pageNumber={pageNumber} size={10}></Page>
+                            <Page pageNumber={pageNumber} scale={1.7}></Page>
                         }
                         {showAll &&
                             <React.Fragment>
                                 <div>
                                     {Array.from(new Array(numPages), (el, index) => (
-                                        <Page key={`page_${index + 1}`} pageNumber={index + 1} style={{ width: "80%", height: "80%" }}/>
+                                        <Page key={`page_${index + 1}`} pageNumber={index + 1} scale={1.7}/>
                                     ))}
                                 </div>
                             </React.Fragment>
