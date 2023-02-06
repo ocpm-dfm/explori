@@ -1,4 +1,4 @@
-FROM python:3.10-slim AS builder
+FROM python:3.10-slim@sha256:e04bc5390a13e6e910980715f1156552fbd3deddf7668e1892575989f9504c70 AS builder
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends build-essential
@@ -11,7 +11,7 @@ ENV PIP_ROOT_USER_ACTION=ignore
 COPY requirements.txt .
 RUN pip install -r requirements.txt
 
-FROM python:3.10-slim
+FROM python:3.10-slim@sha256:e04bc5390a13e6e910980715f1156552fbd3deddf7668e1892575989f9504c70
 # libgomp1 needed for pm4py parallelism
 RUN apt-get update && \
     apt-get install -y --no-install-recommends libgomp1 && \

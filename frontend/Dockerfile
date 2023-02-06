@@ -1,6 +1,6 @@
 ARG BUILD_ENV
 
-FROM node:18.13.0-slim as common_pre_build
+FROM node:18.13.0-slim@sha256:bc946484118735406562f17c57ddf5fded436e175b6a51f827aa6540ba1e13de as common_pre_build
 ONBUILD WORKDIR /explori/webserver
 ONBUILD COPY package.json .
 ONBUILD COPY package-lock.json .
