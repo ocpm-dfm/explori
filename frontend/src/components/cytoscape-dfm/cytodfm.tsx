@@ -1299,11 +1299,9 @@ function InfoboxTraces(props: { title: string, traces: { [key: string]: RenderTr
         <h4 className="CytoDFM-Infobox-Traces-Header">{props.title}</h4>
         {Object.entries(props.traces).map(([objectType, traces]) => {
             const potentialColor = props.legendColors.find(([ot, _]) => (ot === objectType))
-            let color;
+            let color = "";
             if (potentialColor !== undefined){
                 color = props.legendColors.find(([ot, _]) => (ot === objectType))![1];
-            } else {
-                color = ""
             }
             return (
                 <React.Fragment key={props.keyPrefix + "-" + objectType}>
