@@ -93,6 +93,18 @@ def list_available_sessions():
         return []
 
     result = []
+    def find_available_logs(folder: str) -> List[str]:
+        results = []
+        for node in os.listdir(folder):
+            complete_path = os.path.join(folder, node)
+            if os.path.isfile(complete_path) and (
+                    node.endswith(".jsonocel") or node.endswith(".xmlocel") or node.endswith(".csv")):
+                results.append(os.path.join(folder, node)[5:])
+            elif os.path.isdir(complete_path):
+                results.extend(find_available_logs(complete_path))
+        return results
+
+    logs = find_available_logs("data")
     for file in os.listdir(SESSIONS_FOLDER):
         if file.endswith(".json"):
             session_name = file[:-5]
@@ -105,8 +117,8 @@ def list_available_sessions():
 
             with open(session_file, 'r') as f:
                 session = Session(**json.load(f))
-            print(session.edge_label)
-            result.append((session_name, last_change, session.base_ocel, session.threshold, session.object_types, session.alignment_mode, session.edge_label))
+            if session.base_ocel in logs:
+                result.append((session_name, last_change, session.base_ocel, session.threshold, session.object_types, session.alignment_mode, session.edge_label))
     return result
 
 
