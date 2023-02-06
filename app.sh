@@ -4,6 +4,12 @@ NUM_ARGS="$#"
 RUN_COMMAND="$1"
 OCEL_MOUNT_PATH="$2"
 
+# https://stackoverflow.com/questions/7522712/how-can-i-check-if-a-command-exists-in-a-shell-script
+DOCKER_COMPOSE="docker-compose"
+if ! type "$DOCKER_COMPOSE" >> /dev/null; then
+    DOCKER_COMPOSE="docker compose"
+fi
+
 if [[ $NUM_ARGS -ne 1 && $NUM_ARGS -ne 2 ]]; then
     echo "Please provide an app command and optionally a path to a folder of event logs to mount, e.g.: >> ./app.sh --start ../my_ocels/"
     echo "For more information, e.g. all available commands, see the user manual."
@@ -23,7 +29,7 @@ case "$RUN_COMMAND" in
         if [[ -n "$OCEL_MOUNT_PATH" ]]; then
             docker-compose build _backend_base && OCEL_MOUNT_PATH="$OCEL_MOUNT_PATH" docker-compose -f docker-compose.yml -f docker-compose.mount-ocels.yml -f docker-compose.prod.yml up --build --detach
         else
-            docker-compose build _backend_base && docker-compose -f docker-compose.yml -f docker-compose.prod.yml up --build --detach
+            $DOCKER_COMPOSE build _backend_base && docker-compose -f docker-compose.yml -f docker-compose.prod.yml up --build --detach
         fi
         ;;
     ("--start-dev") 

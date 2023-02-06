@@ -1,8 +1,8 @@
 import {ExploriNavbar} from "../../components/ExploriNavbar/ExploriNavbar";
 import  "../../components/DefaultLayout/DefaultLayout.css";
 import "./Help.css";
-import React, {useEffect, useState} from "react";
-import {Button} from "@mui/material";
+import React, {useState} from "react";
+import {Button, Stack, Pagination} from "@mui/material";
 import {getURI} from "../../hooks";
 import DialogTitle from "@mui/material/DialogTitle";
 import DialogContent from "@mui/material/DialogContent";
@@ -10,12 +10,15 @@ import DialogContentText from "@mui/material/DialogContentText";
 import DialogActions from "@mui/material/DialogActions";
 import Dialog from "@mui/material/Dialog";
 // @ts-ignore
-import { Document, Page, pdfjs } from "react-pdf/dist/esm/entry.webpack5";
+import { Document, Page } from "react-pdf/dist/esm/entry.webpack5";
+import 'react-pdf/dist/esm/pdf.worker.entry.js';
 import 'react-pdf/dist/esm/Page/AnnotationLayer.css';
 import 'react-pdf/dist/esm/Page/TextLayer.css';
-//import samplePDF from './User_manual.pdf';
 // @ts-ignore
 import Pdf from '../Help/User_manual.pdf'
+import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
+import {faUndo, faFileArchive, faBiohazard, faEye, faEyeSlash} from "@fortawesome/free-solid-svg-icons";
+import '../../components/ExploriNavbar/NavbarButton/NavbarButton.css';
 
 async function clearCache(){
     const uri = getURI("/logs/clear_cache", {});
@@ -43,7 +46,7 @@ export function Help(props: Props) {
     const [localStorageOpen, setLocalStorageOpen] = useState(false);
     const [resetQueryOpen, setResetQueryOpen] = useState(false);
     const [showAll, setShowAll] = useState(false);
-    const [numPages, setNumPages] = useState(null);
+    const [numPages, setNumPages] = useState(0);
     const [pageNumber, setPageNumber] = useState(1);
 
     // @ts-ignore
@@ -51,10 +54,12 @@ export function Help(props: Props) {
         setNumPages(numPages);
     }
 
-    const goToPrevPage = () =>
-        setPageNumber(pageNumber - 1);
-    const goToNextPage = () =>
-        setPageNumber(pageNumber + 1);
+    const setPage = (event: React.ChangeEvent<unknown>, value: number) => {
+        if (value >= 1 && numPages && value <= numPages){
+           setPageNumber(value);
+        }
+    }
+
     const toggleShowAll = () =>
         setShowAll(!showAll);
 
@@ -106,52 +111,91 @@ export function Help(props: Props) {
 
     const resetQueryDialog = helpDialog(resetQueryOpen, setResetQueryOpen, resetQueryText, resetQueryTitle, props.resetQueryState)
 
-    useEffect(() => {
-        //pdfjs.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.js`;
-        pdfjs.GlobalWorkerOptions.workerSrc = 'pdf.worker.js';
-    });
-
-
     return (
         <div className="DefaultLayout-Container">
             <ExploriNavbar />
-            <div style={{ width: "80%", height: "80%" }}>
-                <Document file={Pdf} onLoadSuccess={onDocumentLoadSuccess}>
-                    {!showAll &&
-                        <Page pageNumber={pageNumber} size={10}></Page>
-                    }
+            <div className="DefaultLayout-Content Help-Card">
+                <div className="Help-Card-Title-Container">
+                    <h2 className="Help-Card-Title">
+                        Trouble-shoot & Docs
+                    </h2>
+                    <div className={'NavbarButton PanicButton'}
+                         onClick={() => setPanicButtonOpen(true)}
+                         title={"Clear the whole cache."}>
+                        <FontAwesomeIcon icon={faBiohazard} className="NavbarButton-Icon"/>
+                        Panic button
+                    </div>
+                    {panicButtonDialog}
+                    <div className={'NavbarButton'}
+                         onClick={() => setResetQueryOpen(true)}
+                         title={"Resets the current query states."}>
+                        <FontAwesomeIcon icon={faUndo} className="NavbarButton-Icon"/>
+                        Clear queries
+                    </div>
+                    {resetQueryDialog}
+                    <div className={'NavbarButton'}
+                         onClick={() => {setLocalStorageOpen(true);}}
+                         title={"Resets the local storage item to the default."}>
+                        <FontAwesomeIcon icon={faUndo} className="NavbarButton-Icon"/>
+                        Reset localStorage
+                    </div>
+                    {localStorageDialog}
+                    <div className={'NavbarButton'}
+                         title={"Opens the backend swagger interface in a new tab."}>
+                        <FontAwesomeIcon icon={faFileArchive} className="NavbarButton-Icon"/>
+                        <a className={"Help-a"} href="http://localhost:8080/docs" target="_blank" rel="noreferrer">
+                            Backend Docs
+                        </a>
+                    </div>
+                </div>
+                <div style={{ width: "80%", height: "80%" }} className={"Help-Card-Docs-Container"}>
+                    <nav>
+                        <Stack spacing={0.1} direction="column" justifyContent="center">
+                            <Stack direction="row" justifyContent="center">
+                                <Pagination
+                                    count={numPages}
+                                    page={pageNumber}
+                                    onChange={setPage}
+                                    showFirstButton
+                                    showLastButton
+                                />
+                            </Stack>
+                            <Stack spacing={2} direction="row" justifyContent="center">
+                                <div className={'NavbarButton'}
+                                     onClick={toggleShowAll}
+                                     title={"Toggles the page view."}>
+                                    <FontAwesomeIcon icon={showAll? faEyeSlash: faEye} className="NavbarButton-Icon"/>
+                                    {!showAll? "Show all pages": "Hide all pages"}
+                                </div>
+                            </Stack>
+                        </Stack>
+                    </nav>
+                    <Document file={Pdf} onLoadSuccess={onDocumentLoadSuccess} onLoadError={console.error}>
+                        {!showAll &&
+                            <Page pageNumber={pageNumber} scale={1.7}></Page>
+                        }
+                        {showAll &&
+                            <React.Fragment>
+                                <div>
+                                    {Array.from(new Array(numPages), (el, index) => (
+                                        <Page key={`page_${index + 1}`} pageNumber={index + 1} scale={1.7}/>
+                                    ))}
+                                </div>
+                            </React.Fragment>
+                        }
+                    </Document>
                     {showAll &&
-                        <div>
-                            {Array.from(new Array(numPages), (el, index) => (
-                                    <Page key={`page_${index + 1}`} pageNumber={index + 1} style={{ width: "80%", height: "80%" }}/>
-                                ))}
-                        </div>
+                        <Stack spacing={2} direction="row" justifyContent="center">
+                            <div className={'NavbarButton'}
+                                 onClick={toggleShowAll}
+                                 title={"Toggles the page view."}>
+                                <FontAwesomeIcon icon={showAll? faEyeSlash: faEye} className="NavbarButton-Icon"/>
+                                {!showAll? "Show all pages": "Hide all pages"}
+                            </div>
+                        </Stack>
                     }
-                </Document>
-                <p>
-                    Page {pageNumber} of {numPages}
-                </p>
-                <nav>
-                    <button onClick={goToPrevPage}>Prev</button>
-                    <button onClick={goToNextPage}>Next</button>
-                    <button onClick={toggleShowAll}>Toggle all pages</button>
-                </nav>
+                </div>
             </div>
-            <div className={"Help"}>
-                <Button onClick={() => setPanicButtonOpen(true)} sx={{'background-color': 'red', 'color': 'white'}}>
-                    Panic button
-                </Button>
-            </div>
-            {panicButtonDialog}
-            <Button onClick={() => setResetQueryOpen(true)}>Clear queries</Button>
-            {resetQueryDialog}
-            <Button onClick={() => {setLocalStorageOpen(true);}}>Reset localStorage</Button>
-            {localStorageDialog}
-            <Button>
-                <a href="http://localhost:8080/docs" target="_blank">
-                    Docs
-                </a>
-            </Button>
         </div>
     );
 }
