@@ -27,19 +27,19 @@ fi
 case "$RUN_COMMAND" in
     ("--start")
         if [[ -n "$OCEL_MOUNT_PATH" ]]; then
-            docker-compose build _backend_base && OCEL_MOUNT_PATH="$OCEL_MOUNT_PATH" docker-compose -f docker-compose.yml -f docker-compose.mount-ocels.yml -f docker-compose.prod.yml up --build --detach
+            $DOCKER_COMPOSE build _backend_base && OCEL_MOUNT_PATH="$OCEL_MOUNT_PATH" $DOCKER_COMPOSE -f docker-compose.yml -f docker-compose.mount-ocels.yml -f docker-compose.prod.yml up --build --detach
         else
-            $DOCKER_COMPOSE build _backend_base && docker-compose -f docker-compose.yml -f docker-compose.prod.yml up --build --detach
+            $DOCKER_COMPOSE build _backend_base && $DOCKER_COMPOSE -f docker-compose.yml -f docker-compose.prod.yml up --build --detach
         fi
         ;;
     ("--start-dev") 
-        docker-compose build _backend_base && docker-compose -f docker-compose.yml -f docker-compose.dev.yml up --build --detach
+        $DOCKER_COMPOSE build _backend_base && $DOCKER_COMPOSE -f docker-compose.yml -f docker-compose.dev.yml up --build --detach
         ;;
     ("--stop") 
-        docker-compose stop
+        $DOCKER_COMPOSE stop
         ;;
     ("--remove")
-        docker-compose down --volumes --rmi all
+        $DOCKER_COMPOSE down --volumes --rmi all
         ;;
     (*) 
         echo "Please provide a valid app command, e.g. --start. For more information, e.g. all available commands, see the user manual."
