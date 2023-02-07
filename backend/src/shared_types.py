@@ -18,6 +18,7 @@ FrontendFriendlyCounts = List[Tuple[float, int]]
 class FrontendFriendlyNode(BaseModel):
     label: str
     counts: Dict[str, FrontendFriendlyCounts]
+    ocel_counts: FrontendFriendlyCounts
     traces: List[int]
 
 

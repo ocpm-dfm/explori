@@ -1,0 +1,41 @@
+version: "3.9"
+
+services:
+  webserver:
+    build:
+      context: frontend/
+      dockerfile: Dockerfile
+    depends_on:
+      - fastapi
+    ports:
+      - "80:3000"
+  fastapi:
+    build:
+      context: backend/
+      dockerfile: Dockerfile_fastapi
+    environment:
+      REDIS_HOST: "redis"
+      REDIS_PORT: 6379
+    depends_on:
+      - celery
+      - redis
+      - _backend_base
+    ports:
+      - "8080:8080"
+  celery:
+    build:
+      context: backend/
+      dockerfile: Dockerfile_celery
+    environment:
+      REDIS_HOST: "redis"
+      REDIS_PORT: 6379
+    depends_on:
+      - redis
+      - _backend_base
+  redis:
+    image: "redis:alpine"
+  _backend_base:
+    image: explori-backend-base-image
+    build:
+      context: backend/
+      dockerfile: Dockerfile_backend

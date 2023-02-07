@@ -1,6 +1,46 @@
-.Performance-Button {
-    position: relative;
-    width: 76px;
-    left: 66rem;
-    bottom: 15.5rem;
+.Performance-Waiting-Circle {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translateX(-50%) translateY(-50%);
+}
+
+.Performance-Node-Metrics-Container {
+    width: 100%;
+    display: grid;
+    grid-template-columns: auto auto 1fr;
+    grid-template-rows: auto auto;
+    grid-gap: 1rem;
+}
+
+.Performance-Node-Metrics-Table {
+    grid-row: 1 / 2;
+    grid-column: 1 / 4;
+}
+
+.Performance-Node-Metrics-Settings-Header {
+    font-weight: bold;
+}
+
+.Performance-Node-Metrics-Settings {
+    margin-left: -0.25rem;
+}
+
+.Performance-Node-Metrics-Settings>div {
+    padding: 0.25rem 0.25rem;
+}
+
+.Performance-Pooling-OT {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+}
+
+.Performance-Pooling-OTCircle {
+    width: .75rem;
+    height: .75rem;
+    aspect-ratio: 1/1;
+    border-radius: 50%;
+
+    margin-right: .5rem;
 }

@@ -20,6 +20,10 @@ import {TraceAlignment, TraceAlignments, AlignElement} from "../../redux/Alignme
 import { AlignmentTable } from '../../components/AlignmentsTable/AlignmentsTable';
 import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
 import {faShareFromSquare} from "@fortawesome/free-solid-svg-icons";
+import {DirectlyFollowsMultigraph} from "../../components/cytoscape-dfm/cytodfm";
+import {setDfmQueryState} from "../../redux/DFMQuery/dfmquery";
+import {NewObjectSelection} from "../../components/NewObjectSelection/NewObjectSelection";
+import {setSelectedObjectTypes} from "../../redux/UserSession/userSession.actions";
 
 // Code from: https://reactdatagrid.io/docs/miscellaneous#csv-export-+-custom-search-box
 export const downloadBlob = (blob: any, fileName = 'alignments-data.csv') => {
@@ -44,13 +48,22 @@ type AlignmentProps = {
 const mapStateToProps = (state: RootState, _: AlignmentProps) => ({
     modelOcel: state.session.ocel,
     threshold: state.session.threshold,
+    selectedObjectTypes: state.session.selectedObjectTypes,
+    alreadySelectedAllObjectTypesInitially: state.session.alreadySelectedAllObjectTypesInitially,
+    dfmQuery: state.dfmQuery,
     queryState: state.alignmentsQuery
 });
 
 const mapDispatchToProps = (dispatch: ThunkDispatch<any, any, any>, _: AlignmentProps) => ({
     setQueryState: (state: AsyncApiState<TraceAlignments>) => {
         dispatch(setAlignmentQueryState(state));
-    }
+    },
+    setDfmQuery: (state: AsyncApiState<DirectlyFollowsMultigraph>) => {
+        dispatch(setDfmQueryState(state));
+    },
+    setSelectedObjectTypes: async (selectedObjectTypes: string[]) => {
+        dispatch(setSelectedObjectTypes(selectedObjectTypes))
+    },
 });
 
 type StateProps = ReturnType<typeof mapStateToProps>;
@@ -61,6 +74,18 @@ export const Alignments = connect<StateProps, DispatchProps, AlignmentProps, Roo
     const modelOcel = props.modelOcel;
     const conformanceOcel = props.modelOcel;
     const threshold = props.threshold;
+    const selectedObjectTypes = props.selectedObjectTypes;
+    const alreadySelectedAllObjectTypesInitially = props.alreadySelectedAllObjectTypesInitially;
+
+    const dfm_query = useAsyncAPI<DirectlyFollowsMultigraph>(
+        "/pm/dfm",
+        {
+            ocel: modelOcel
+        },
+        {
+            state: props.dfmQuery,
+            setState: props.setDfmQuery
+        });
 
     const alignmentsQuery = useAsyncAPI<TraceAlignments>("/pm/alignments", {
         process_ocel: modelOcel,
@@ -82,20 +107,30 @@ export const Alignments = connect<StateProps, DispatchProps, AlignmentProps, Roo
                     if (alignment) {
                         if (!object_type_alignments[objectType])
                             object_type_alignments[objectType] = [];
+                        // Need to check if alignments were not cut before already
+                        if (alignment['log_alignment'][0].activity === "|EXPLORI_START|")
+                            alignment['log_alignment'].shift()
+                        if (alignment['log_alignment'][alignment['log_alignment'].length-1].activity === "|EXPLORI_END|")
+                            alignment['log_alignment'].pop()
+                        if (alignment['model_alignment'][0].activity === "|EXPLORI_START|")
+                            alignment['model_alignment'].shift()
+                        if (alignment['model_alignment'][alignment['model_alignment'].length-1].activity === "|EXPLORI_END|")
+                            alignment['model_alignment'].pop()
                         object_type_alignments[objectType].push(alignment);
                     }
                 })
             });
 
-            console.log(object_type_alignments['MATERIAL']);
+            //console.log(object_type_alignments['MATERIAL']);
         }
         catch (e) {
             console.error(e);
-            console.log(alignmentData)
+            //console.log(alignmentData)
         }
     }
 
-    const totalMaterialCount = Object.keys(object_type_alignments).length;
+    const availableObjectTypes: string[] = dfm_query.result ? Object.keys(dfm_query.result.subgraphs) : [];
+    const totalMaterialCount = availableObjectTypes.length;
 
     const exportJSON = (objectType: string) => {
         const json = JSON.stringify(object_type_alignments[objectType], null, 4);
@@ -104,9 +139,20 @@ export const Alignments = connect<StateProps, DispatchProps, AlignmentProps, Roo
         downloadBlob(blob, "alignments-data-" + objectType + ".json");
     };
 
+    const navbarItems = (
+        <React.Fragment>
+            <NewObjectSelection
+                availableObjectTypes={availableObjectTypes}
+                selectedObjectTypes={selectedObjectTypes}
+                setSelectedObjectTypes={props.setSelectedObjectTypes}
+                alreadySelectedAllObjectTypesInitially={alreadySelectedAllObjectTypesInitially}
+                selectAllObjectTypesInitially={true}/>
+        </React.Fragment>
+    );
+
     return (
         <div className="DefaultLayout-Container">
-            <ExploriNavbar />
+            <ExploriNavbar lowerRowSlot={navbarItems}/>
             <div style={{position: "relative", minHeight: "50vh"}}>
                 {!alignmentsQuery.result && !alignmentsQuery.preliminary && (
                     <Box sx={{
@@ -114,22 +160,22 @@ export const Alignments = connect<StateProps, DispatchProps, AlignmentProps, Roo
                         position: 'absolute',
                         bottom: '0%',
                         left: '50%',
-                        'margin-right': '-50%',
+                        marginRight: '-50%',
                         transform: 'translate(-50%, -50%)'
                     }}>
                         <CircularProgress />
                     </Box>
                 )}
-                {Object.keys(object_type_alignments).map((objectType, index) => (
+                {Object.keys(object_type_alignments).filter((objectType) => selectedObjectTypes.includes(objectType)).map((objectType) => (
                     <div className="DefaultLayout-Content Alignments-Card" key={`alignments=${objectType}`}>
                         <div className="Alignments-Card-Title-Container">
                             <h2 className="Alignments-Card-Title">
-                                <div className="Alignments-Card-Title-Circle" style={{backgroundColor: getObjectTypeColor(totalMaterialCount, index)}} />
+                                <div className="Alignments-Card-Title-Circle" style={{backgroundColor: getObjectTypeColor(totalMaterialCount, availableObjectTypes.indexOf(objectType))}} />
                                 {objectType}
                             </h2>
                             <div className={'NavbarButton AlignmentsTable-Button'}
                                  onClick={() => exportJSON(objectType)}
-                                 title={"Export"}>
+                                 title={"Export alignment data as json file."}>
                                 <FontAwesomeIcon icon={faShareFromSquare} className="NavbarButton-Icon"/>
                                 Export
                             </div>
@@ -203,6 +249,9 @@ export const AlignmentsData = connect<StateProps, DispatchProps, AlignmentsDataP
     });
 
     const alignmentData = alignmentsQuery.preliminary ? alignmentsQuery.preliminary : alignmentsQuery.result;
+    // Reset alignments in cytodfm to prevent errors
+    props.setLogAlignments([]);
+    props.setModelAlignments([]);
     if (alignmentData) {
         try {
             let log_misalignments: [string, AlignElement, AlignElement, AlignElement, string[][]][] = [];
@@ -263,11 +312,24 @@ export const AlignmentsData = connect<StateProps, DispatchProps, AlignmentsDataP
         }
         catch (e) {
             console.error(e);
-            console.log(alignmentData)
+            //console.log(alignmentData)
         }
     }
 
-    return null
+    return (
+        <React.Fragment>
+            {!alignmentsQuery.result && alignmentsQuery.preliminary && (
+                <Box sx={{
+                    display: 'flex',
+                    position: 'absolute',
+                    top: '1rem',
+                    right: '1rem'
+                }}>
+                    <CircularProgress/>
+                </Box>
+            )}
+        </React.Fragment>
+    )
 });
 
 function getLastAndNextActivity(alignment: TraceAlignment, index: number): AlignElement[] {

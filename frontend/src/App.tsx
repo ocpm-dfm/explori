@@ -1,14 +1,13 @@
-import React, {useEffect, useRef, useState} from 'react';
+import React, {useEffect, useRef} from 'react';
 import './App.css';
 import { Home } from "./pages/Home/Home";
-import { EventLogList } from "./components/EventLogList/EventLogList";
-import { Routes, Route, useNavigate } from "react-router-dom";
+import {Routes, Route, useNavigate, Link} from "react-router-dom";
 import { QueryClient, QueryClientProvider } from 'react-query';
 import {Alignments} from "./pages/Alignments/Alignments";
 
 import {RootState} from './redux/store';
 import {connect} from "react-redux";
-import {modifyUserSession, restoreUserSession, saveUserSession} from "./redux/UserSession/userSession.actions";
+import {modifyUserSession, restoreUserSession, saveUserSession, restoreSavedUserSession} from "./redux/UserSession/userSession.actions";
 import {ThunkDispatch} from "@reduxjs/toolkit";
 import {SessionState} from "./redux/UserSession/userSession.types";
 import {resetDfmQueryState} from "./redux/DFMQuery/dfmquery";
@@ -17,6 +16,8 @@ import {NewSessionPage} from "./pages/NewSession/NewSessionPage";
 import {PerformanceMetricsPage} from "./pages/Performance/Performance";
 import {resetPerformanceQueryState} from "./redux/PerformanceQuery/performancequery";
 import {Help} from "./pages/Help/Help";
+import {UserSession} from "./components/UserSession/UserSession";
+import {getURI} from "./hooks";
 
 export type StateChangeCallback = (update: any) => void;
 export type SwitchOcelsCallback = (newOcel: string) => Promise<void>;
@@ -29,16 +30,26 @@ const mapStateToProps = (state: RootState, ownProps: OwnProps) => ({
     session: state.session
 });
 
+let timeoutId: ReturnType<typeof setTimeout> | null = null;
+
 const mapDispatchToProps = (dispatch: ThunkDispatch<{}, {}, any>, ownProps: OwnProps) => ({
     saveSession: async (session: SessionState) => {
         await dispatch(saveUserSession(session));
-        console.log("[App] Saved user session");
+        if (timeoutId) {
+            clearTimeout(timeoutId);
+        }
+        timeoutId = setTimeout(() => {
+            console.log("[App] Saved user session");
+        }, 1000)
     },
     setSession: (session: SessionState) => {
-        dispatch(modifyUserSession(session))
+        dispatch(modifyUserSession(session));
     },
     loadSession: async (ocel: string) => {
         await dispatch(restoreUserSession(ocel));
+    },
+    restoreSavedUserSession: (session: SessionState) => {
+        dispatch(restoreSavedUserSession(session));
     },
     resetQueryStates: () => {
         dispatch(resetDfmQueryState());
@@ -69,16 +80,40 @@ export function App(props: Props) {
     useEffect(() => {
         (async () => {
             const currentOcel = localStorage.getItem("explori-currentOcel");
+
             if (!currentOcel) {
                 navigateTo("/session")
                 return;
             }
 
-            try {
-                await props.loadSession(currentOcel);
-                autosaveEnabled.current = true;
+            let foundFlag: boolean = false;
+            if (currentOcel.split("/")[0] !== "uploaded") {
+                const availableURI = getURI("/logs/available", {});
+                await fetch(availableURI)
+                    .then((response) => response.json())
+                    .then((result) => {
+                        if (result !== undefined) {
+                            for (let log of result) {
+                                if (log[0] === currentOcel){
+                                    foundFlag = true;
+                                    break;
+                                }
+                            }
+                        }
+                    })
+                    .catch(err => console.log("Error in fetching available sessions ..."))
+            } else {
+                foundFlag = true;
             }
-            catch (e) {
+            if (foundFlag) {
+                try {
+                    await props.loadSession(currentOcel);
+                    autosaveEnabled.current = true;
+                }
+                catch (e) {
+                    navigateTo("/session");
+                }
+            } else {
                 navigateTo("/session");
             }
         })();
@@ -100,11 +135,20 @@ export function App(props: Props) {
                 graphHorizontal: false,
                 alignmentMode: "none",
                 legendPosition: "top-left",
-                performanceMode: "Counts",
+                edgeLabelMode: {
+                    metric: "count",
+                    aggregate: "sum"
+                },
             });
         }
         localStorage.setItem("explori-currentOcel", newOcel);
         autosaveEnabled.current = true;
+    }
+
+    function restoreSession(sessionState: SessionState){
+        props.resetQueryStates();
+        props.restoreSavedUserSession(sessionState);
+        localStorage.setItem("explori-currentOcel", sessionState.ocel);
     }
 
     return (
@@ -114,7 +158,9 @@ export function App(props: Props) {
                 <Route path="/alignments" element={<Alignments />}></Route>
                 <Route path="/performance" element={<PerformanceMetricsPage />} />
                 <Route path="/session" element={<NewSessionPage switchOcelCallback={loadSessionOrStartNewOne} />} />
-                <Route path="/help" element={<Help/>} />
+                <Route path="/help" element={<Help resetQueryState={props.resetQueryStates}/>} />
+                <Route path="/user-session/store" element={<UserSession storeOrRestore={"store"} userSessionState={props.session}/>}></Route>
+                <Route path="/user-session/restore" element={<UserSession storeOrRestore={"restore"} stateChangeCallback={restoreSession}/>}></Route>
             </Routes>
         </QueryClientProvider>
     );

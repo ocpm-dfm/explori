@@ -9,7 +9,12 @@ export const SET_HIGHLIGHTING_MODE = 'SET_HIGHLIGHTING_MODE'
 export const SET_GRAPH_HORIZONTAL = 'SET_GRAPH_HORIZONTAL'
 export const SET_ALIGNMENT_MODE = 'SET_ALIGNMENT_MODE'
 export const SET_LEGEND_POSITION = 'SET_LEGEND_POSITION'
-export const SET_PERFORMANCE_MODE = 'SET_PERFORMANCE_MODE'
+export const SET_EDGE_LABEL_MODE = 'SET_EDGE_LABEL_MODE'
+
+export type EdgeLabelMode = {
+    metric: "count" | "pooling_time" | "waiting_time"
+    aggregate: "mean" | "median" | "max" | "min" | "sum" | "stdev"
+};
 
 export interface SessionState {
     ocel: string,
@@ -20,5 +25,5 @@ export interface SessionState {
     graphHorizontal: boolean,
     alignmentMode: string,
     legendPosition: string,
-    performanceMode: string,
+    edgeLabelMode: EdgeLabelMode,
 }

@@ -109,7 +109,9 @@ class RedisCache(ShortTermCache):
         print("Done")
 
 
-__SHORT_TERM_CACHE = RedisCache("localhost", 6379)
+REDIS_HOST = os.environ.get('EXPLORI_REDIS_HOST', default='localhost')
+REDIS_PORT = os.environ.get('EXPLORI_REDIS_PORT', default='6379')
+__SHORT_TERM_CACHE = RedisCache(REDIS_HOST, REDIS_PORT)
 
 
 def get_short_term_cache() -> ShortTermCache:
@@ -236,6 +238,13 @@ def dfm(ignored_object_types: List[str] | None = None) -> str:
 def alignments(base_threshold: float, conformance_ocel: str, object_type: str | None, trace_id: int) -> str:
     return f"alignments-{hash_path(conformance_ocel)}-{hash(object_type)}-{base_threshold}-{trace_id}"
 
+
+def aligned_times(process_ocel: str, base_threshold: float, object_type: str) -> str:
+    return f"aligned-times-{hash_path(process_ocel)}-{hash(object_type)}-{base_threshold}"
+
+
+def ocel_performance_metrics(process_ocel: str, base_threshold: float, object_types: List[str]) -> str:
+    return f"ocel-performance-{hash_path(process_ocel)}-{base_threshold}-{hash('_'.join([hash(object_type) for object_type in object_types]))}"
 
 def performance_metrics(process_ocel: str, base_threshold: float, object_type: str) -> str:
     return f"performance-{hash_path(process_ocel)}-{hash(object_type)}-{base_threshold}"

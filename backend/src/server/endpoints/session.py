@@ -22,6 +22,10 @@ class Session(BaseModel):
     graph_horizontal: bool = False
     legend_position: str = "top-left"
     alignment_mode: str = "none"
+    edge_label: dict = {
+        "metric": "count",
+        "aggregate": "sum"
+    }
 
     class Config:
         schema_extra = {
@@ -54,9 +58,21 @@ def restore_session(name: str) -> Session:
     with open(session_file, 'r') as f:
         return Session(**json.load(f))
 
+@router.get('/delete')
+def delete_session(name: str):
+    session_file = get_session_file(name)
+    if not os.path.isfile(session_file):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Unknown session file.")
+
+    os.remove(session_file)
+
+    return {
+        "status": "successful"
+    }
+
 
 class AvailableSessionsResponseModel(BaseModel):
-    __root__: List[Tuple[str, float, str, float]]
+    __root__: List[Tuple[str, float, str, float, List[str], str, dict]]
 
     class Config:
         schema_extra = {
@@ -77,6 +93,18 @@ def list_available_sessions():
         return []
 
     result = []
+    def find_available_logs(folder: str) -> List[str]:
+        results = []
+        for node in os.listdir(folder):
+            complete_path = os.path.join(folder, node)
+            if os.path.isfile(complete_path) and (
+                    node.endswith(".jsonocel") or node.endswith(".xmlocel") or node.endswith(".csv")):
+                results.append(os.path.join(folder, node)[5:])
+            elif os.path.isdir(complete_path):
+                results.extend(find_available_logs(complete_path))
+        return results
+
+    logs = find_available_logs("data")
     for file in os.listdir(SESSIONS_FOLDER):
         if file.endswith(".json"):
             session_name = file[:-5]
@@ -89,7 +117,8 @@ def list_available_sessions():
 
             with open(session_file, 'r') as f:
                 session = Session(**json.load(f))
-            result.append((session_name, last_change, session.base_ocel, session.threshold))
+            if session.base_ocel in logs:
+                result.append((session_name, last_change, session.base_ocel, session.threshold, session.object_types, session.alignment_mode, session.edge_label))
     return result
 
 
