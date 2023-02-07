@@ -22,6 +22,8 @@ import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
 import {faShareFromSquare} from "@fortawesome/free-solid-svg-icons";
 import {DirectlyFollowsMultigraph} from "../../components/cytoscape-dfm/cytodfm";
 import {setDfmQueryState} from "../../redux/DFMQuery/dfmquery";
+import {NewObjectSelection} from "../../components/NewObjectSelection/NewObjectSelection";
+import {setSelectedObjectTypes} from "../../redux/UserSession/userSession.actions";
 
 // Code from: https://reactdatagrid.io/docs/miscellaneous#csv-export-+-custom-search-box
 export const downloadBlob = (blob: any, fileName = 'alignments-data.csv') => {
@@ -47,6 +49,7 @@ const mapStateToProps = (state: RootState, _: AlignmentProps) => ({
     modelOcel: state.session.ocel,
     threshold: state.session.threshold,
     selectedObjectTypes: state.session.selectedObjectTypes,
+    alreadySelectedAllObjectTypesInitially: state.session.alreadySelectedAllObjectTypesInitially,
     dfmQuery: state.dfmQuery,
     queryState: state.alignmentsQuery
 });
@@ -57,6 +60,9 @@ const mapDispatchToProps = (dispatch: ThunkDispatch<any, any, any>, _: Alignment
     },
     setDfmQuery: (state: AsyncApiState<DirectlyFollowsMultigraph>) => {
         dispatch(setDfmQueryState(state));
+    },
+    setSelectedObjectTypes: async (selectedObjectTypes: string[]) => {
+        dispatch(setSelectedObjectTypes(selectedObjectTypes))
     },
 });
 
@@ -69,6 +75,7 @@ export const Alignments = connect<StateProps, DispatchProps, AlignmentProps, Roo
     const conformanceOcel = props.modelOcel;
     const threshold = props.threshold;
     const selectedObjectTypes = props.selectedObjectTypes;
+    const alreadySelectedAllObjectTypesInitially = props.alreadySelectedAllObjectTypesInitially;
 
     const dfm_query = useAsyncAPI<DirectlyFollowsMultigraph>(
         "/pm/dfm",
@@ -132,9 +139,20 @@ export const Alignments = connect<StateProps, DispatchProps, AlignmentProps, Roo
         downloadBlob(blob, "alignments-data-" + objectType + ".json");
     };
 
+    const navbarItems = (
+        <React.Fragment>
+            <NewObjectSelection
+                availableObjectTypes={availableObjectTypes}
+                selectedObjectTypes={selectedObjectTypes}
+                setSelectedObjectTypes={props.setSelectedObjectTypes}
+                alreadySelectedAllObjectTypesInitially={alreadySelectedAllObjectTypesInitially}
+                selectAllObjectTypesInitially={true}/>
+        </React.Fragment>
+    );
+
     return (
         <div className="DefaultLayout-Container">
-            <ExploriNavbar />
+            <ExploriNavbar lowerRowSlot={navbarItems}/>
             <div style={{position: "relative", minHeight: "50vh"}}>
                 {!alignmentsQuery.result && !alignmentsQuery.preliminary && (
                     <Box sx={{
