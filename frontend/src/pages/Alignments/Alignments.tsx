@@ -123,7 +123,7 @@ export const Alignments = connect<StateProps, DispatchProps, AlignmentProps, Roo
                         position: 'absolute',
                         bottom: '0%',
                         left: '50%',
-                        'margin-right': '-50%',
+                        marginRight: '-50%',
                         transform: 'translate(-50%, -50%)'
                     }}>
                         <CircularProgress />

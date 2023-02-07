@@ -30,10 +30,17 @@ const mapStateToProps = (state: RootState, ownProps: OwnProps) => ({
     session: state.session
 });
 
+let timeoutId: ReturnType<typeof setTimeout> | null = null;
+
 const mapDispatchToProps = (dispatch: ThunkDispatch<{}, {}, any>, ownProps: OwnProps) => ({
     saveSession: async (session: SessionState) => {
         await dispatch(saveUserSession(session));
-        console.log("[App] Saved user session");
+        if (timeoutId) {
+            clearTimeout(timeoutId);
+        }
+        timeoutId = setTimeout(() => {
+            console.log("[App] Saved user session");
+        }, 1000)
     },
     setSession: (session: SessionState) => {
         dispatch(modifyUserSession(session));
