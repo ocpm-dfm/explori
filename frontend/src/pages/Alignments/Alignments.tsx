@@ -96,11 +96,11 @@ export const Alignments = connect<StateProps, DispatchProps, AlignmentProps, Roo
                 })
             });
 
-            console.log(object_type_alignments['MATERIAL']);
+            //console.log(object_type_alignments['MATERIAL']);
         }
         catch (e) {
             console.error(e);
-            console.log(alignmentData)
+            //console.log(alignmentData)
         }
     }
 
@@ -275,7 +275,7 @@ export const AlignmentsData = connect<StateProps, DispatchProps, AlignmentsDataP
         }
         catch (e) {
             console.error(e);
-            console.log(alignmentData)
+            //console.log(alignmentData)
         }
     }
 

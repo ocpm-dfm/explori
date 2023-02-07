@@ -36,7 +36,7 @@ export function UserSession(props: {storeOrRestore: string, userSessionState?: S
     const [sessionToBeDeleted, setSessionToBeDeleted] = useState(null);
     const navigate = useNavigate();
 
-    console.log(userSessionState)
+    //console.log(userSessionState)
 
     let initialDataSource: TypeDataSource = [];
     const [dataSource, setDataSource] = useState(initialDataSource);

@@ -27,9 +27,9 @@ export function useInterval(callback: () => any, delay: number | null) {
                 }
             }
             const id = setInterval(tick, delay);
-            console.log("Added interval (delay" + delay + ")");
+            //console.log("Added interval (delay" + delay + ")");
             return () => {
-                console.log("Cleaned interval");
+                //console.log("Cleaned interval");
                 clearInterval(id);
             };
         }
@@ -108,7 +108,7 @@ export function useAsyncAPI<DataType>(endpoint: string, parameters: { [key: stri
         const response = await fetch(uri);
         if (response.status !== 200) {
             console.log("Failed to make request " + uri);
-            console.log(response);
+            //console.log(response);
             setState({
                 preliminary: null,
                 result: null,

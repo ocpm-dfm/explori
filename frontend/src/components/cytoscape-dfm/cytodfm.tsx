@@ -408,7 +408,7 @@ export const FilteredCytoDFM = forwardRef((props: CytoDFMProps, ref: ForwardedRe
                 const edges = dfm.subgraphs[objectType];
                 let hasDisplayedEdge = false;
 
-                console.log(dfm.nodes)
+                //console.log(dfm.nodes)
 
                 for (const edge of edges) {
                     let count: number = getCountAtThreshold(edge.counts, thresh);
@@ -455,7 +455,7 @@ export const FilteredCytoDFM = forwardRef((props: CytoDFMProps, ref: ForwardedRe
             }
         });
 
-        console.log(Array.from(allNodesOfSelectedObjectTypes));
+        //console.log(Array.from(allNodesOfSelectedObjectTypes));
 
         let filteredNodesLabels: string[] = []
         // Filter the nodes by threshold and object type and prepare them for forcegraph.
@@ -776,7 +776,7 @@ export const FilteredCytoDFM = forwardRef((props: CytoDFMProps, ref: ForwardedRe
 
         const elements: cytoscape.ElementDefinition[] = filteredNodes.concat(alignmentNodes).concat(links).concat(alignmentEdges);
 
-        console.log(elements)
+        //console.log(elements)
 
         return [elements, legendObjectTypeColors];
     }, [props.dfm, boxedThreshold, props.selectedObjectTypes, props.highlightingMode, modelAlignments, logAlignments, props.alignmentMode, props.performanceMetrics, props.edgeLabelMode]);

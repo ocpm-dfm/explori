@@ -454,8 +454,8 @@ function EdgeMetrics(props: { metrics: PerformanceMetrics, objectTypeColors: { [
         })
     });
 
-    console.log(columns)
-    console.log(entries)
+    //console.log(columns)
+    //console.log(entries)
 
     const MetricCheckbox = (p: { metric: string }) => (
         <DropdownCheckbox selected={selectedMetrics[p.metric]} label={metricDisplayNames[p.metric]}
