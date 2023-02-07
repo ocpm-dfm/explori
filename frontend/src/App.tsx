@@ -30,10 +30,17 @@ const mapStateToProps = (state: RootState, ownProps: OwnProps) => ({
     session: state.session
 });
 
+let timeoutId: ReturnType<typeof setTimeout> | null = null;
+
 const mapDispatchToProps = (dispatch: ThunkDispatch<{}, {}, any>, ownProps: OwnProps) => ({
     saveSession: async (session: SessionState) => {
         await dispatch(saveUserSession(session));
-        console.log("[App] Saved user session");
+        if (timeoutId) {
+            clearTimeout(timeoutId);
+        }
+        timeoutId = setTimeout(() => {
+            console.log("[App] Saved user session");
+        }, 1000)
     },
     setSession: (session: SessionState) => {
         dispatch(modifyUserSession(session));
@@ -81,13 +88,13 @@ export function App(props: Props) {
 
             let foundFlag: boolean = false;
             if (currentOcel.split("/")[0] !== "uploaded") {
-                const availableURI = getURI("/session/available", {});
+                const availableURI = getURI("/logs/available", {});
                 await fetch(availableURI)
                     .then((response) => response.json())
                     .then((result) => {
                         if (result !== undefined) {
-                            for (let session of result) {
-                                if (session[2] === currentOcel){
+                            for (let log of result) {
+                                if (log[0] === currentOcel){
                                     foundFlag = true;
                                     break;
                                 }
@@ -98,16 +105,15 @@ export function App(props: Props) {
             } else {
                 foundFlag = true;
             }
-
-            try {
-                if (foundFlag) {
+            if (foundFlag) {
+                try {
                     await props.loadSession(currentOcel);
                     autosaveEnabled.current = true;
-                } else {
+                }
+                catch (e) {
                     navigateTo("/session");
                 }
-            }
-            catch (e) {
+            } else {
                 navigateTo("/session");
             }
         })();

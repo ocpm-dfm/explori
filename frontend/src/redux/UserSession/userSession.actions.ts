@@ -19,6 +19,17 @@ import {ThunkDispatch} from "@reduxjs/toolkit";
 import {RootState} from "../store";
 import {Action} from "./userSession.reducer";
 
+let timeoutId: ReturnType<typeof setTimeout> | null = null;
+
+function logStoring(name: string) {
+    if (timeoutId) {
+        clearTimeout(timeoutId);
+    }
+    timeoutId = setTimeout(() => {
+        console.log("Storing of session " + name + " successful!");
+    }, 1000)
+}
+
 export const saveUserSession = (session: SessionState) => async (dispatch: ThunkDispatch<RootState, void, Action>) => {
     const sessionName = "autosave-" + getUuid(session.ocel)
     const uri = getURI("/session/store", {})
@@ -46,7 +57,8 @@ export const saveUserSession = (session: SessionState) => async (dispatch: Thunk
         .then((response) => response.json())
         .then((result) => {
             if (result.status === "successful") {
-                console.log("Storing of session " + sessionName + " successful!");
+                logStoring(sessionName)
+                //console.log("Storing of session " + sessionName + " successful!");
             }
         })
         .catch(err => console.log("Error in uploading ..."));
