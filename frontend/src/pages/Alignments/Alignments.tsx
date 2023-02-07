@@ -20,6 +20,8 @@ import {TraceAlignment, TraceAlignments, AlignElement} from "../../redux/Alignme
 import { AlignmentTable } from '../../components/AlignmentsTable/AlignmentsTable';
 import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
 import {faShareFromSquare} from "@fortawesome/free-solid-svg-icons";
+import {DirectlyFollowsMultigraph} from "../../components/cytoscape-dfm/cytodfm";
+import {setDfmQueryState} from "../../redux/DFMQuery/dfmquery";
 
 // Code from: https://reactdatagrid.io/docs/miscellaneous#csv-export-+-custom-search-box
 export const downloadBlob = (blob: any, fileName = 'alignments-data.csv') => {
@@ -44,13 +46,18 @@ type AlignmentProps = {
 const mapStateToProps = (state: RootState, _: AlignmentProps) => ({
     modelOcel: state.session.ocel,
     threshold: state.session.threshold,
+    selectedObjectTypes: state.session.selectedObjectTypes,
+    dfmQuery: state.dfmQuery,
     queryState: state.alignmentsQuery
 });
 
 const mapDispatchToProps = (dispatch: ThunkDispatch<any, any, any>, _: AlignmentProps) => ({
     setQueryState: (state: AsyncApiState<TraceAlignments>) => {
         dispatch(setAlignmentQueryState(state));
-    }
+    },
+    setDfmQuery: (state: AsyncApiState<DirectlyFollowsMultigraph>) => {
+        dispatch(setDfmQueryState(state));
+    },
 });
 
 type StateProps = ReturnType<typeof mapStateToProps>;
@@ -61,6 +68,17 @@ export const Alignments = connect<StateProps, DispatchProps, AlignmentProps, Roo
     const modelOcel = props.modelOcel;
     const conformanceOcel = props.modelOcel;
     const threshold = props.threshold;
+    const selectedObjectTypes = props.selectedObjectTypes;
+
+    const dfm_query = useAsyncAPI<DirectlyFollowsMultigraph>(
+        "/pm/dfm",
+        {
+            ocel: modelOcel
+        },
+        {
+            state: props.dfmQuery,
+            setState: props.setDfmQuery
+        });
 
     const alignmentsQuery = useAsyncAPI<TraceAlignments>("/pm/alignments", {
         process_ocel: modelOcel,
@@ -104,7 +122,8 @@ export const Alignments = connect<StateProps, DispatchProps, AlignmentProps, Roo
         }
     }
 
-    const totalMaterialCount = Object.keys(object_type_alignments).length;
+    const availableObjectTypes: string[] = dfm_query.result ? Object.keys(dfm_query.result.subgraphs) : [];
+    const totalMaterialCount = availableObjectTypes.length;
 
     const exportJSON = (objectType: string) => {
         const json = JSON.stringify(object_type_alignments[objectType], null, 4);
@@ -129,11 +148,11 @@ export const Alignments = connect<StateProps, DispatchProps, AlignmentProps, Roo
                         <CircularProgress />
                     </Box>
                 )}
-                {Object.keys(object_type_alignments).map((objectType, index) => (
+                {Object.keys(object_type_alignments).filter((objectType) => selectedObjectTypes.includes(objectType)).map((objectType) => (
                     <div className="DefaultLayout-Content Alignments-Card" key={`alignments=${objectType}`}>
                         <div className="Alignments-Card-Title-Container">
                             <h2 className="Alignments-Card-Title">
-                                <div className="Alignments-Card-Title-Circle" style={{backgroundColor: getObjectTypeColor(totalMaterialCount, index)}} />
+                                <div className="Alignments-Card-Title-Circle" style={{backgroundColor: getObjectTypeColor(totalMaterialCount, availableObjectTypes.indexOf(objectType))}} />
                                 {objectType}
                             </h2>
                             <div className={'NavbarButton AlignmentsTable-Button'}
