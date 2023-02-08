@@ -39,7 +39,7 @@ case "$RUN_COMMAND" in
         $DOCKER_COMPOSE stop
         ;;
     ("--remove")
-        $DOCKER_COMPOSE down --volumes --rmi all
+        $DOCKER_COMPOSE -f docker-compose.yml -f docker-compose.prod.yml down --volumes
         ;;
     (*) 
         echo "Please provide a valid app command, e.g. --start. For more information, e.g. all available commands, see the user manual."

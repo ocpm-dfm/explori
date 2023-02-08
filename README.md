@@ -11,7 +11,7 @@ Let people know what your project can do specifically. Provide context and add a
   - `./app.sh --start optional/path/to/event/logs/`: start app in production mode and optionally specify path to a folder containing event logs to mount into the application
   - `./app.sh --start-dev`: start app in development mode
   - `./app.sh --stop`: stop app
-  - `./app.sh --remove`: remove created containers, networks, volumes and images (everything)
+  - `./app.sh --remove`: remove created containers, networks, volumes
 
 ## Development - Backend
 
