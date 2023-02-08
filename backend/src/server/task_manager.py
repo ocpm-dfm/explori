@@ -40,6 +40,13 @@ class TaskManager:
         self.__long_term_cache = long_term_cache
 
     def cached_task(self, task: TaskDefinition, ignore_cache: bool = False) -> TaskStatus:
+        """
+        Checks whether the task result is already stored in the long term cache. If it has not been executed yet,
+        it executes the task and returns eventual preliminary results.
+        :param task: The task to be executed.
+        :param ignore_cache: If set to true, the long term cache is ignored and the task is always executed.
+        :return: The current status of the task, including eventual (preliminary) result.
+        """
         ocel = task.base_ocel
         long_term_key = task.long_term_cache_key
 
@@ -61,6 +68,9 @@ class TaskManager:
         return TaskStatus(status="running")
 
     def cached_group(self, tasks: Dict[str, TaskDefinition], ignore_cache: bool = False) -> TaskStatus:
+        """
+        Executes each task in the group and assembles the results of the individual tasks into one joint result.
+        """
         task_statuses: Dict[str, TaskStatus] = {key: self.cached_task(task, ignore_cache) for (key, task) in tasks.items()}
 
         assembled_result: Dict[str, Any] = {}

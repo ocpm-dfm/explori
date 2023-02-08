@@ -203,6 +203,11 @@ def get_long_term_cache() -> LongTermCache:
 
 
 # region Cache keys
+# The following methods describe the cache keys for both the short term and the long term cache. You may notice
+# that there is quite a lot of hashing going it. It is to ensure that all filenames are valid and prevent weird behavior
+# if, for example, a object type contains slashes or dots.
+
+
 def __extra_attribute(attribute: str, values: str | List[str] | int | float | None) -> str:
     if values is None:
         return ""
@@ -244,6 +249,7 @@ def aligned_times(process_ocel: str, base_threshold: float, object_type: str) ->
 
 
 def ocel_performance_metrics(process_ocel: str, base_threshold: float, object_types: List[str]) -> str:
+    # Object types are hashed twice because apparently, there is a maximal file name length.
     return f"ocel-performance-{hash_path(process_ocel)}-{base_threshold}-{hash('_'.join([hash(object_type) for object_type in object_types]))}"
 
 def performance_metrics(process_ocel: str, base_threshold: float, object_type: str) -> str:
