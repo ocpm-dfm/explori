@@ -20,6 +20,9 @@ import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
 import {faUndo, faFileArchive, faBiohazard, faEye, faEyeSlash} from "@fortawesome/free-solid-svg-icons";
 import '../../components/ExploriNavbar/NavbarButton/NavbarButton.css';
 
+/**
+ * Clears the whole cache in the backend as attempt to fix Explori if something has gone seriously wrong.
+ */
 async function clearCache(){
     const uri = getURI("/logs/clear_cache", {});
     await fetch(uri)
@@ -35,6 +38,10 @@ interface Props {
     resetQueryState: any
 }
 
+/**
+ * Resets the local storage item "explori-currentOcel" to the default value. After going back to the Home page
+ * and refreshing, it should go back to show the default ocel.
+ */
 function resetLocalStorage(){
     // set to demo ocel
     localStorage.setItem("explori-currentOcel", "uploaded/demo_ocel.jsonocel");
@@ -200,6 +207,14 @@ export function Help(props: Props) {
     );
 }
 
+/**
+ * Used to modularize the dialog which is shown when one of the trouble-shoot buttons is pressed.
+ * @param open - Boolean which decides if the dialog is shown (open)
+ * @param setOpen - Sets the "open" variable (state)
+ * @param text - The text to be displayed in the dialog
+ * @param title - The title of the dialog
+ * @param onClick - Function which determines what happens when "Yes" is clicked in the dialog.
+ */
 function helpDialog(open: boolean, setOpen: { (value: React.SetStateAction<boolean>): void; }, text: any, title: any, onClick: any){
     return (
         <Dialog

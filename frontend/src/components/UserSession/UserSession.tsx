@@ -268,6 +268,10 @@ export async function restoreSession(name: string, stateChangeCallback: any) {
         .catch(err => console.log("Error in uploading ..."));
 }
 
+/**
+ * Function used to translate the frontend session state to a backend compatible format.
+ * @param session - Frontend Session
+ */
 function translateToBackend(session: SessionState): BackendSession{
     return {
         base_ocel: session.ocel,
@@ -281,6 +285,10 @@ function translateToBackend(session: SessionState): BackendSession{
     }
 }
 
+/**
+ * Function used to translate the backend session state to a frontend compatible format.
+ * @param session - Backend session fetches from the API endpoint
+ */
 function translateToFrontend(session: BackendSession): SessionState {
     return {
         ocel: session.base_ocel,
