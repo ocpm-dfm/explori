@@ -30,23 +30,30 @@ const fileSaver = require('file-saver');
 
 
 export type DirectlyFollowsMultigraph = {
+    // The collection of all thresholds, used for threshold boxing.
     thresholds: number[]
     nodes: {
         label: string,
+        // The old counts (sum of incoming edge counts) per each object type. (counts: { object type -> counts }).
         counts: { [key: string]: [number, number][] }
+        // These are new node counts that correspond to actual OCEL events.
         ocel_counts: [number, number][]
+        // The traces running through that node.
         traces: number[]
     }[],
+    // The edges by object type, so subgraphs: object type -> Edge[]
     subgraphs: {
         [key: string]: {
             source: number,
             target: number,
             counts: [number, number][]
+            // The traces running through that edge.
             traces: number[]
         }[]
     },
     traces: [
         {
+            // Sometimes, we used actions synonymous to activity. If you keep on developing Explori, you would probably want to refactor that :D
             actions: number[]
             thresholds: {
                 [key: string]: {
@@ -78,6 +85,7 @@ export interface CytoDFMMethods {
 }
 
 
+// These are the icons of the "Process start" and "Process end" nodes. It is hideous this way, but it is the only way it works :(
 const startIcon = `data:image/svg+xml;utf8,${encodeURIComponent("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>\n" +
     "<!-- Created with Inkscape (http://www.inkscape.org/) -->\n" +
     "\n" +
@@ -314,12 +322,14 @@ interface CytoDFMSelectionState {
     selectedEdge: [string, number, number] | null
 }
 
+// A trace to be rendered in the infobox.
 type RenderTraceData = {
     id: number,
     activities: String[],
     count: number
 }
 
+// The traces running through the currently selected node / edge.
 type SelectedTracesData = {
     shown: { [key: string]: RenderTraceData[] },
     hidden: { [key: string]: RenderTraceData[] }
@@ -354,6 +364,7 @@ export const FilteredCytoDFM = forwardRef((props: CytoDFMProps, ref: ForwardedRe
         }
     }, [props.dfm]);
 
+    // The currently selected node or edge for the infobox.
     const [selection, setSelection] = useState<CytoDFMSelectionState>({
         selectedNode: null,
         selectedEdge: null
@@ -362,6 +373,7 @@ export const FilteredCytoDFM = forwardRef((props: CytoDFMProps, ref: ForwardedRe
     const [modelAlignments, setModelAlignments] = useState<[string, AlignElement, AlignElement, string[][]][]>([]);
     const cytoscapeRef = useRef<cytoscape.Core | null>(null);
 
+    // Open up the ability to export the graph to the parent component via the ref parameter.
     useImperativeHandle(ref, () => ({
         exportAsJpg() {
             if (cytoscapeRef.current == null)
@@ -371,6 +383,7 @@ export const FilteredCytoDFM = forwardRef((props: CytoDFMProps, ref: ForwardedRe
         }
     }));
 
+    // We box the threshold to reduce the amount of re-renders.
     let boxedThreshold = 0;
     if (props.dfm) {
         for (const thresholdCandidate of props.dfm.thresholds) {
@@ -382,6 +395,7 @@ export const FilteredCytoDFM = forwardRef((props: CytoDFMProps, ref: ForwardedRe
     }
 
     // The usage of useMemo reduces the number of rerenders, hence performance.
+    // This memo calculates the elements, i.e. nodes and edges, shown in the graph as well as the entries of the legend.
     const [elements, legendObjectTypeColors] = useMemo(() => {
         const dfm = props.dfm;
         const thresh = boxedThreshold;
@@ -393,12 +407,23 @@ export const FilteredCytoDFM = forwardRef((props: CytoDFMProps, ref: ForwardedRe
         if (!dfm)
             return [[], []];
 
+        // STEP 1: Add edges to the graph.
+        // As a byproduct, we determine which object types appear at least once, which used for the legend.
+
+        // Link = Cytoscape notation for edge.
         const links: any[] = [];
         const legendObjectTypeColors: [string, string][] = [];
 
+        // The set of all nodes that have at least one connecting edge, introduced by Jan (?) at some point.
+        // This might or might not be actually used, but we're currently too afraid to change
+        // this shortly before the presentation.
         let allNodesOfSelectedObjectTypes = new Set<number>();
+        // The method to determine object type colors depends on the total amount of object types, so we just cache
+        // that value here.
         const numberOfColorsNeeded = Object.keys(dfm.subgraphs).length;
 
+        // The edge highlighting mode determines the thickness of the edges. It might need to perform some pre-computations,
+        // e.g. finding the max edge count, therefore it has the option to create arbitrary initial data.
         const highlightingInitialData = edgeHighlightingMode.createInitialData(dfm, props);
 
         Object.keys(dfm.subgraphs).forEach((objectType, i) => {
@@ -412,7 +437,8 @@ export const FilteredCytoDFM = forwardRef((props: CytoDFMProps, ref: ForwardedRe
 
                 for (const edge of edges) {
                     let count: number = getCountAtThreshold(edge.counts, thresh);
-                    // Ignore edges below the threshold.
+                    // Edges that should be filtered out because of the threshold filtering have a count of zero, so we
+                    // ignore them.
                     if (count === 0)
                         continue
 
@@ -450,12 +476,15 @@ export const FilteredCytoDFM = forwardRef((props: CytoDFMProps, ref: ForwardedRe
                     allNodesOfSelectedObjectTypes.add(edge.target);
                 }
 
+                // Add the object type to the legend.
                 if (hasDisplayedEdge)
                     legendObjectTypeColors.push([objectType, objectTypeColor]);
             }
         });
 
         //console.log(Array.from(allNodesOfSelectedObjectTypes));
+
+        // STEP 2: Create the nodes.
 
         let filteredNodesLabels: string[] = []
         // Filter the nodes by threshold and object type and prepare them for forcegraph.
@@ -477,6 +506,9 @@ export const FilteredCytoDFM = forwardRef((props: CytoDFMProps, ref: ForwardedRe
                 const displayCount = getCountAtThreshold(node.ocel_counts, thresh);
 
                 filteredNodesLabels.push(node.label)
+                // The "convert_to_frontend_friendly_graph_notation" method of the DFM pre-filtering ensures that the
+                // "Process start" node has the index 0 and the "Process end" node has the index 1. Those nodes
+                // get some special treatment to make them look nicer.
                 if (i === 0) {
                     return {
                         data: {
@@ -782,6 +814,7 @@ export const FilteredCytoDFM = forwardRef((props: CytoDFMProps, ref: ForwardedRe
     }, [props.dfm, boxedThreshold, props.selectedObjectTypes, props.highlightingMode, modelAlignments, logAlignments, props.alignmentMode, props.performanceMetrics, props.edgeLabelMode]);
 
 
+    // Determines the traces running through the currently selected node or edge as well as the corresponding performance metrics.
     const [selectedTraces, selectedPerformanceMetrics]: [SelectedTracesData, NodePerformanceMetrics | EdgePerformanceMetrics | null] = useMemo(() => {
         const dfm = props.dfm;
         const thresh = boxedThreshold;
@@ -838,6 +871,7 @@ export const FilteredCytoDFM = forwardRef((props: CytoDFMProps, ref: ForwardedRe
                 })
             });
         });
+        // Sort traces by count from most frequent to least frequent.
         Object.keys(shown).forEach((objectType) => {
             shown[objectType].sort((a, b) => a.count > b.count ? -1 : 1);
         });
@@ -870,10 +904,15 @@ export const FilteredCytoDFM = forwardRef((props: CytoDFMProps, ref: ForwardedRe
 
 
     if (!props.dfm) {
-        // Reset the state if necessary.
         return <div style={{height: "100%", minHeight: "80vh"}}/>;
     }
 
+    // Now begin the Cytoscape "hacks" to make it behave as it should.
+    // The first part is layouting algorithm, which is augmented by a custom transform function that fixes the node
+    // positions of frozen nodes (UI to freeze individual nodes still missing, not sure whether that is a desirable
+    // feature) or when the whole graph is frozen.
+    // Just disabling layouting when the graph is frozen does not work because the user can still change the threshold
+    // resulting in "unpositioned" nodes to be added to the graph.
     const layout = {
         name: 'elk',
         spacingFactor: 1,
@@ -911,6 +950,7 @@ export const FilteredCytoDFM = forwardRef((props: CytoDFMProps, ref: ForwardedRe
     };
 
     function onNodeDrag(event: EventObject) {
+        // Update the node position in the soft state.
         const item = event.target;
         if (item.isNode()) {
             const node = item as cytoscape.NodeSingular;
@@ -957,6 +997,9 @@ export const FilteredCytoDFM = forwardRef((props: CytoDFMProps, ref: ForwardedRe
         }
     }
 
+    // For panning, cytoscape is nice and first triggers a "user input pan" event before triggering a
+    // real "panning" event, so we can just pan back to the position in the soft state to block programmatic pans.
+    // There is some additional logic required to adjust for the fact that zooming also pans the graph.
     function blockProgramaticPan(event: any) {
         if (cytoscapeRef.current && softState.current.pan) {
             const hasZoomed = softState.current.lastZoom !== null && (Date.now() - softState.current.lastZoom) < 100;
@@ -975,6 +1018,9 @@ export const FilteredCytoDFM = forwardRef((props: CytoDFMProps, ref: ForwardedRe
         }
     }
 
+    // For zooming, Cytoscape sadly is not as nice and first triggers the "zoom" event before triggering a "scrollzoom"
+    // event. Therefore, the first zoom event is blocked. Afterwards, a grace period of 500ms allows the ensuing zooms
+    // to go through, which will happen if the user scrolls with the mouse wheel.
     function blockProgrammaticZoom(event: any) {
         if (cytoscapeRef.current && softState.current.zoom && cytoscapeRef.current?.zoom() !== softState.current.zoom) {
             const hasZoomed = softState.current.lastZoom !== null && (Date.now() - softState.current.lastZoom) < 500;
@@ -1080,6 +1126,7 @@ export const FilteredCytoDFM = forwardRef((props: CytoDFMProps, ref: ForwardedRe
 });
 
 export function getCountAtThreshold(counts: [number, number][], threshold: number): number {
+    // Calculates the count specified by the counts separators at the given threshold.
     let rangeStart = 0;
     for (const [rangeEnd, count] of counts) {
         if (rangeStart <= threshold && threshold < rangeEnd)
@@ -1329,6 +1376,9 @@ function getEdgePerformanceLabel(labelMode: EdgeLabelMode,
                                  performanceMetrics: PerformanceMetrics | null,
                                  source: string, target: string, object_type: string,
                                  count: number): string {
+    // Determines the appropriate label for the edge depending on the given edge labeling mode and the availability
+    // of performance metrics.
+
     if (!labelMode || labelMode.metric === "count")
         return count.toString();
 
