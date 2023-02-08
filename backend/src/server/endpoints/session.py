@@ -60,6 +60,11 @@ def restore_session(name: str) -> Session:
 
 @router.get('/delete')
 def delete_session(name: str):
+    """
+    This function deletes a single session.
+    :param name: Name of the session to be deleted.
+    :return: Status successful
+    """
     session_file = get_session_file(name)
     if not os.path.isfile(session_file):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Unknown session file.")

@@ -40,6 +40,11 @@ const availableSeparators = [
     '{}'
 ]
 
+/**
+ * CSVSettings is used to control the storing/restoring of csv column mappings.
+ * @param props
+ * @constructor
+ */
 export const CSVSettings = (props: CSVSettingProps) => {
     const [lastEventLog, setLastEventLog] = useState<string | null>(null);
 
@@ -101,6 +106,7 @@ export const CSVSettings = (props: CSVSettingProps) => {
         setSeparator(",");
     }
 
+    // Fetches the columns from the backend to display them when selecting a csv OCEL.
     async function fetchColumns() {
         if (!props.selectedEventLog)
             return;
@@ -153,6 +159,7 @@ export const CSVSettings = (props: CSVSettingProps) => {
         }
     }
 
+    // Stores the csv column mappings to the backend.
     async function storeCSV(name: string, csv: CSVState) {
         const uri = getURI("/logs/save_csv", {});
         await fetch(uri, {
@@ -187,6 +194,12 @@ export const CSVSettings = (props: CSVSettingProps) => {
     );
 }
 
+/**
+ * CSVPreviewTable is used to give the user a short preview of the data in the csv OCEL for an easier decision
+ * to set the column mappings.
+ * @param props
+ * @constructor
+ */
 function CSVPreviewTable(props: { eventLog: EventLogMetadata | null, columns: Column[] }) {
     const [data, setData] = useState<any[]>([]);
 
@@ -280,6 +293,11 @@ function isCSV(eventLog: EventLogMetadata): boolean {
     return eventLog.type === "csv";
 }
 
+/**
+ * Used to determine a default value to show in the column mapping dropdowns.
+ * @param columns
+ * @param value
+ */
 function findDefaultValue(columns: Column[], value: string): string | null {
     const val = columns.map((column) => column.name).find((name) => name.search(value) >= 0);
     // Convert undefined to null.

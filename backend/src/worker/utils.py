@@ -138,6 +138,12 @@ def project_ocel(ocel_filename: str, build_metadata: bool = True) -> Dict[str, E
 
 
 def get_ocel(ocel_filename: str) -> OCEL:
+    """
+    This function returns the OCEL for the given ocel file name.
+    If a csv OCEL is selected, fetches the csv column mappings to import it.
+    :param ocel_filename: File name of the OCEL to import.
+    :return: Imported OCEL.
+    """
     # Use saved csv column data to properly import OCEL
     if ocel_filename.split(".")[-1] == "csv":
         csv_path = get_csv_file_name(ocel_filename)
@@ -176,6 +182,11 @@ def __build_metadata(ocel_filename: str, ocel: OCEL) -> OCELMetadata:
     return result
 
 def get_csv_file_name(ocel_filename: str):
+    """
+    Determines the file to restore the csv data from. Prevents path traversals.
+    :param ocel_filename: Name of the csv OCEL.
+    :return: Path to the csv file.
+    """
     cache = get_long_term_cache()
     folder = cache.get_folder(ocel_filename)
     csv_path_unvalidated = os.path.join("cache", "csv_columns", folder.split(os.sep)[-1] + ".json")

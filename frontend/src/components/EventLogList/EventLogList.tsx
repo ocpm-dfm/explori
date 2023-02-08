@@ -68,6 +68,8 @@ export const EventLogList = connect<StateProps, DispatchProps, EventLogListProps
             setSelected(selected);
         };
 
+        // This function checks if the currently stored csv column mapping in the backend is equal to
+        // the currently selected mappings. If this is not the case, we need to overwrite them.
         async function checkForChangeInCSV(): Promise<boolean>{
             try {
                 if (selected !== null){
@@ -103,6 +105,9 @@ export const EventLogList = connect<StateProps, DispatchProps, EventLogListProps
             return false;
         }
 
+        // When we select a csv, we first check if the column mapping stored in the backend and the currently
+        // selected one are equal. If this is not the case, we first need to delete the corresponding cache in
+        // the backend, so that no wrong cached results are used but new ones are computed.
         const onSelect = () => {
             if (selected !== null) {
                 if (props.eventLogs[selected].type === "csv") {

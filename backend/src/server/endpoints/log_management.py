@@ -76,7 +76,8 @@ class ColumnListResponseModel(BaseModel):
 def list_available_logs():
     """
     Lists all available OCELS and returns them as list of strings that can be used to access them using other
-    API endpoints. OCELs that were uploaded by the user over the web interface will be prefixed by "uploaded/".
+    API endpoints. Additionally, the file size is returned.OCELs that were uploaded by the user over the web
+    interface will be prefixed by "uploaded/".
     """
     def find_available_logs(folder: str) -> List[str]:
         result = []
@@ -109,6 +110,13 @@ def list_available_logs():
 
 @router.put('/upload')
 async def upload_event_logs(file: UploadFile):
+    """
+    This function handles the uploading of OCELs. It also ensures that .jsonocel and .xmlocel OCELs
+    have the correct Event ID format since OCPA does not like string event IDs (at least v1.2).
+
+    :param file: File to be uploaded as fastapi UploadFile
+    :return: Returns successful status and file path + file size
+    """
     upload_folder_location = "." + os.sep + "data" + os.sep + "uploaded"
     Path(upload_folder_location).mkdir(parents=True, exist_ok=True)
 
@@ -169,6 +177,15 @@ async def upload_event_logs(file: UploadFile):
     }
 
 def delete(file_path: str, uuid: str, delete_log: bool):
+    """
+    This function handles deletion of uploaded OCELs. It does so by removing the OCEL, cache folder,
+    autosave and hardsaved sessions.
+    :param file_path: Path to the file to be deleted
+    :param uuid: The UUID of the OCEL which being is deleted. Needed to delete the corresponding cache.
+    :param delete_log: Boolean to decide whether to delete the log. Useful when one just wants to clear
+    everything except the OCEL.
+    :return:
+    """
     file_path_extended = "data" + os.sep + file_path
     # Delete ocel and corresponding cache folder
     if os.path.exists(file_path_extended):
@@ -210,6 +227,12 @@ def delete(file_path: str, uuid: str, delete_log: bool):
 
 @router.get('/delete')
 def delete_event_log(file_path: str, uuid: str):
+    """
+    API endpoint for the frontend to access when deleting an OCEL.
+    :param file_path: Path to the file to be deleted
+    :param uuid: The UUID of the OCEL which is being deleted. Needed to delete the corresponding cache.
+    :return: Status successful
+    """
     delete(file_path, uuid, True)
     return {
         "status": "successful"
@@ -217,6 +240,12 @@ def delete_event_log(file_path: str, uuid: str):
 
 @router.get('/delete_cache')
 def delete_event_log(file_path: str, uuid: str):
+    """
+    API endpoint for the frontend to access when clearing the cache of an OCEL.
+    :param file_path: Path to the OCEL for which the cache should be cleared.
+    :param uuid: The UUID of the OCEL. Needed to delete the corresponding cache.
+    :return: Status successful
+    """
     delete(file_path, uuid, False)
     return {
         "status": "successful"
@@ -224,6 +253,11 @@ def delete_event_log(file_path: str, uuid: str):
 
 @router.get('/csv_columns', response_model=ColumnListResponseModel)
 def get_csv_columns(file_path: str):
+    """
+    Returns the columns of the OCEL.
+    :param file_path: Path to the csv OCEL for which the columns should be returned.
+    :return: Columns of the OCEL
+    """
     file_path_extended = "data" + os.sep + file_path
 
     if not os.path.isfile(file_path_extended):
@@ -234,6 +268,12 @@ def get_csv_columns(file_path: str):
 
 @router.get('/csv_data')
 def get_csv_columns(file_path: str, n_columns: int):
+    """
+    Allows to fetch a certain number of rows in the csv OCEL to display them.
+    :param file_path: Path to the csv OCEL for which the columns should be fetched.
+    :param n_columns: Number of columns to fetch.
+    :return: First n_columns rows of the csv OCEL.
+    """
     file_path_extended = "data" + os.sep + file_path
 
     if not os.path.isfile(file_path_extended):
@@ -244,6 +284,12 @@ def get_csv_columns(file_path: str, n_columns: int):
 
 @router.put('/save_csv')
 def save_csv_columns(payload: StoreCSVPayload):
+    """
+    This function saves the csv column mappings chosen in the frontend to a .json file.
+    It also replaces the id column by a numeric values if that is not already the case.
+    :param payload: The payload as StoreCSVPayload which should be stored.
+    :return: Status successful
+    """
     file_path_extended = "data" + os.sep + payload.name
 
     cache = get_long_term_cache()
@@ -266,6 +312,13 @@ def save_csv_columns(payload: StoreCSVPayload):
 
 @router.get('/delete_csv_cache')
 def delete_csv_cache(file_path: str, uuid: str):
+    """
+    This function is used to delete the cache and autosaves of csv OCEL which is called when
+    the csv OCEL was selected and the column mappings are different than before.
+    :param file_path: Path to the csv OCEL.
+    :param uuid: UUID of the csv OCEL to retrieve the corresponding cache.
+    :return: Status successful
+    """
     file_path_extended = "data" + os.sep + file_path
     # Delete corresponding cache folder
     if os.path.exists(file_path_extended):
@@ -290,6 +343,11 @@ def delete_csv_cache(file_path: str, uuid: str):
 
 @router.get('/clear_cache')
 def delete_cache():
+    """
+    This function is used to trouble-shoot Explori and fully clear the cache. This includes all OCEL
+    caches, csv column mappings, session saves and the redis tasks.
+    :return: Status successful
+    """
     dir_path = "cache"
     # clear all OCEL caches
     for directory in [x[0] for x in os.walk(dir_path)]:
@@ -327,6 +385,11 @@ def delete_cache():
 
 @router.get('/restore', response_model=CSV)
 def restore_csv_data(name: str) -> CSV:
+    """
+    This function is used to restore the stored csv column mapping.
+    :param name: File path of the csv OCEL.
+    :return: Returns csv column mappings in the form of CSV.
+    """
     file_path_extended = "data" + os.sep + name
 
     cache = get_long_term_cache()
@@ -340,8 +403,11 @@ def restore_csv_data(name: str) -> CSV:
         return CSV(**json.load(f))
 
 def get_csv_file(ocel_name: str):
-    """Determines the file to store the csv data to. Prevents path traversals."""
-
+    """
+    Determines the file to store the csv data to. Prevents path traversals.
+    :param ocel_name: Name of the csv OCEL.
+    :return: Path to the csv file.
+    """
     csv_file_unvalidated = os.path.join(CSV_FOLDER, ocel_name + ".json")
 
     # The backend might run on windows which results in a mixture of windows and posix paths (as we simply use strings as path representations for now)
