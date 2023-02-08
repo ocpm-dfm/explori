@@ -18,6 +18,11 @@ from worker.tasks.performance import align_projected_log_times_task
 router = APIRouter(prefix="/pm",
                    tags=['Process Mining'])
 
+# The endpoints in this file are a little strange when compared to the other endpoints. That's because the endpoints in
+# this files are ment to be pollen continuously by the frontend. Hence, if a result is not available yet, we don't wait
+# until the computation is complete but instead immediately result a status that the computation is still running.
+# This allows for the FastAPI server to quickly respond to all requests and we don't have to deal with issues such as
+# blocked servers or timeouting requests.
 
 # region /dfm Get filtered DFM
 class DFMNodeResponseModel(BaseModel):
@@ -52,7 +57,7 @@ def calculate_dfm_with_thresholds(ocel: str = Depends(ocel_filename_from_query),
                                   task_manager: TaskManager = Depends(get_task_manager)):
     """
     Async: Tries to load the given OCEL from the data folder, calculates the DFM and the threshold associated with
-    each edge and node.
+    each edge, node and traace.
     """
     return run_dfm_task(ocel, task_manager)
 
@@ -65,10 +70,18 @@ def compute_alignments(process_ocel: str = Query(example="uploaded/p2p-normal.js
                        conformance_ocel: str = Query(example="uploaded/p2p-normal.jsonocel"),
                        threshold: float = Query(example=0.75),
                        task_manager: TaskManager = Depends(get_task_manager)):
+    """
+    Async: Computes alignments of the projected traces in the conformance OCEL based on DFM constructed from the process
+    OCEL and the threshold.
+    """
+    # We cannot use "Depends(ocel_filename_from_query)" for the OCELs since it's parameter name is hardcoded.
+    # Therefore, we have to ensure that we have safe paths (i.e. no path transitions).
     process_ocel = secure_ocel_filename(process_ocel)
     conformance_ocel = secure_ocel_filename(conformance_ocel)
 
     process_dfm = get_dfm(process_ocel, task_manager)
+    # We also get the DFM of the conformance OCEL which is a slight overkill way to get all the object types and traces
+    # from the conformance OCEL.
     conformance_dfm = get_dfm(conformance_ocel, task_manager)
 
     if process_dfm is None or conformance_ocel is None:
@@ -77,6 +90,7 @@ def compute_alignments(process_ocel: str = Query(example="uploaded/p2p-normal.js
     result = run_alignment_tasks(process_ocel, conformance_ocel, process_dfm, conformance_dfm, threshold, task_manager)
 
     def reformat_output(task_output: Dict[Tuple[str, int], Any] | None):
+        """Remaps the output of the grouped tasks into a frontend friendly form."""
         if task_output is None:
             return None
 
@@ -90,29 +104,33 @@ def compute_alignments(process_ocel: str = Query(example="uploaded/p2p-normal.js
 
     result.result = reformat_output(result.result)
     result.preliminary = reformat_output(result.preliminary)
-    #print(result.json())
     return result
 
 
 @router.get('/performance', response_model=TaskStatus[Any])
-def compute_performance_metrics(process_ocel: str = Query(example="uploaded/p2p-normal.jsonocel"),
-                                metrics_ocel: str = Query(example="uploaded/p2p-normal.jsonocel"),
-                                threshold: float = Query(example=0.75),
-                                task_manager: TaskManager = Depends(get_task_manager)):
+def compute_legacy_performance_metrics(process_ocel: str = Query(example="uploaded/p2p-normal.jsonocel"),
+                                       metrics_ocel: str = Query(example="uploaded/p2p-normal.jsonocel"),
+                                       threshold: float = Query(example=0.75),
+                                       task_manager: TaskManager = Depends(get_task_manager)):
+    """This is the legacy / Sprint 3 performance metrics endpoint. It computes the performance metrics
+    of the aligned projected event logs."""
     process_ocel = secure_ocel_filename(process_ocel)
     metrics_ocel = secure_ocel_filename(metrics_ocel)
 
+    # First we determine the DFMs in order to calculate the alignments in the next steps.
     process_dfm = get_dfm(process_ocel, task_manager)
     metrics_dfm = get_dfm(metrics_ocel, task_manager)
 
     if process_dfm is None or metrics_dfm is None:
         return TaskStatus(status="running", result=None, preliminary=None)
 
+    # Now, the alignments are calculated.
     alignments_status = run_alignment_tasks(process_ocel, metrics_ocel, process_dfm, metrics_dfm, threshold,
                                             task_manager)
     if alignments_status.status != "done":
         return TaskStatus(status="running", preliminary=None, result=None)
 
+    # The final step is to align the projected logs and to calculate waiting times.
     alignments_by_object_type = {}
     for ((object_type, _), alignment) in alignments_status.result.items():
         alignments_by_object_type.setdefault(object_type, []).append(alignment)
@@ -139,20 +157,26 @@ def compute_ocel_performance_metrics(process_ocel: str = Query(example="uploaded
                                      metrics_ocel: str = Query(example="uploaded/p2p-normal.jsonocel"),
                                      threshold: float = Query(example=0.75),
                                      task_manager: TaskManager = Depends(get_task_manager)):
+    """
+    Async: Calculates aligned OperA performance metrics.
+    """
     process_ocel = secure_ocel_filename(process_ocel)
     metrics_ocel = secure_ocel_filename(metrics_ocel)
 
+    # Step 1. Calculate the DFMs of the both OCELs. (Needed for the alignments)
     process_dfm = get_dfm(process_ocel, task_manager)
     metrics_dfm = get_dfm(metrics_ocel, task_manager)
 
     if process_dfm is None or metrics_dfm is None:
         return TaskStatus(status="running", result=None, preliminary=None)
 
+    # Step 2. Calculate the alignments. (Needed for to align the projected OCELs)
     alignments_status = run_alignment_tasks(process_ocel, metrics_ocel, process_dfm, metrics_dfm, threshold,
                                             task_manager)
     if alignments_status.status != "done":
         return TaskStatus(status="running", preliminary=None, result=None)
 
+    # Step 3. Align the timestamps of the projected event logs (one task per object type).
     alignments_by_object_type = {}
     for ((object_type, _), alignment) in alignments_status.result.items():
         alignments_by_object_type.setdefault(object_type, []).append(alignment)
@@ -175,6 +199,8 @@ def compute_ocel_performance_metrics(process_ocel: str = Query(example="uploaded
     if aligned_times_status.status != "done":
         return TaskStatus(status="running", preliminary=None, result=None)
 
+    # Step 4. Actually calculating the performance metrics.
+    # We sort the object types so the cache keys are consistent.
     object_types = sorted(list(aligned_times_status.result.keys()))
     ocel_metrics_task = TaskDefinition(metrics_ocel,
                                        TaskName.PERFORMANCE_METRICS.with_attributes(
