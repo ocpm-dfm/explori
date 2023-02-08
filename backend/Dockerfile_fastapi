@@ -5,6 +5,7 @@ ONBUILD WORKDIR /explori/fastapi
 
 FROM common_pre_build as prod_build
 ONBUILD COPY src/ src/
+ONBUILD COPY data/uploaded/demo_ocel.jsonocel data/uploaded/demo_ocel.jsonocel
 
 FROM common_pre_build as dev_build
 ONBUILD ENV DEV=1
