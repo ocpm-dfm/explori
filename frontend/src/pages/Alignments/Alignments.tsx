@@ -234,11 +234,19 @@ export type ModelAlignment = {
     ]
 }
 
+/**
+ * Used for visualizing alignments in the graph. It takes alignments from the backend and transforms them such that they
+ * can be visualized in the cytodfm.tsx component.
+ */
 export const AlignmentsData = connect<StateProps, DispatchProps, AlignmentsDataProps, RootState>(mapStateToProps, mapDispatchToProps)((props: DataProps) => {
+    // modelOcel corresponds to the OCEL used for the initial dfm
+    // conformanceOcel is used for aligning the log to the dfm. Currently, this feature is not used.
     const modelOcel = props.modelOcel;
     const conformanceOcel = props.modelOcel;
     const threshold = props.threshold;
 
+    // The query to fetch the alignments from the backend. Additionally, a stateBackend objects
+    // is given to the backend to set/update the query state.
     const alignmentsQuery = useAsyncAPI<TraceAlignments>("/pm/alignments", {
         process_ocel: modelOcel,
         conformance_ocel: conformanceOcel,
@@ -248,12 +256,15 @@ export const AlignmentsData = connect<StateProps, DispatchProps, AlignmentsDataP
         setState: props.setQueryState
     });
 
+    // When preliminary data is available, we already start transforming the alignments from the
+    // backend to a frontend-friendly format which can then be visualized.
     const alignmentData = alignmentsQuery.preliminary ? alignmentsQuery.preliminary : alignmentsQuery.result;
     // Reset alignments in cytodfm to prevent errors
     props.setLogAlignments([]);
     props.setModelAlignments([]);
     if (alignmentData) {
         try {
+            // These are the arrays to be used for storing the transformed alignments.
             let log_misalignments: [string, AlignElement, AlignElement, AlignElement, string[][]][] = [];
             let model_misalignments: [string, AlignElement, AlignElement, string[][]][] = [];
             alignmentData.forEach((traceWithAlignments : any) => {
@@ -262,21 +273,27 @@ export const AlignmentsData = connect<StateProps, DispatchProps, AlignmentsDataP
                     if (alignment) {
                         if(alignment['log_alignment'].length === alignment['model_alignment'].length){
                             let alignment_copy = JSON.parse(JSON.stringify(alignment));
+                            // The indices represent where a ">>" (skip move) was found to later retrieve the correct edges for each one.
                             const log_indices = alignment_copy['log_alignment'].map((item: any, index: number) => (item['activity'] === ">>" ? index : null)).filter((item: number | null) => item !== null);
                             const model_indices = alignment_copy['model_alignment'].map((item: any, index: number) => (item['activity'] === ">>" ? index : null)).filter((item: number | null) => item !== null);
                             log_indices.forEach((index: number) => {
+                                // We introduced "fake" start and end events to handle traces of length 1. Since these are always
+                                // present, they should always align.
                                 if(index === 0){
                                     console.log("something went wrong? Explori start should always be in the log")
                                 } else if(index === alignment['log_alignment'].length-1){
                                     console.log("something went wrong? Explori end should always be in the log")
                                 } else {
-                                    // need edge from edge between last activity before to skipped activity and edge between skipped activity and next activity
-                                    // search in model alignment for last activity and next activity (so go to start and use first activity that is not ">>")
-                                    // e.g: have index 7 where >> is seen in log, then go to model index 7 and go to start until we find first activity that is not >>
-                                    //      then same with going till end
-                                    //      create edge between these two found ones and the activity at index 7 (is never >> since we have log move)
+                                    // We need an edge from: edge between last activity before to skipped activity, and edge between skipped activity and next activity
+                                    // We search in model alignment for last activity and next activity (so go to start and use first activity that is not ">>")
+                                    // e.g: We have index 7 where >> is seen in log, then go to model index 7 and go to start until we find first activity that is not >>
+                                    //      then same with going till the end.
+                                    //      We create edge between these two found ones and the activity at index 7 (is never >> since we have model move)
                                     const model_activity = alignment['model_alignment'][index];
                                     let [last_activity, next_activity] = getLastAndNextActivity(alignment, index);
+                                    // Check whether the element which we want to add is not already present in the log_misalignments.
+                                    // If it is present, we decided against showing duplicate edges next to each other and just sum them up onto
+                                    // one edge.
                                     let element = logEqualityChecker(log_misalignments, [objectType, last_activity, model_activity, next_activity])
                                     if(element === null){
                                         log_misalignments.push([objectType, last_activity, model_activity, next_activity, [clearAndCutAlignment(alignment_copy)]])
@@ -285,13 +302,17 @@ export const AlignmentsData = connect<StateProps, DispatchProps, AlignmentsDataP
                                     }
                                 }
                             })
+                            // Since Explori currently works with "interval" events and not with atomic ones, we only consider one
+                            // type of log moves (instead of the five possible ones).
                             model_indices.forEach((index: number) => {
                                 if(index === 0){
                                     // loop on start node
+                                    console.log("something went wrong? Explori start should always be in the log")
                                 } else if(index === alignment['log_alignment'].length-1){
                                     // loop on end node
+                                    console.log("something went wrong? Explori end should always be in the log")
                                 } else {
-                                    // loop on edge between last and next activity in model
+                                    // We need an edge between the last activity found before the ">>" in the model alignment and the next one.
                                     let [last_activity, next_activity] = getLastAndNextActivity(alignment, index);
                                     let element = modelEqualityChecker(model_misalignments, [objectType, last_activity, next_activity])
                                     if(element === null){
@@ -306,6 +327,7 @@ export const AlignmentsData = connect<StateProps, DispatchProps, AlignmentsDataP
                     }
                 })
             });
+            // Sets the corresponding variables in cytodfm.tsx for visualizing.
             props.setLogAlignments(log_misalignments)
             props.setModelAlignments(model_misalignments)
             //console.log(object_type_alignments['MATERIAL']);
@@ -315,7 +337,8 @@ export const AlignmentsData = connect<StateProps, DispatchProps, AlignmentsDataP
             //console.log(alignmentData)
         }
     }
-
+    // Shows a circular waiting indicator when the alignmentsQuery is running and preliminary results were fetched to
+    // indicate that not all results are present already.
     return (
         <React.Fragment>
             {!alignmentsQuery.result && alignmentsQuery.preliminary && (
@@ -332,6 +355,11 @@ export const AlignmentsData = connect<StateProps, DispatchProps, AlignmentsDataP
     )
 });
 
+/**
+ * Searches for the last activity before ">>" and the next activity after.
+ * @param alignment - The alignment trace to consider
+ * @param index - The index from where we start searching
+ */
 function getLastAndNextActivity(alignment: TraceAlignment, index: number): AlignElement[] {
     let first_activity: AlignElement = {activity: ""};
     for (let i = index-1; i >= 0; i--){
@@ -357,6 +385,11 @@ function getLastAndNextActivity(alignment: TraceAlignment, index: number): Align
     return [first_activity, second_activity];
 }
 
+/**
+ * Checks whether the new entry is already present in the frontend-friendly log_alignments.
+ * @param alignments - Current frontend-friendly log alignments
+ * @param new_entry - New entry to be checked
+ */
 function logEqualityChecker(alignments: [string, AlignElement, AlignElement, AlignElement, string[][]][],
                          new_entry: [string, AlignElement, AlignElement, AlignElement])
 {
@@ -367,7 +400,11 @@ function logEqualityChecker(alignments: [string, AlignElement, AlignElement, Ali
     }
     return null
 }
-
+/**
+ * Checks whether the new entry is already present in the frontend-friendly model_alignments.
+ * @param alignments - Current frontend-friendly model alignments
+ * @param new_entry - New entry to be checked
+ */
 function modelEqualityChecker(alignments: [string, AlignElement, AlignElement, string[][]][],
                             new_entry: [string, AlignElement, AlignElement])
 {
@@ -379,6 +416,10 @@ function modelEqualityChecker(alignments: [string, AlignElement, AlignElement, s
     return null
 }
 
+/**
+ * Clears the skip moves (>>) out of the alignment.
+ * @param alignment - The alignment to be cleared.
+ */
 function clearAndCutAlignment(alignment: TraceAlignment){
     let activities: string[] = []
     for(let ele of alignment['log_alignment']){

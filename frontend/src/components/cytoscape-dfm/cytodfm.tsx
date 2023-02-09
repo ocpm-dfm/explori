@@ -369,6 +369,7 @@ export const FilteredCytoDFM = forwardRef((props: CytoDFMProps, ref: ForwardedRe
         selectedNode: null,
         selectedEdge: null
     });
+    // logAlignments and modelAlignments are used to visualize alignments in the graph.
     const [logAlignments, setLogAlignments] = useState<[string, AlignElement, AlignElement, AlignElement, string[][]][]>([]);
     const [modelAlignments, setModelAlignments] = useState<[string, AlignElement, AlignElement, string[][]][]>([]);
     const cytoscapeRef = useRef<cytoscape.Core | null>(null);
@@ -576,10 +577,12 @@ export const FilteredCytoDFM = forwardRef((props: CytoDFMProps, ref: ForwardedRe
 
                     const nodeIndices = [lastNodeIndex, intermediateNodeIndex, nextNodeIndex]
 
+                    // Check that all nodes which are used for the new edges exist
                     if (nodeIndices.indexOf(-1) > -1) {
                         break
                     }
 
+                    // New nodes are created for the "extended" view.
                     const nodeLength: number = dfm.nodes.length + alignmentNodes.length
                     const sourceNodeIndex: number = nodeLength + 1
                     const targetNodeIndex: number = nodeLength + 2
@@ -632,6 +635,7 @@ export const FilteredCytoDFM = forwardRef((props: CytoDFMProps, ref: ForwardedRe
                         [targetNodeIndex, nextNodeIndex, intermediateNodeIndex, nextNodeIndex]
                     ]
 
+                    // For simple mode, we simply need an edge from the lastNode to the nextNode.
                     const neededEdgesSimple: number[][] = [
                         [lastNodeIndex, nextNodeIndex, lastNodeIndex, nextNodeIndex]
                     ]
@@ -711,6 +715,7 @@ export const FilteredCytoDFM = forwardRef((props: CytoDFMProps, ref: ForwardedRe
 
             for (const [objectType, lastActivity, nextActivity, alignments] of modelAlignments) {
                 if (selectedObjectTypes.includes(objectType)) {
+                    // Check whether all nodes used for the new edge exist.
                     if (
                         filteredNodesLabels.indexOf(lastActivity.activity) === -1 ||
                         filteredNodesLabels.indexOf(nextActivity.activity) === -1
@@ -754,8 +759,6 @@ export const FilteredCytoDFM = forwardRef((props: CytoDFMProps, ref: ForwardedRe
                     }
 
                     const neededEdgesExpansive: number[][] = [
-                        // need loop on new node
-                        //[sourceNodeIndex, sourceNodeIndex],
                         // need edge between lastNode and sourceNode
                         [lastNodeIndex, sourceNodeIndex, lastNodeIndex, nextNodeIndex],
                         // need edge between sourceNode and nextNode
@@ -1136,6 +1139,12 @@ export function getCountAtThreshold(counts: [number, number][], threshold: numbe
     return 0;
 }
 
+/**
+ * Finds the correct edge which needs to be split and removed for the "extended" alignments view.
+ * @param subgraph - subgraph with all edges
+ * @param sourceIndex - The index from where the edge we want to find starts
+ * @param targetIndex - The index where the edge we want to find ends
+ */
 function findMatch(subgraph: {
     source: number,
     target: number,
@@ -1150,6 +1159,13 @@ function findMatch(subgraph: {
     return null
 }
 
+/**
+ * Finds the correct edge which needs to be split and removed for the "extended" alignments view.
+ * @param edges - Current edges of the dfm
+ * @param sourceIndex - The index from where the edge we want to find starts
+ * @param targetIndex - The index where the edge we want to find ends
+ * @param objectType -  The object type that the edge corresponds to
+ */
 function findRedundantEdge(edges: {
     data: {
         objectType: string,
@@ -1165,6 +1181,10 @@ function findRedundantEdge(edges: {
     return null
 }
 
+/**
+ * Creates a dict which maps nodes to their index.
+ * @param nodes - The nodes for which the dict should be created.
+ */
 function createNodeIndexDict(nodes: {
     label: string,
     counts: { [key: string]: [number, number][] }
@@ -1177,6 +1197,11 @@ function createNodeIndexDict(nodes: {
     return nodeIndexDict
 }
 
+/**
+ * Translates whole traces to node indices. Returns array of array of indices.
+ * @param traces
+ * @param nodeIndexDict
+ */
 function translateTracesToNodeIndex(traces: string[][], nodeIndexDict: { [id: string]: number }) {
     let outputTraces: number[][] = []
     for (let trace of traces) {
