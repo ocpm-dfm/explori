@@ -18,6 +18,11 @@ STOP_TOKEN = "|EXPLORI_END|"
 
 @app.task()
 def dfm(ocel_filename: str):
+    """
+    Celery task which constructs a DFM from an ocel.
+    :param ocel_filename: Path to ocel from which to build the DFM
+    :return: Constructed DFM in frontend friendly format
+    """
     # At least for development the backend can potentially run on Windows in which case `ocel_filename` is a Windows
     # path as it was constructed using `os.path` functionality (which just operates on strings).
     # Because Celery has no official support for Windows, we assume it will be run on a POSIX compatible platform.
@@ -52,6 +57,13 @@ def prepare_dfg_computation(traces: List[Trace]) -> (
         Dict[Edge, int],
         Dict[Node, int], Dict[Edge, List[Trace]],
         int):
+    """
+    Calculates a number of useful, additional data to later be able to e.g. efficiently filter the DFG.
+    :param traces: Traces for which to compute the additional data
+    :return: Number of objects passing through each edge, number of objects passing through each node,
+             traces containing each edge, number of total objects
+    """
+
     # edge := (sourceNode: str, targetNode: str)
     # edge_counts := edge -> <nr of objects passing through that edge>: int
     # node_counts := node -> <nr of objects passing through that node>: int
@@ -95,6 +107,15 @@ def calculate_threshold_counts_on_dfg(edge_totals: Dict[Edge, int], node_totals:
         Dict[Edge, List[CountSeperator]],
         Dict[Node, List[CountSeperator]],
         Dict[Tuple[Node], Tuple[int, float]]):
+    """
+    Calculates threshold lower bound for edges and nodes above which those would still be included in a filtered DFG
+    to be able to quickly switch between different thresholds without to perform the filtering operation on-demand.
+    :param edge_totals: Number of objects passing through each edge
+    :param node_totals: Number of objects passing through each node
+    :param edge_traces: Traces containing each edge
+    :param total_objects: Total number of objects
+    :return: Lower threshold bound and number of objects going through edge or node after at that threshold
+    """
     edges = sorted(list(edge_totals.keys()), key=lambda edge: edge_totals[edge])
 
     current_objects = total_objects

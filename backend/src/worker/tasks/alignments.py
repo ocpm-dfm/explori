@@ -42,6 +42,9 @@ class TraceAlignment(BaseModel):
 
 
 def rearrange_and_deduplicate_alignments(aligned_traces: List[Dict[str, Any]]) -> List[TraceAlignment]:
+    """
+    Legacy version of `rearrange_alignment` below
+    """
     # TODO: deterministic ordering?
 
     deduplicated_traces = set()
@@ -71,6 +74,11 @@ def rearrange_and_deduplicate_alignments(aligned_traces: List[Dict[str, Any]]) -
 
 
 def rearrange_alignment(alignment: List[List[Tuple[str, str]]]) -> TraceAlignment:
+    """
+    Rearranges alignment information calculated by pm4py and removes model moves of optional start transitions.
+    :param alignment: Alignment information calculated by pm4py
+    :return: Rearranged trace alignment type used by explori
+    """
     alignment_log = map(op.itemgetter(0), alignment)
     alignment_model = map(op.itemgetter(1), alignment)
 
@@ -90,6 +98,14 @@ def rearrange_alignment(alignment: List[List[Tuple[str, str]]]) -> TraceAlignmen
 
 @app.task()
 def compute_alignments(process_ocel: str, threshold: float, object_type: str, trace: List[str]):
+    """
+    Celery task which computes the alignment between a DFG and a single trace.
+    :param process_ocel: Ocel of the DFM containing the DFG to calculate alignments on
+    :param threshold: Filtering threshold to apply before calculating alignments
+    :param object_type: Object type indicating for which DFG the alignments should be calculated
+    :param trace: Trace which gets converted into an artificial projected event log which is then aligned to the DFG
+    :return: Resulting trace alignment information
+    """
     process_ocel = PureWindowsPath(process_ocel).as_posix()
 
     # we know that the DFM exists because the `compute_alignments` endpoint does not start this task before the DFM is discovered
@@ -111,6 +127,14 @@ def compute_alignments(process_ocel: str, threshold: float, object_type: str, tr
 
 
 def filter_threshold_of_graph_notation(dfm: FrontendFriendlyDFM, object_type: str, filter_threshold: float) -> FilteredDFG:
+    """
+    The trace-based filtering operation done in the frontend needs to be replicated because it changes the structure of the
+    DFG and will therefore also influence the alignment calculation.
+    :param dfm: DFM containing the DFG to calculate alignments on
+    :param object_type: Object type indicating which DFG should be filtered
+    :param filter_threshold: Filtering threshold to apply
+    :return: Threshold filtered DFG
+    """
     # in nodes, edges in subgraphs threshold attribute is value at which the element starts to be included
 
     nodes = []
@@ -131,6 +155,11 @@ def filter_threshold_of_graph_notation(dfm: FrontendFriendlyDFM, object_type: st
 
 
 def build_trace_event_log(trace: List[str]) -> EventLog:
+    """
+    Creates an artificial event log containing only the provided trace.
+    :param trace: Trace to include in the event log
+    :return: Event log containing the single trace
+    """
     df = pandas.DataFrame({
         "concept:name": trace,
         "time:timestamp": list(range(len(trace))),
@@ -141,11 +170,24 @@ def build_trace_event_log(trace: List[str]) -> EventLog:
 
 
 def build_pm4py_dfg(dfg: FilteredDFG):
+    """
+    Remnant of avoiding to build petrinet to calculate alignments on, but instead use pm4py's computation directly
+    on dfgs. We switched back to an earlier version of pm4py (from 2.3 to 2.2) to avoid problems with ocpa 1.2 not being
+    compatible with pm4py 2.3 and use the in the introductory paper mentioned transformation to sound petrinets again.
+    :param dfg: Filtered DFG to convert into pm4py format
+    :return: pm4py DFG
+    """
     edges = {(dfg.nodes[edge.source], dfg.nodes[edge.target]): 1 for edge in dfg.edges}
     return edges, {START_TOKEN: 1}, {STOP_TOKEN: 1}
 
 
 def build_petrinet(dfg):
+    """
+    Converts a (sound) DFG into a (sound) petrinet following the approach presented in
+    `https://doi.org/10.1109/ICPM.2019.00015`.
+    :param dfg: DFG to convert to `pm4py.objects.petri_net.utils.petri_utils.PetriNet`
+    :return: pm4py petrinet, initial marking of petrinet, final marking of petrinet
+    """
     net = PetriNet()
 
     # "A place for each node ∈ N (this includes places belonging to start and end)"
@@ -188,15 +230,38 @@ def build_petrinet(dfg):
 
 
 def add_empty_connected_transition(source, target, net):
+    """
+    Helper function to build petrinet from DFG. Creates a transition without name and label.
+    :param source: Source of transition
+    :param target: Target of transition
+    :param net: pm4py petrinet to add the transition to
+    """
     add_connected_transition(source, target, None, None, net)
 
 
 def add_connected_transition(source, target, name, label, net):
+    """
+    Helper function to build petrinet from DFG. Creates a transition with name and label.
+    :param source: Source of transition
+    :param target: Target of transition
+    :param name: Name of transition
+    :param label: Label of transition
+    :param net: pm4py petrinet to add the transition to
+    """
     trans = add_transition(net, name=name, label=label)
     _ = add_arc_from_to(source, trans, net)
     _ = add_arc_from_to(trans, target, net)
 
 
 def add_optional_connected_transition(source, target, name, label, net):
+    """
+    Helper function to build petrinet from DFG. Creates an optional transition by created both an empty and a non-empty
+    one from source to target nodes.
+    :param source: Source of both transition
+    :param target: Target of both transition
+    :param name: Name of non-empty transition
+    :param label: Label of non-empty transition
+    :param net: pm4py petrinet to add both transitions to
+    """
     add_empty_connected_transition(source, target, net)
     add_connected_transition(source, target, name, label, net)

@@ -76,8 +76,9 @@ class ColumnListResponseModel(BaseModel):
 def list_available_logs():
     """
     Lists all available OCELS and returns them as list of strings that can be used to access them using other
-    API endpoints. Additionally, the file size is returned.OCELs that were uploaded by the user over the web
+    API endpoints. Additionally, the file size is returned. OCELs that were uploaded by the user over the web
     interface will be prefixed by "uploaded/".
+    :return: String list containing paths of available ocels
     """
     def find_available_logs(folder: str) -> List[str]:
         result = []
@@ -113,7 +114,6 @@ async def upload_event_logs(file: UploadFile):
     """
     This function handles the uploading of OCELs. It also ensures that .jsonocel and .xmlocel OCELs
     have the correct Event ID format since OCPA does not like string event IDs (at least v1.2).
-
     :param file: File to be uploaded as fastapi UploadFile
     :return: Returns successful status and file path + file size
     """
@@ -184,7 +184,6 @@ def delete(file_path: str, uuid: str, delete_log: bool):
     :param uuid: The UUID of the OCEL which being is deleted. Needed to delete the corresponding cache.
     :param delete_log: Boolean to decide whether to delete the log. Useful when one just wants to clear
     everything except the OCEL.
-    :return:
     """
     file_path_extended = "data" + os.sep + file_path
     # Delete ocel and corresponding cache folder
@@ -314,7 +313,7 @@ def save_csv_columns(payload: StoreCSVPayload):
 def delete_csv_cache(file_path: str, uuid: str):
     """
     This function is used to delete the cache and autosaves of csv OCEL which is called when
-    the csv OCEL was selected and the column mappings are different than before.
+    the csv OCEL was selected and the column mappings are different from before.
     :param file_path: Path to the csv OCEL.
     :param uuid: UUID of the csv OCEL to retrieve the corresponding cache.
     :return: Status successful
@@ -418,6 +417,3 @@ def get_csv_file(ocel_name: str):
     if csv_file[-len(csv_file_unvalidated):] != csv_file_unvalidated:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Path traversals are not allowed!")
     return csv_file
-
-
-

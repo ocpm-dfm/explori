@@ -19,7 +19,7 @@ router = APIRouter(prefix="/pm",
                    tags=['Process Mining'])
 
 # The endpoints in this file are a little strange when compared to the other endpoints. That's because the endpoints in
-# this files are ment to be pollen continuously by the frontend. Hence, if a result is not available yet, we don't wait
+# this file are meant to be polled continuously by the frontend. Hence, if a result is not available yet, we don't wait
 # until the computation is complete but instead immediately result a status that the computation is still running.
 # This allows for the FastAPI server to quickly respond to all requests and we don't have to deal with issues such as
 # blocked servers or timeouting requests.
@@ -57,7 +57,10 @@ def calculate_dfm_with_thresholds(ocel: str = Depends(ocel_filename_from_query),
                                   task_manager: TaskManager = Depends(get_task_manager)):
     """
     Async: Tries to load the given OCEL from the data folder, calculates the DFM and the threshold associated with
-    each edge, node and traace.
+    each edge, node and trace.
+    :param ocel: Path to ocel
+    :param task_manager: Taskmanager to run the dfm construction task with
+    :return: Taskstatus (potentially containing the previously computed (partial) result) of dfm construction task
     """
     return run_dfm_task(ocel, task_manager)
 
@@ -73,6 +76,11 @@ def compute_alignments(process_ocel: str = Query(example="uploaded/p2p-normal.js
     """
     Async: Computes alignments of the projected traces in the conformance OCEL based on DFM constructed from the process
     OCEL and the threshold.
+    :param process_ocel: Path to ocel used in DFM construction
+    :param conformance_ocel: Path to ocel to align with the DFM
+    :param threshold: Filtering threshold
+    :param task_manager: Taskmanager to run the dfm construction task with
+    :return: Taskstatus (potentially containing the previously computed (partial) result) of alignment calculation task
     """
     # We cannot use "Depends(ocel_filename_from_query)" for the OCELs since it's parameter name is hardcoded.
     # Therefore, we have to ensure that we have safe paths (i.e. no path transitions).
@@ -112,8 +120,15 @@ def compute_legacy_performance_metrics(process_ocel: str = Query(example="upload
                                        metrics_ocel: str = Query(example="uploaded/p2p-normal.jsonocel"),
                                        threshold: float = Query(example=0.75),
                                        task_manager: TaskManager = Depends(get_task_manager)):
-    """This is the legacy / Sprint 3 performance metrics endpoint. It computes the performance metrics
-    of the aligned projected event logs."""
+    """
+    This is the legacy / Sprint 3 performance metrics endpoint. It computes the performance metrics
+    of the aligned projected event logs.
+    :param process_ocel: Path to ocel used in DFM construction
+    :param metrics_ocel: Path to ocel to align with the DFM and then compute the performance metrics for
+    :param threshold: Filtering threshold
+    :param task_manager: Taskmanager to run the dfm construction task with
+    :return: Taskstatus (potentially containing the previously computed (partial) result) of performance metrics task
+    """
     process_ocel = secure_ocel_filename(process_ocel)
     metrics_ocel = secure_ocel_filename(metrics_ocel)
 
@@ -159,6 +174,11 @@ def compute_ocel_performance_metrics(process_ocel: str = Query(example="uploaded
                                      task_manager: TaskManager = Depends(get_task_manager)):
     """
     Async: Calculates aligned OperA performance metrics.
+    :param process_ocel: Path to ocel used in DFM construction
+    :param metrics_ocel: Path to ocel to align with the DFM and then compute the performance metrics for
+    :param threshold: Filtering threshold
+    :param task_manager: Taskmanager to run the dfm construction task with
+    :return: Taskstatus (potentially containing the previously computed (partial) result) of performance metrics task
     """
     process_ocel = secure_ocel_filename(process_ocel)
     metrics_ocel = secure_ocel_filename(metrics_ocel)
@@ -215,6 +235,13 @@ def compute_ocel_performance_metrics(process_ocel: str = Query(example="uploaded
 
 
 def get_dfm(ocel: str, task_manager: TaskManager, ignore_cache: bool = False) -> FrontendFriendlyDFM | None:
+    """
+    Helper function running the dfm construction task and returning the finished result once it's available
+    :param ocel: Path to ocel to use in DFM construction
+    :param task_manager: Taskmanager to run the dfm construction task with
+    :param ignore_cache: If set to true, the taskmanager ignores cached results and the task is always executed
+    :return: Constructed DFM or `None` when the construction task isn't finished yet
+    """
     task = run_dfm_task(ocel, task_manager, ignore_cache)
     if task.status != "done":
         return None
@@ -222,6 +249,13 @@ def get_dfm(ocel: str, task_manager: TaskManager, ignore_cache: bool = False) ->
 
 
 def run_dfm_task(ocel: str, task_manager, ignore_cache=False):
+    """
+    Creates dfm construction task definition and queues the task with the task manager.
+    :param ocel: Path to ocel to use in DFM construction
+    :param task_manager: Taskmanager to run the dfm construction task with
+    :param ignore_cache: If set to true, the taskmanager ignores cached results and the task is always executed
+    :return: Taskstatus (potentially containing the previously computed (partial) result) of dfm construction task
+    """
     dfm_task_definition = TaskDefinition(ocel, TaskName.CREATE_DFM, dfm_task, [ocel], dfm_cache_key(),
                                          result_version="3")
     return task_manager.cached_task(dfm_task_definition, ignore_cache)
@@ -231,7 +265,18 @@ def run_alignment_tasks(process_ocel: str,
                         conformance_ocel: str,
                         process_dfm: FrontendFriendlyDFM,
                         conformance_dfm: FrontendFriendlyDFM,
-                        threshold: float, task_manager: TaskManager):
+                        threshold: float,
+                        task_manager: TaskManager):
+    """
+    Creates alignment calculation task definition and queues the task with the task manager.
+    :param process_ocel: Path to ocel used in DFM construction
+    :param conformance_ocel: Path to ocel to align with the DFM
+    :param process_dfm: Constructed process DFM
+    :param conformance_dfm: Conformance DFM to align
+    :param threshold: Filtering threshold
+    :param task_manager: Taskmanager to run the alignment calculation task with
+    :return: Taskstatus (potentially containing the previously computed (partial) result) of alignment calculation task
+    """
     if not set(conformance_dfm.subgraphs.keys()).issubset(process_dfm.subgraphs.keys()):
         raise HTTPException(status_code=status.HTTP_412_PRECONDITION_FAILED,
                             detail="The object types of the OCELS do not match.")

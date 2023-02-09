@@ -43,6 +43,11 @@ class StoreSessionPayload(BaseModel):
 
 @router.put('/store')
 async def store_session(payload: StoreSessionPayload):
+    """
+    Stores the provided session on disk.
+    :param payload: Session to store
+    :return: Successful status
+    """
     session_file = get_session_file(payload.name)
     with open(session_file, 'w') as f:
         json.dump(payload.session.dict(), f)
@@ -51,6 +56,11 @@ async def store_session(payload: StoreSessionPayload):
 
 @router.get('/restore', response_model=Session)
 def restore_session(name: str) -> Session:
+    """
+    Restore a session from disk by name.
+    :param name: Name of session to restore
+    :return: Restored session
+    """
     session_file = get_session_file(name)
     if not os.path.isfile(session_file):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Unknown session.")
@@ -90,8 +100,9 @@ class AvailableSessionsResponseModel(BaseModel):
 @router.get('/available', response_model=AvailableSessionsResponseModel)
 def list_available_sessions():
     """
-        Lists all available Sessions and returns them as list of strings that can be used to access them using other
-        API endpoints.
+    Lists all available Sessions and returns them as list of strings that can be used to access them using other
+    API endpoints.
+    :return: List of available sessions containing information like used ocel, etc.
     """
 
     if not os.path.isdir(SESSIONS_FOLDER):
@@ -128,7 +139,11 @@ def list_available_sessions():
 
 
 def get_session_file(session_name: str):
-    """Determines the file to store the session to. Prevents path traversals."""
+    """
+    Determines the file to store the session to. Prevents path traversals.
+    :param session_name: Name of session for which to create a session file path
+    :return: Session file path
+    """
 
     session_file_unvalidated = os.path.join(SESSIONS_FOLDER, session_name + ".json")
 
