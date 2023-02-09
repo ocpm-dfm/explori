@@ -12,9 +12,3 @@ app = Celery(
     backend=f"redis://{REDIS_HOST}:{REDIS_PORT}/0"
 )
 app.autodiscover_tasks(['worker.tasks.dfm', 'worker.tasks.alignments', 'worker.tasks.performance'], force=True)
-
-
-@app.task()
-def test_task(x):
-    time.sleep(5)
-    return x + 5
