@@ -5,7 +5,7 @@ let API_BASE_URL = 'https://production.com/api';
 // @ts-ignore
 if (window.webpackHotUpdate || (process.env.NODE_ENV !== "production" && process.env.NODE_ENV !== "test" && typeof console !== "undefined")
 ) {
-    API_BASE_URL = 'http://localhost:8080';
+    API_BASE_URL = 'http://localhost:8000';
 }
 
 const deepEqual = require("deep-equal");
@@ -82,7 +82,7 @@ type StateBackend<T> = {
 }
 
 export function useAsyncAPI<DataType>(endpoint: string, parameters: { [key: string]: string | number },
-                                      stateBackend: StateBackend<DataType> | null = null) {
+    stateBackend: StateBackend<DataType> | null = null) {
     const componentState = useState<AsyncApiState<DataType>>({
         preliminary: null,
         result: null,

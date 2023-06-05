@@ -1,5 +1,5 @@
 import "./ExploriNavbar.css"
-import {FontAwesomeIcon} from '@fortawesome/react-fontawesome'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
     faDiagramProject,
     faArrowRightArrowLeft,
@@ -7,16 +7,16 @@ import {
     faSave,
     faDownload
 } from "@fortawesome/free-solid-svg-icons";
-import {faFile, IconDefinition, faCircleQuestion, faFolderOpen} from "@fortawesome/free-regular-svg-icons";
-import {Link, useLocation} from "react-router-dom";
+import { faFile, IconDefinition, faCircleQuestion, faFolderOpen } from "@fortawesome/free-regular-svg-icons";
+import { Link, useLocation } from "react-router-dom";
 
 
-export interface ExploriNavbarProps  {
+export interface ExploriNavbarProps {
     lowerRowSlot?: any
 }
 
 
-function NavbarLink(props: { icon: IconDefinition, display: string, route: string, title? : string }) {
+function NavbarLink(props: { icon: IconDefinition, display: string, route: string, title?: string }) {
     const location = useLocation();
     const active = location.pathname === props.route;
 
@@ -57,12 +57,12 @@ export function ExploriNavbar(props: ExploriNavbarProps) {
             </div>
             <div className="ENAV-Row ENAV-Row2">
                 <div className="ENAV-links">
-                    <NavbarLink icon={faDiagramProject} display="Graph" route="/" title={"Home page where the DFM is rendered."}/>
-                    <NavbarLink icon={faArrowRightArrowLeft} display="Alignments" route="/alignments" title={"Alignments shown as table."}/>
-                    <NavbarLink icon={faGaugeHigh} display="Performance" route="/performance" title={"Performance metrics shown as table."}/>
+                    <NavbarLink icon={faDiagramProject} display="Graph" route="/" title={"Home page where the DFM is rendered."} />
+                    <NavbarLink icon={faArrowRightArrowLeft} display="Alignments" route="/alignments" title={"Alignments shown as table."} />
+                    <NavbarLink icon={faGaugeHigh} display="Performance" route="/performance" title={"Performance metrics shown as table."} />
                 </div>
                 <div className="ENAV-props">
-                    {props.lowerRowSlot !== undefined ? props.lowerRowSlot : undefined }
+                    {props.lowerRowSlot !== undefined ? props.lowerRowSlot : undefined}
                 </div>
             </div>
         </div>
