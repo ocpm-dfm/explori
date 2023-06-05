@@ -27,9 +27,9 @@ fi
 case "$RUN_COMMAND" in
     ("--start")
         if [[ -n "$OCEL_MOUNT_PATH" ]]; then
-            $DOCKER_COMPOSE build --no-cache _backend_base && OCEL_MOUNT_PATH="$OCEL_MOUNT_PATH" $DOCKER_COMPOSE -f docker-compose.yml -f docker-compose.mount-ocels.yml -f docker-compose.prod.yml up --build --no-cache --detach
+            $DOCKER_COMPOSE build _backend_base && OCEL_MOUNT_PATH="$OCEL_MOUNT_PATH" $DOCKER_COMPOSE -f docker-compose.yml -f docker-compose.mount-ocels.yml -f docker-compose.prod.yml up --build --detach
         else
-            $DOCKER_COMPOSE build --no-cache _backend_base && $DOCKER_COMPOSE -f docker-compose.yml -f docker-compose.prod.yml up --build --no-cache --detach
+            $DOCKER_COMPOSE build _backend_base && $DOCKER_COMPOSE -f docker-compose.yml -f docker-compose.prod.yml up --build --detach
         fi
         ;;
     ("--start-dev") 

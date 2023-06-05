@@ -1,13 +1,9 @@
-# Explori - Enhancing the Discovery of Directly Follows Multigraphs
-
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
+# Explori - Object-Centric Process Mining Using Directly-Follows Multigraphs (DFMs)
 
 ## Requirements
 - docker, docker-compose
 
 ## Getting started
-- Syntax:
   - `./app.sh --start optional/path/to/event/logs/`: start app in production mode and optionally specify path to a folder containing event logs to mount into the application
   - `./app.sh --start-dev`: start app in development mode
   - `./app.sh --stop`: stop app
