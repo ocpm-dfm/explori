@@ -110,7 +110,7 @@ class RedisCache(ShortTermCache):
 
 
 REDIS_HOST = os.environ.get('EXPLORI_REDIS_HOST', default='localhost')
-REDIS_PORT = os.environ.get('EXPLORI_REDIS_PORT', default='6379')
+REDIS_PORT = os.environ.get('EXPLORI_REDIS_PORT', default='6380')
 __SHORT_TERM_CACHE = RedisCache(REDIS_HOST, REDIS_PORT)
 
 

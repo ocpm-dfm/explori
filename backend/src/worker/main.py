@@ -4,7 +4,7 @@ import os
 from celery import Celery
 
 REDIS_HOST = os.environ.get('EXPLORI_REDIS_HOST', default='localhost')
-REDIS_PORT = os.environ.get('EXPLORI_REDIS_PORT', default='6379')
+REDIS_PORT = os.environ.get('EXPLORI_REDIS_PORT', default='6380')
 
 app = Celery(
     'explori',

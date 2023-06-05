@@ -15,7 +15,7 @@ services:
       dockerfile: Dockerfile_fastapi
     environment:
       REDIS_HOST: "redis"
-      REDIS_PORT: 6379
+      REDIS_PORT: 6380
     depends_on:
       - celery
       - redis
@@ -28,7 +28,7 @@ services:
       dockerfile: Dockerfile_celery
     environment:
       REDIS_HOST: "redis"
-      REDIS_PORT: 6379
+      REDIS_PORT: 6380
     depends_on:
       - redis
       - _backend_base
