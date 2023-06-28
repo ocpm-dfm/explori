@@ -1,25 +1,25 @@
-import {RootState} from "../../redux/store";
-import {ThunkDispatch} from "@reduxjs/toolkit";
-import {AsyncApiState, useAsyncAPI} from "../../hooks";
-import {TraceAlignments} from "../../redux/AlignmentsQuery/alignmentsquery.types";
-import {setPerformanceQueryState} from "../../redux/PerformanceQuery/performancequery";
-import {connect} from "react-redux";
-import {ExploriNavbar} from "../../components/ExploriNavbar/ExploriNavbar";
+import { RootState } from "../../redux/store";
+import { ThunkDispatch } from "@reduxjs/toolkit";
+import { AsyncApiState, useAsyncAPI } from "../../hooks";
+import { TraceAlignments } from "../../redux/AlignmentsQuery/alignmentsquery.types";
+import { setPerformanceQueryState } from "../../redux/PerformanceQuery/performancequery";
+import { connect } from "react-redux";
+import { ExploriNavbar } from "../../components/ExploriNavbar/ExploriNavbar";
 import Box from "@mui/material/Box";
 import CircularProgress from "@mui/material/CircularProgress";
-import {getObjectTypeColor, secondsToHumanReadableFormat} from "../../utils";
-import React, {useState} from "react";
-import {AggregatedMetric, PerformanceMetrics} from "../../redux/PerformanceQuery/performancequery.types";
+import { getObjectTypeColor, secondsToHumanReadableFormat } from "../../utils";
+import React, { useState } from "react";
+import { AggregatedMetric, PerformanceMetrics } from "../../redux/PerformanceQuery/performancequery.types";
 import ReactDataGrid from "@inovua/reactdatagrid-community";
-import {downloadBlob} from "../../pages/Alignments/Alignments";
-import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
-import {faShareFromSquare} from "@fortawesome/free-solid-svg-icons";
+import { downloadBlob } from "../../pages/Alignments/Alignments";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faShareFromSquare } from "@fortawesome/free-solid-svg-icons";
 import '../../components/ExploriNavbar/NavbarButton/NavbarButton.css';
 import './Performance.css';
-import {DefaultLayout} from "../../components/DefaultLayout/DefaultLayout";
-import {DropdownCheckbox} from "../../components/ExploriNavbar/NavbarDropdown/DropdownCheckbox/DropdownCheckbox";
-import {DirectlyFollowsMultigraph} from "../../components/cytoscape-dfm/cytodfm";
-import {setDfmQueryState} from "../../redux/DFMQuery/dfmquery";
+import { DefaultLayout } from "../../components/DefaultLayout/DefaultLayout";
+import { DropdownCheckbox } from "../../components/ExploriNavbar/NavbarDropdown/DropdownCheckbox/DropdownCheckbox";
+import { DirectlyFollowsMultigraph } from "../../components/cytoscape-dfm/cytodfm";
+import { setDfmQueryState } from "../../redux/DFMQuery/dfmquery";
 
 type PerformanceProps = {}
 
@@ -57,8 +57,8 @@ export const PerformanceMetricsPage = connect<StateProps, DispatchProps, Perform
     const metrics = metricsQuery.result ? metricsQuery.result : metricsQuery.preliminary;
 
     // We need the total number of object types. Therefore, we fetch the graph, most likely from the Redux state.
-    const dfmQuery = useAsyncAPI<DirectlyFollowsMultigraph>("/pm/dfm", {ocel: props.modelOcel},
-        {state: props.dfmState, setState: props.setDfmState});
+    const dfmQuery = useAsyncAPI<DirectlyFollowsMultigraph>("/pm/dfm", { ocel: props.modelOcel },
+        { state: props.dfmState, setState: props.setDfmState });
     const objectTypeColors: { [key: string]: string } = {}
     if (dfmQuery.result) {
         const objectTypes = Object.keys(dfmQuery.result.subgraphs);
@@ -77,13 +77,13 @@ export const PerformanceMetricsPage = connect<StateProps, DispatchProps, Perform
                             Node metrics
                         </h2>
                         <div className={'NavbarButton AlignmentsTable-Button'}
-                             onClick={() => exportNodeMetrics(metrics)}
-                             title={"Export alignment data as json file."}>
-                            <FontAwesomeIcon icon={faShareFromSquare} className="NavbarButton-Icon"/>
+                            onClick={() => exportNodeMetrics(metrics)}
+                            title={"Export alignment data as json file."}>
+                            <FontAwesomeIcon icon={faShareFromSquare} className="NavbarButton-Icon" />
                             Export
                         </div>
                     </div>
-                    <NodeMetrics metrics={metrics}/>
+                    <NodeMetrics metrics={metrics} />
                 </div>
                 <div className="DefaultLayout-Content Alignments-Card">
                     <div className="Alignments-Card-Title-Container">
@@ -91,13 +91,13 @@ export const PerformanceMetricsPage = connect<StateProps, DispatchProps, Perform
                             Pooling times
                         </h2>
                         <div className={'NavbarButton AlignmentsTable-Button'}
-                             onClick={() => exportNodePoolingTimes(metrics)}
-                             title={"Export alignment data as json file."}>
-                            <FontAwesomeIcon icon={faShareFromSquare} className="NavbarButton-Icon"/>
+                            onClick={() => exportNodePoolingTimes(metrics)}
+                            title={"Export alignment data as json file."}>
+                            <FontAwesomeIcon icon={faShareFromSquare} className="NavbarButton-Icon" />
                             Export
                         </div>
                     </div>
-                    <PoolingTimes metrics={metrics} objectTypeColors={objectTypeColors}/>
+                    <PoolingTimes metrics={metrics} objectTypeColors={objectTypeColors} />
                 </div>
                 <div className="DefaultLayout-Content Alignments-Card">
                     <div className="Alignments-Card-Title-Container">
@@ -105,24 +105,24 @@ export const PerformanceMetricsPage = connect<StateProps, DispatchProps, Perform
                             Edge metrics
                         </h2>
                         <div className={'NavbarButton AlignmentsTable-Button'}
-                             onClick={() => exportEdgeMetrics(metrics)}
-                             title={"Export alignment data as json file."}>
-                            <FontAwesomeIcon icon={faShareFromSquare} className="NavbarButton-Icon"/>
+                            onClick={() => exportEdgeMetrics(metrics)}
+                            title={"Export alignment data as json file."}>
+                            <FontAwesomeIcon icon={faShareFromSquare} className="NavbarButton-Icon" />
                             Export
                         </div>
                     </div>
-                    <EdgeMetrics metrics={metrics} objectTypeColors={objectTypeColors}/>
+                    <EdgeMetrics metrics={metrics} objectTypeColors={objectTypeColors} />
                 </div>
             </React.Fragment>
         )
     } else {
         content = (
-            <CircularProgress className="Performance-Waiting-Circle"/>
+            <CircularProgress className="Performance-Waiting-Circle" />
         )
     }
 
     return (<div className="DefaultLayout-Container">
-        <ExploriNavbar/>
+        <ExploriNavbar />
         {content}
     </div>)
 });
@@ -219,7 +219,7 @@ function NodeMetrics(props: { metrics: PerformanceMetrics }) {
     });
 
     const columns: any[] = [
-        {name: "node", header: "Node"}
+        { name: "node", header: "Node" }
     ]
     metricsOrder.forEach(metric => {
         if (!selectedMetrics[metric])
@@ -243,26 +243,26 @@ function NodeMetrics(props: { metrics: PerformanceMetrics }) {
 
     const MetricCheckbox = (p: { metric: string }) => (
         <DropdownCheckbox selected={selectedMetrics[p.metric]} label={metricDisplayNames[p.metric]}
-                          onClick={() => {
-                              setSelectedMetrics((oldMetrics) => {
-                                  const result = {...oldMetrics};
-                                  result[p.metric] = !oldMetrics[p.metric];
-                                  return result;
-                              })
-                          }
-                          }/>
+            onClick={() => {
+                setSelectedMetrics((oldMetrics) => {
+                    const result = { ...oldMetrics };
+                    result[p.metric] = !oldMetrics[p.metric];
+                    return result;
+                })
+            }
+            } />
     )
 
     const AggregateCheckbox = (p: { aggregate: string }) => (
         <DropdownCheckbox selected={selectedAggregates[p.aggregate]} label={aggregateDisplayNames[p.aggregate]}
-                          onClick={() => {
-                              setSelectedAggregates((oldAggregates) => {
-                                  const result = {...oldAggregates};
-                                  result[p.aggregate] = !oldAggregates[p.aggregate];
-                                  return result;
-                              })
-                          }
-                          }/>
+            onClick={() => {
+                setSelectedAggregates((oldAggregates) => {
+                    const result = { ...oldAggregates };
+                    result[p.aggregate] = !oldAggregates[p.aggregate];
+                    return result;
+                })
+            }
+            } />
     )
 
     return (
@@ -272,30 +272,30 @@ function NodeMetrics(props: { metrics: PerformanceMetrics }) {
                 theme={"blue-light"}
                 columns={columns}
                 dataSource={entries}
-                style={{width: "100%"}}
+                style={{ width: "100%" }}
                 className="Performance-Node-Metrics-Table"
             />
             <div className="Performance-Node-Metrics-Settings">
                 <div className="Performance-Node-Metrics-Settings-Header">
                     Shown metrics
                 </div>
-                <MetricCheckbox metric="service_time"/>
-                <MetricCheckbox metric="waiting_time"/>
-                <MetricCheckbox metric="sojourn_time"/>
-                <MetricCheckbox metric="lagging_time"/>
-                <MetricCheckbox metric="synchronization_time"/>
-                <MetricCheckbox metric="flow_time"/>
+                <MetricCheckbox metric="service_time" />
+                <MetricCheckbox metric="waiting_time" />
+                <MetricCheckbox metric="sojourn_time" />
+                <MetricCheckbox metric="lagging_time" />
+                <MetricCheckbox metric="synchronization_time" />
+                <MetricCheckbox metric="flow_time" />
             </div>
             <div className="Performance-Node-Metrics-Settings">
                 <div className="Performance-Node-Metrics-Settings-Header">
                     Shown aggregates
                 </div>
-                <AggregateCheckbox aggregate="min"/>
-                <AggregateCheckbox aggregate="mean"/>
-                <AggregateCheckbox aggregate="median"/>
-                <AggregateCheckbox aggregate="max"/>
-                <AggregateCheckbox aggregate="sum"/>
-                <AggregateCheckbox aggregate="stdev"/>
+                <AggregateCheckbox aggregate="min" />
+                <AggregateCheckbox aggregate="mean" />
+                <AggregateCheckbox aggregate="median" />
+                <AggregateCheckbox aggregate="max" />
+                <AggregateCheckbox aggregate="sum" />
+                <AggregateCheckbox aggregate="stdev" />
             </div>
         </div>
     )
@@ -321,7 +321,7 @@ function PoolingTimes(props: { metrics: PerformanceMetrics, objectTypeColors: { 
             const otCell = (
                 <div className="Performance-Pooling-OT" key={`Pooling-Time-${node}-${objectType}`}>
                     <div className="Performance-Pooling-OTCircle"
-                         style={{backgroundColor: props.objectTypeColors[objectType]}}/>
+                        style={{ backgroundColor: props.objectTypeColors[objectType] }} />
                     {objectType}
                 </div>)
             entries.push({
@@ -338,14 +338,14 @@ function PoolingTimes(props: { metrics: PerformanceMetrics, objectTypeColors: { 
     });
 
     const columns = [
-        {name: "node", header: "Node"},
-        {name: "objectType", header: "Object Type"},
-        {name: "min", header: "Minimum", render: renderTime},
-        {name: "mean", header: "Mean", render: renderTime},
-        {name: "median", header: "Median", render: renderTime},
-        {name: "max", header: "Maximum", render: renderTime},
-        {name: "sum", header: "Total", render: renderTime},
-        {name: "stdev", header: "Standard deviation"},
+        { name: "node", header: "Node" },
+        { name: "objectType", header: "Object Type" },
+        { name: "min", header: "Minimum", render: renderTime },
+        { name: "mean", header: "Mean", render: renderTime },
+        { name: "median", header: "Median", render: renderTime },
+        { name: "max", header: "Maximum", render: renderTime },
+        { name: "sum", header: "Total", render: renderTime },
+        { name: "stdev", header: "Standard deviation" },
     ];
 
     return <ReactDataGrid
@@ -353,7 +353,7 @@ function PoolingTimes(props: { metrics: PerformanceMetrics, objectTypeColors: { 
         theme={"blue-light"}
         columns={columns}
         dataSource={entries}
-        style={{width: "100%"}}
+        style={{ width: "100%" }}
     />
 }
 
@@ -415,7 +415,7 @@ function EdgeMetrics(props: { metrics: PerformanceMetrics, objectTypeColors: { [
                 const otCell = (
                     <div className="Performance-Pooling-OT" key={`Edge-OT-${source}-${target}-${objectType}`}>
                         <div className="Performance-Pooling-OTCircle"
-                             style={{backgroundColor: props.objectTypeColors[objectType]}}/>
+                            style={{ backgroundColor: props.objectTypeColors[objectType] }} />
                         {objectType}
                     </div>)
                 entries.push({
@@ -430,9 +430,9 @@ function EdgeMetrics(props: { metrics: PerformanceMetrics, objectTypeColors: { [
     });
 
     const columns: any[] = [
-        {name: "source", header: "Source"},
-        {name: "target", header: "Target"},
-        {name: "objectType", header: "Object type"},
+        { name: "source", header: "Source" },
+        { name: "target", header: "Target" },
+        { name: "objectType", header: "Object type" },
     ]
     metricsOrder.forEach(metric => {
         if (!selectedMetrics[metric])
@@ -459,26 +459,26 @@ function EdgeMetrics(props: { metrics: PerformanceMetrics, objectTypeColors: { [
 
     const MetricCheckbox = (p: { metric: string }) => (
         <DropdownCheckbox selected={selectedMetrics[p.metric]} label={metricDisplayNames[p.metric]}
-                          onClick={() => {
-                              setSelectedMetrics((oldMetrics) => {
-                                  const result = {...oldMetrics};
-                                  result[p.metric] = !oldMetrics[p.metric];
-                                  return result;
-                              })
-                          }
-                          }/>
+            onClick={() => {
+                setSelectedMetrics((oldMetrics) => {
+                    const result = { ...oldMetrics };
+                    result[p.metric] = !oldMetrics[p.metric];
+                    return result;
+                })
+            }
+            } />
     )
 
     const AggregateCheckbox = (p: { aggregate: string }) => (
         <DropdownCheckbox selected={selectedAggregates[p.aggregate]} label={aggregateDisplayNames[p.aggregate]}
-                          onClick={() => {
-                              setSelectedAggregates((oldAggregates) => {
-                                  const result = {...oldAggregates};
-                                  result[p.aggregate] = !oldAggregates[p.aggregate];
-                                  return result;
-                              })
-                          }
-                          }/>
+            onClick={() => {
+                setSelectedAggregates((oldAggregates) => {
+                    const result = { ...oldAggregates };
+                    result[p.aggregate] = !oldAggregates[p.aggregate];
+                    return result;
+                })
+            }
+            } />
     )
 
     return (
@@ -488,26 +488,26 @@ function EdgeMetrics(props: { metrics: PerformanceMetrics, objectTypeColors: { [
                 theme={"blue-light"}
                 columns={columns}
                 dataSource={entries}
-                style={{width: "100%"}}
+                style={{ width: "100%" }}
                 className="Performance-Node-Metrics-Table"
             />
             <div className="Performance-Node-Metrics-Settings">
                 <div className="Performance-Node-Metrics-Settings-Header">
                     Shown metrics
                 </div>
-                <MetricCheckbox metric="pooling_time"/>
-                <MetricCheckbox metric="waiting_time"/>
+                <MetricCheckbox metric="pooling_time" />
+                <MetricCheckbox metric="waiting_time" />
             </div>
             <div className="Performance-Node-Metrics-Settings">
                 <div className="Performance-Node-Metrics-Settings-Header">
                     Shown aggregates
                 </div>
-                <AggregateCheckbox aggregate="min"/>
-                <AggregateCheckbox aggregate="mean"/>
-                <AggregateCheckbox aggregate="median"/>
-                <AggregateCheckbox aggregate="max"/>
-                <AggregateCheckbox aggregate="sum"/>
-                <AggregateCheckbox aggregate="stdev"/>
+                <AggregateCheckbox aggregate="min" />
+                <AggregateCheckbox aggregate="mean" />
+                <AggregateCheckbox aggregate="median" />
+                <AggregateCheckbox aggregate="max" />
+                <AggregateCheckbox aggregate="sum" />
+                <AggregateCheckbox aggregate="stdev" />
             </div>
         </div>
     )
@@ -568,7 +568,7 @@ function exportNodeMetrics(metrics: PerformanceMetrics) {
             .concat(simpleMetrics
                 .map((metric) => aggreatedMetricToCommaSeperatedListForExport((nodeMetric as any)[metric])))
             .join(','));
-    const blob = new Blob([[header].concat(entries).join('\n')], {type: 'text/csv;charset=utf-8;'});
+    const blob = new Blob([[header].concat(entries).join('\n')], { type: 'text/csv;charset=utf-8;' });
     downloadBlob(blob, "node-metrics.csv");
 }
 
@@ -580,7 +580,7 @@ function exportNodePoolingTimes(metrics: PerformanceMetrics) {
                 .map(([objectType, poolingTime]) =>
                     [node, objectType].concat(aggreatedMetricToCommaSeperatedListForExport(poolingTime)).join(','))
                 .join('\n'))
-    const blob = new Blob([[header].concat(entries).join('\n')], {type: 'text/csv;charset=utf-8;'});
+    const blob = new Blob([[header].concat(entries).join('\n')], { type: 'text/csv;charset=utf-8;' });
     downloadBlob(blob, "node-pooling-times.csv");
 }
 
@@ -594,15 +594,15 @@ function exportEdgeMetrics(metrics: PerformanceMetrics) {
         .join(',')
     const entries: string[] = [];
     Object.entries(metrics.edges).forEach(([source, targets]) => {
-         Object.entries(targets).forEach(([target, objectTypes]) => {
-             Object.entries(objectTypes).forEach(([objectType, edgeMetrics]) => {
+        Object.entries(targets).forEach(([target, objectTypes]) => {
+            Object.entries(objectTypes).forEach(([objectType, edgeMetrics]) => {
                 entries.push([source, target, objectTypes]
                     .concat(aggreatedMetricToCommaSeperatedListForExport(edgeMetrics.pooling_time))
                     .concat(aggreatedMetricToCommaSeperatedListForExport(edgeMetrics.waiting_time))
                     .join(','))
-             });
+            });
         });
     });
-    const blob = new Blob([[header].concat(entries).join('\n')], {type: 'text/csv;charset=utf-8;'});
+    const blob = new Blob([[header].concat(entries).join('\n')], { type: 'text/csv;charset=utf-8;' });
     downloadBlob(blob, "edge-metrics.csv");
 }

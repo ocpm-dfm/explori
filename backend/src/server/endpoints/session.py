@@ -30,7 +30,7 @@ class Session(BaseModel):
     class Config:
         schema_extra = {
             "example": {
-                "base_ocel": "uploaded/p2p-normal.jsonocel",
+                "base_ocel": "uploaded/demo-ocel.jsonocel",
                 "threshold": 0.8
             }
         }

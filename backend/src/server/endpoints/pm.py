@@ -69,8 +69,8 @@ def calculate_dfm_with_thresholds(ocel: str = Depends(ocel_filename_from_query),
 
 
 @router.get('/alignments', response_model=TaskStatus[AlignmentResponseModel])
-def compute_alignments(process_ocel: str = Query(example="uploaded/p2p-normal.jsonocel"),
-                       conformance_ocel: str = Query(example="uploaded/p2p-normal.jsonocel"),
+def compute_alignments(process_ocel: str = Query(example="uploaded/demo-ocel.jsonocel"),
+                       conformance_ocel: str = Query(example="uploaded/demo-ocel.jsonocel"),
                        threshold: float = Query(example=0.75),
                        task_manager: TaskManager = Depends(get_task_manager)):
     """
@@ -116,8 +116,8 @@ def compute_alignments(process_ocel: str = Query(example="uploaded/p2p-normal.js
 
 
 @router.get('/performance', response_model=TaskStatus[Any])
-def compute_legacy_performance_metrics(process_ocel: str = Query(example="uploaded/p2p-normal.jsonocel"),
-                                       metrics_ocel: str = Query(example="uploaded/p2p-normal.jsonocel"),
+def compute_legacy_performance_metrics(process_ocel: str = Query(example="uploaded/demo-ocel.jsonocel"),
+                                       metrics_ocel: str = Query(example="uploaded/demo-ocel.jsonocel"),
                                        threshold: float = Query(example=0.75),
                                        task_manager: TaskManager = Depends(get_task_manager)):
     """
@@ -168,8 +168,8 @@ def compute_legacy_performance_metrics(process_ocel: str = Query(example="upload
 
 
 @router.get('/ocel-performance', response_model=TaskStatus[Any])
-def compute_ocel_performance_metrics(process_ocel: str = Query(example="uploaded/p2p-normal.jsonocel"),
-                                     metrics_ocel: str = Query(example="uploaded/p2p-normal.jsonocel"),
+def compute_ocel_performance_metrics(process_ocel: str = Query(example="uploaded/demo-ocel.jsonocel"),
+                                     metrics_ocel: str = Query(example="uploaded/demo-ocel.jsonocel"),
                                      threshold: float = Query(example=0.75),
                                      task_manager: TaskManager = Depends(get_task_manager)):
     """
@@ -230,7 +230,7 @@ def compute_ocel_performance_metrics(process_ocel: str = Query(example="uploaded
                                            object_types=object_types),
                                        ocel_performance_metrics_task, [metrics_ocel, aligned_times_status.result],
                                        ocel_performance_metrics(process_ocel, threshold, object_types),
-                                       result_version="1")
+                                       result_version="2")
     return task_manager.cached_task(ocel_metrics_task)
 
 

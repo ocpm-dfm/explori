@@ -4,7 +4,7 @@ from fastapi import HTTPException, Query
 from starlette import status
 
 
-def ocel_filename_from_query(ocel: str = Query(example="uploaded/p2p-normal.jsonocel")):
+def ocel_filename_from_query(ocel: str = Query(example="uploaded/demo-ocel.jsonocel")):
     return secure_ocel_filename(ocel)
 
 

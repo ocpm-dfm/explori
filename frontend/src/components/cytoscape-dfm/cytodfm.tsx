@@ -10,21 +10,21 @@ import {
     useRef,
     useState
 } from "react";
-import cytoscape, {EventObject} from "cytoscape";
-import {getObjectTypeColor, secondsToHumanReadableFormat} from "../../utils";
-import {EdgeHighlightingMode} from "./EdgeHighlighters";
+import cytoscape, { EventObject } from "cytoscape";
+import { getObjectTypeColor, secondsToHumanReadableFormat } from "../../utils";
+import { EdgeHighlightingMode } from "./EdgeHighlighters";
 
-import {AlignmentsData} from "../../pages/Alignments/Alignments";
-import {AlignElement} from "../../redux/AlignmentsQuery/alignmentsquery.types";
-import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
-import {faCircleXmark} from "@fortawesome/free-regular-svg-icons";
+import { AlignmentsData } from "../../pages/Alignments/Alignments";
+import { AlignElement } from "../../redux/AlignmentsQuery/alignmentsquery.types";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faCircleXmark } from "@fortawesome/free-regular-svg-icons";
 import {
     PerformanceMetrics,
     EdgePerformanceMetrics,
     NodePerformanceMetrics, AggregatedMetric
 } from "../../redux/PerformanceQuery/performancequery.types";
 import React from "react";
-import {EdgeLabelMode} from "../../redux/UserSession/userSession.types";
+import { EdgeLabelMode } from "../../redux/UserSession/userSession.types";
 
 const fileSaver = require('file-saver');
 
@@ -211,17 +211,17 @@ const graphStylesheet: cytoscape.Stylesheet[] = [
     {
         "selector": 'node',  // For all nodes
         'style':
-            {
-                "opacity": 0.9,
-                "label": "data(label)",  // Label of node to display
-                "background-color": "rgb(25, 118, 210)",  // node color
-                "color": "#FFFFFF",  // node label color
-                "text-halign": "center",
-                "text-valign": "center",
-                'width': 'label',
-                "shape": "round-rectangle",
-                "padding-left": ".5em"
-            }
+        {
+            "opacity": 0.9,
+            "label": "data(label)",  // Label of node to display
+            "background-color": "rgb(25, 118, 210)",  // node color
+            "color": "#FFFFFF",  // node label color
+            "text-halign": "center",
+            "text-valign": "center",
+            'width': 'label',
+            "shape": "round-rectangle",
+            "padding-left": ".5em"
+        }
     },
     {
         selector: ".icon",
@@ -240,68 +240,68 @@ const graphStylesheet: cytoscape.Stylesheet[] = [
     {
         "selector": 'edge',  // For all edges
         "style":
-            {
-                "width": "data(width)",
-                "target-arrow-color": "data(color)",  // Arrow color
-                "target-arrow-shape": "triangle",  // Arrow shape
-                "line-color": "data(color)",  // edge color
-                'arrow-scale': 2,  // Arrow size
-                // Default curve-If it is style, the arrow will not be displayed, so specify it
-                'curve-style': 'bezier',
-                'label': 'data(label)',
-                "line-style": "solid",
-                'text-wrap': 'wrap',
-                'color': 'black',
-            }
+        {
+            "width": "data(width)",
+            "target-arrow-color": "data(color)",  // Arrow color
+            "target-arrow-shape": "triangle",  // Arrow shape
+            "line-color": "data(color)",  // edge color
+            'arrow-scale': 2,  // Arrow size
+            // Default curve-If it is style, the arrow will not be displayed, so specify it
+            'curve-style': 'bezier',
+            'label': 'data(label)',
+            "line-style": "solid",
+            'text-wrap': 'wrap',
+            'color': 'black',
+        }
     },
     {
         "selector": '.log-move',  // For all edges
         "style":
-            {
-                "width": "data(width)",
-                "target-arrow-color": "data(color)",  // Arrow color
-                "target-arrow-shape": "triangle",  // Arrow shape
-                "line-color": "data(color)",  // edge color
-                'arrow-scale': 2,  // Arrow size
-                // Default curve-If it is style, the arrow will not be displayed, so specify it
-                'curve-style': 'bezier',
-                'label': 'data(label)',
-                "line-style": "dashed",
-                'text-wrap': 'wrap',
-                'color': 'black',
-            }
+        {
+            "width": "data(width)",
+            "target-arrow-color": "data(color)",  // Arrow color
+            "target-arrow-shape": "triangle",  // Arrow shape
+            "line-color": "data(color)",  // edge color
+            'arrow-scale': 2,  // Arrow size
+            // Default curve-If it is style, the arrow will not be displayed, so specify it
+            'curve-style': 'bezier',
+            'label': 'data(label)',
+            "line-style": "dashed",
+            'text-wrap': 'wrap',
+            'color': 'black',
+        }
     },
     {
         "selector": '.model-move',  // For all edges
         "style":
-            {
-                "width": "data(width)",
-                "target-arrow-color": "data(color)",  // Arrow color
-                "target-arrow-shape": "triangle",  // Arrow shape
-                "line-color": "data(color)",  // edge color
-                'arrow-scale': 2,  // Arrow size
-                // Default curve-If it is style, the arrow will not be displayed, so specify it
-                'curve-style': 'bezier',
-                'label': 'data(label)',
-                "line-style": "dotted",
-                'text-wrap': 'wrap',
-                'color': 'black',
-            }
+        {
+            "width": "data(width)",
+            "target-arrow-color": "data(color)",  // Arrow color
+            "target-arrow-shape": "triangle",  // Arrow shape
+            "line-color": "data(color)",  // edge color
+            'arrow-scale': 2,  // Arrow size
+            // Default curve-If it is style, the arrow will not be displayed, so specify it
+            'curve-style': 'bezier',
+            'label': 'data(label)',
+            "line-style": "dotted",
+            'text-wrap': 'wrap',
+            'color': 'black',
+        }
     },
     {
         "selector": '.loop',
         "style":
-            {
-                'loop-direction': '180deg',
-                'loop-sweep': '45deg',
-                'target-endpoint': 'outside-to-line',
-                'source-endpoint': 'outside-to-line'
-                // 'loop-direction': '-90deg',
-                // 'loop-sweep': '-25deg',
-                // 'control-point-step-size': '100'
-                // 'target-endpoint': 'outside-to-line',
-                // 'source-endpoint': 'outside-to-line',
-            }
+        {
+            'loop-direction': '180deg',
+            'loop-sweep': '45deg',
+            'target-endpoint': 'outside-to-line',
+            'source-endpoint': 'outside-to-line'
+            // 'loop-direction': '-90deg',
+            // 'loop-sweep': '-25deg',
+            // 'control-point-step-size': '100'
+            // 'target-endpoint': 'outside-to-line',
+            // 'source-endpoint': 'outside-to-line',
+        }
     }];
 
 interface NodeState {
@@ -402,7 +402,7 @@ export const FilteredCytoDFM = forwardRef((props: CytoDFMProps, ref: ForwardedRe
         const thresh = boxedThreshold;
         const selectedObjectTypes = props.selectedObjectTypes;
         const edgeHighlightingMode = props.highlightingMode;
-        const edgeLabelMode = props.edgeLabelMode || {metric: "count", aggregate: "sum"};
+        const edgeLabelMode = props.edgeLabelMode || { metric: "count", aggregate: "sum" };
         const performanceMetrics = props.performanceMetrics ? props.performanceMetrics : null;
 
         if (!dfm)
@@ -458,18 +458,18 @@ export const FilteredCytoDFM = forwardRef((props: CytoDFMProps, ref: ForwardedRe
                     links.push(
                         {
                             data:
-                                {
-                                    source: `${edge.source}`,
-                                    target: `${edge.target}`,
-                                    label,
-                                    style: 'solid',
-                                    color: objectTypeColor,
-                                    width,
+                            {
+                                source: `${edge.source}`,
+                                target: `${edge.target}`,
+                                label,
+                                style: 'solid',
+                                color: objectTypeColor,
+                                width,
 
-                                    objectType,
-                                    metaSource: edge.source,
-                                    metaTarget: edge.target
-                                },
+                                objectType,
+                                metaSource: edge.source,
+                                metaTarget: edge.target
+                            },
                             classes
                         });
 
@@ -685,17 +685,17 @@ export const FilteredCytoDFM = forwardRef((props: CytoDFMProps, ref: ForwardedRe
                         alignmentEdges.push(
                             {
                                 data:
-                                    {
-                                        source: `${source}`,
-                                        target: `${target}`,
-                                        label: `${count}`,
-                                        color: objectTypeColor,
-                                        width,
+                                {
+                                    source: `${source}`,
+                                    target: `${target}`,
+                                    label: `${count}`,
+                                    color: objectTypeColor,
+                                    width,
 
-                                        objectType,
-                                        metaSource: metaSource,
-                                        metaTarget: metaTarget
-                                    },
+                                    objectType,
+                                    metaSource: metaSource,
+                                    metaTarget: metaTarget
+                                },
                                 classes
                             });
 
@@ -787,18 +787,18 @@ export const FilteredCytoDFM = forwardRef((props: CytoDFMProps, ref: ForwardedRe
                         alignmentEdges.push(
                             {
                                 data:
-                                    {
-                                        source: `${source}`,
-                                        target: `${target}`,
-                                        label: `${count}`,
-                                        style: 'dotted',
-                                        color: objectTypeColor,
-                                        width,
+                                {
+                                    source: `${source}`,
+                                    target: `${target}`,
+                                    label: `${count}`,
+                                    style: 'dotted',
+                                    color: objectTypeColor,
+                                    width,
 
-                                        objectType,
-                                        metaSource: metaSource,
-                                        metaTarget: metaTarget
-                                    },
+                                    objectType,
+                                    metaSource: metaSource,
+                                    metaTarget: metaTarget
+                                },
                                 classes
                             });
 
@@ -824,7 +824,7 @@ export const FilteredCytoDFM = forwardRef((props: CytoDFMProps, ref: ForwardedRe
         let selectedObjectTypes = props.selectedObjectTypes;
 
         if (dfm === null)
-            return [{shown: {}, hidden: {}} as SelectedTracesData, null];
+            return [{ shown: {}, hidden: {} } as SelectedTracesData, null];
 
         let selectedTraces = null;
         let selectedEdge = null;
@@ -849,7 +849,7 @@ export const FilteredCytoDFM = forwardRef((props: CytoDFMProps, ref: ForwardedRe
         }
 
         if (selectedTraces == null)
-            return [{shown: {}, hidden: {}} as SelectedTracesData, null];
+            return [{ shown: {}, hidden: {} } as SelectedTracesData, null];
 
         const shown: { [key: string]: RenderTraceData[] } = {};
         const hidden: { [key: string]: RenderTraceData[] } = {};
@@ -907,7 +907,7 @@ export const FilteredCytoDFM = forwardRef((props: CytoDFMProps, ref: ForwardedRe
 
 
     if (!props.dfm) {
-        return <div style={{height: "100%", minHeight: "80vh"}}/>;
+        return <div style={{ height: "100%", minHeight: "80vh" }} />;
     }
 
     // Now begin the Cytoscape "hacks" to make it behave as it should.
@@ -933,7 +933,7 @@ export const FilteredCytoDFM = forwardRef((props: CytoDFMProps, ref: ForwardedRe
 
             // If the node is frozen, return the stored state.
             if ((props.positionsFrozen || storedPosition.frozen) && storedPosition.x != null && storedPosition.y != null)
-                return {x: storedPosition.x, y: storedPosition.y}
+                return { x: storedPosition.x, y: storedPosition.y }
 
             // Update stored location.
             storedPosition.x = pos.x;
@@ -1056,9 +1056,9 @@ export const FilteredCytoDFM = forwardRef((props: CytoDFMProps, ref: ForwardedRe
                 elements={elements}
                 stylesheet={graphStylesheet}
                 layout={layout}
-                style={{width: '100%', height: '100%'}}
+                style={{ width: '100%', height: '100%' }}
                 wheelSensitivity={0.2}
-                pan={softState.current.pan ? softState.current.pan : {x: 0, y: 0}}
+                pan={softState.current.pan ? softState.current.pan : { x: 0, y: 0 }}
                 zoom={softState.current.zoom ? softState.current.zoom : 1}
                 cy={registerEvents}
             />
@@ -1073,7 +1073,7 @@ export const FilteredCytoDFM = forwardRef((props: CytoDFMProps, ref: ForwardedRe
                     {
                         legendObjectTypeColors.map(([type, color]) => (
                             <li key={type}>
-                                <div className="CytoDFM-Legend-Circle" style={{backgroundColor: color}}>
+                                <div className="CytoDFM-Legend-Circle" style={{ backgroundColor: color }}>
                                 </div>
                                 {type}
                             </li>
@@ -1102,24 +1102,24 @@ export const FilteredCytoDFM = forwardRef((props: CytoDFMProps, ref: ForwardedRe
                             </h3>
                         }
                         <div className="CytoDFM-Infobox-Header-Close"
-                             onClick={() => setSelection({selectedNode: null, selectedEdge: null})}>
-                            <FontAwesomeIcon icon={faCircleXmark}/>
+                            onClick={() => setSelection({ selectedNode: null, selectedEdge: null })}>
+                            <FontAwesomeIcon icon={faCircleXmark} />
                         </div>
                     </div>
 
                     <InfoboxPerformanceMetrics metrics={selectedPerformanceMetrics}
-                                               selection={selection}
-                                               availableObjectTypes={availableObjectTypes}/>
+                        selection={selection}
+                        availableObjectTypes={availableObjectTypes} />
 
                     <div className="CytoDFM-Infobox-Traces-Grid">
                         <InfoboxTraces traces={selectedTraces.shown}
-                                       title="Shown traces"
-                                       keyPrefix="shown"
-                                       legendColors={legendObjectTypeColors}/>
+                            title="Shown traces"
+                            keyPrefix="shown"
+                            legendColors={legendObjectTypeColors} />
                         <InfoboxTraces traces={selectedTraces.hidden}
-                                       title="Filtered traces"
-                                       keyPrefix="hidden"
-                                       legendColors={legendObjectTypeColors}/>
+                            title="Filtered traces"
+                            keyPrefix="hidden"
+                            legendColors={legendObjectTypeColors} />
                     </div>
                 </div>
             }
@@ -1240,13 +1240,14 @@ function findMatchingTracesCount(alignmentTraces: number[][], objectType: string
 function InfoboxPerformanceMetrics(props: {
     metrics: NodePerformanceMetrics | EdgePerformanceMetrics | null,
     selection: { selectedNode: any },
-    availableObjectTypes: string[] }) {
+    availableObjectTypes: string[]
+}) {
     if (!props.metrics)
-        return <React.Fragment/>
+        return <React.Fragment />
 
     function AggregatedMetricRow(props: { metric: AggregatedMetric | null, title: any }) {
         if (!props.metric)
-            return <React.Fragment/>
+            return <React.Fragment />
 
         return (
             <React.Fragment>
@@ -1269,7 +1270,7 @@ function InfoboxPerformanceMetrics(props: {
         )
     }
 
-    let metrics = <React.Fragment/>
+    let metrics = <React.Fragment />
     if (props.selection.selectedNode) {
         const nodeMetric = props.metrics as NodePerformanceMetrics;
         const hasWaitingTime = !!nodeMetric.waiting_time;
@@ -1292,17 +1293,17 @@ function InfoboxPerformanceMetrics(props: {
                         Total
                     </div>
                 </React.Fragment>
-                <AggregatedMetricRow metric={nodeMetric.service_time} title="Service time"/>
+                <AggregatedMetricRow metric={nodeMetric.service_time} title="Service time" />
                 {
                     hasWaitingTime && (
                         <React.Fragment>
-                            <AggregatedMetricRow metric={nodeMetric.waiting_time} title="Waiting time"/>
-                            <AggregatedMetricRow metric={nodeMetric.sojourn_time} title="Sojourn time"/>
-                            <div className="CytoDFM-Infobox-Metrics-Divider"/>
-                            <AggregatedMetricRow metric={nodeMetric.lagging_time} title="Lagging time"/>
-                            <AggregatedMetricRow metric={nodeMetric.synchronization_time} title="Sync time"/>
-                            <AggregatedMetricRow metric={nodeMetric.flow_time} title="Flow time"/>
-                            <div className="CytoDFM-Infobox-Metrics-Divider"/>
+                            <AggregatedMetricRow metric={nodeMetric.waiting_time} title="Waiting time" />
+                            <AggregatedMetricRow metric={nodeMetric.sojourn_time} title="Sojourn time" />
+                            <div className="CytoDFM-Infobox-Metrics-Divider" />
+                            <AggregatedMetricRow metric={nodeMetric.lagging_time} title="Lagging time" />
+                            <AggregatedMetricRow metric={nodeMetric.synchronization_time} title="Sync time" />
+                            <AggregatedMetricRow metric={nodeMetric.flow_time} title="Flow time" />
+                            <div className="CytoDFM-Infobox-Metrics-Divider" />
                             <React.Fragment>
                                 <div className="CytoDFM-Infobox-Metrics-Cell CytoDFM-Infobox-Metrics-Divider">
                                     Pooling time
@@ -1316,7 +1317,7 @@ function InfoboxPerformanceMetrics(props: {
                                         const color = getObjectTypeColor(props.availableObjectTypes.length, index);
                                         const metricTitle = (
                                             <React.Fragment>
-                                                <div className="CytoDFM-Legend-Circle" style={{backgroundColor: color}}>
+                                                <div className="CytoDFM-Legend-Circle" style={{ backgroundColor: color }}>
                                                 </div>
                                                 {objectType}
                                             </React.Fragment>
@@ -1352,8 +1353,8 @@ function InfoboxPerformanceMetrics(props: {
                         Total
                     </div>
                 </React.Fragment>
-                <AggregatedMetricRow metric={edgeMetrics.pooling_time} title="Pooling time"/>
-                <AggregatedMetricRow metric={edgeMetrics.waiting_time} title="Waiting time"/>
+                <AggregatedMetricRow metric={edgeMetrics.pooling_time} title="Pooling time" />
+                <AggregatedMetricRow metric={edgeMetrics.waiting_time} title="Waiting time" />
             </React.Fragment>)
     }
     return (
@@ -1365,20 +1366,20 @@ function InfoboxPerformanceMetrics(props: {
 
 function InfoboxTraces(props: { title: string, traces: { [key: string]: RenderTraceData[] }, keyPrefix: string, legendColors: [string, string][] }) {
     if (Object.keys(props.traces).length === 0)
-        return <React.Fragment/>
+        return <React.Fragment />
 
     return <React.Fragment>
         <h4 className="CytoDFM-Infobox-Traces-Header">{props.title}</h4>
         {Object.entries(props.traces).map(([objectType, traces]) => {
             const potentialColor = props.legendColors.find(([ot, _]) => (ot === objectType))
             let color = "";
-            if (potentialColor !== undefined){
+            if (potentialColor !== undefined) {
                 color = props.legendColors.find(([ot, _]) => (ot === objectType))![1];
             }
             return (
                 <React.Fragment key={props.keyPrefix + "-" + objectType}>
                     <div className="CytoDFM-Infobox-Traces-OT CytoDFM-Infobox-Traces-Header">
-                        <div className="CytoDFM-Legend-Circle" style={{backgroundColor: color}}>
+                        <div className="CytoDFM-Legend-Circle" style={{ backgroundColor: color }}>
                         </div>
                         {objectType}
                     </div>
@@ -1398,9 +1399,9 @@ function InfoboxTraces(props: { title: string, traces: { [key: string]: RenderTr
 }
 
 function getEdgePerformanceLabel(labelMode: EdgeLabelMode,
-                                 performanceMetrics: PerformanceMetrics | null,
-                                 source: string, target: string, object_type: string,
-                                 count: number): string {
+    performanceMetrics: PerformanceMetrics | null,
+    source: string, target: string, object_type: string,
+    count: number): string {
     // Determines the appropriate label for the edge depending on the given edge labeling mode and the availability
     // of performance metrics.
 

@@ -56,7 +56,7 @@ class AvailableLogsResponseModel(BaseModel):
     class Config:
         schema_extra = {
             "example": [
-                "uploaded/p2p-normal.jsonocel",
+                "uploaded/demo-ocel.jsonocel",
                 "mounted/b2c-unfiltered.csv"
             ]
         }

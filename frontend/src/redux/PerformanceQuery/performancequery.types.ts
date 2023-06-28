@@ -13,7 +13,7 @@ export type NodePerformanceMetrics = {
     sojourn_time: AggregatedMetric | null
     synchronization_time: AggregatedMetric | null
     lagging_time: AggregatedMetric | null
-    pooling_times: {[key:string]: AggregatedMetric}
+    pooling_times: { [key: string]: AggregatedMetric }
     flow_time: AggregatedMetric | null
 }
 
@@ -24,7 +24,7 @@ export type EdgePerformanceMetrics = {
 
 
 export type PerformanceMetrics = {
-    nodes: {[key: string]: NodePerformanceMetrics},
+    nodes: { [key: string]: NodePerformanceMetrics },
     // source -> target -> objectType -> metrics
-    edges: {[key:string]: {[key:string]: {[key:string]: EdgePerformanceMetrics}}}
+    edges: { [key: string]: { [key: string]: { [key: string]: EdgePerformanceMetrics } } }
 }

@@ -1,18 +1,18 @@
-import React, {useMemo, useRef, useState} from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import '../../App.css';
-import {ExploriNavbar} from "../../components/ExploriNavbar/ExploriNavbar";
+import { ExploriNavbar } from "../../components/ExploriNavbar/ExploriNavbar";
 
 import "./Home.css";
-import {AsyncApiState, useAsyncAPI} from "../../hooks";
-import {CytoDFMMethods, DirectlyFollowsMultigraph, FilteredCytoDFM} from '../../components/cytoscape-dfm/cytodfm';
-import {faSnowflake} from "@fortawesome/free-regular-svg-icons";
-import {faBrush, faShareFromSquare, faDiagramProject} from "@fortawesome/free-solid-svg-icons";
+import { AsyncApiState, useAsyncAPI } from "../../hooks";
+import { CytoDFMMethods, DirectlyFollowsMultigraph, FilteredCytoDFM } from '../../components/cytoscape-dfm/cytodfm';
+import { faSnowflake } from "@fortawesome/free-regular-svg-icons";
+import { faBrush, faShareFromSquare, faDiagramProject } from "@fortawesome/free-solid-svg-icons";
 import CircularProgress from '@mui/material/CircularProgress';
 import Box from '@mui/material/Box';
 import Alert from '@mui/material/Alert';
-import {RootState} from "../../redux/store";
-import {ThunkDispatch} from "@reduxjs/toolkit";
-import {connect} from "react-redux";
+import { RootState } from "../../redux/store";
+import { ThunkDispatch } from "@reduxjs/toolkit";
+import { connect } from "react-redux";
 import {
     setGraphHorizontal,
     setHighlightedMode,
@@ -22,10 +22,10 @@ import {
     setLegendPosition,
     setEdgeLabelMode,
 } from "../../redux/UserSession/userSession.actions";
-import {setDfmQueryState} from "../../redux/DFMQuery/dfmquery";
-import {resetAlignmentQueryState} from "../../redux/AlignmentsQuery/alingmentsquery";
-import {NavbarButton} from "../../components/ExploriNavbar/NavbarButton/NavbarButton";
-import {NewObjectSelection} from "../../components/NewObjectSelection/NewObjectSelection";
+import { setDfmQueryState } from "../../redux/DFMQuery/dfmquery";
+import { resetAlignmentQueryState } from "../../redux/AlignmentsQuery/alingmentsquery";
+import { NavbarButton } from "../../components/ExploriNavbar/NavbarButton/NavbarButton";
+import { NewObjectSelection } from "../../components/NewObjectSelection/NewObjectSelection";
 import {
     NO_HIGHLIGHTING,
     PerformanceBasedHighlighting,
@@ -33,11 +33,11 @@ import {
     CountBasedHighlighting,
     OutputClamper
 } from "../../components/cytoscape-dfm/EdgeHighlighters";
-import {NavbarDropdown} from "../../components/ExploriNavbar/NavbarDropdown/NavbarDropdown";
-import {DropdownCheckbox} from "../../components/ExploriNavbar/NavbarDropdown/DropdownCheckbox/DropdownCheckbox";
-import {resetPerformanceQueryState, setPerformanceQueryState} from "../../redux/PerformanceQuery/performancequery";
-import {PerformanceMetrics} from "../../redux/PerformanceQuery/performancequery.types";
-import {EdgeLabelMode} from "../../redux/UserSession/userSession.types";
+import { NavbarDropdown } from "../../components/ExploriNavbar/NavbarDropdown/NavbarDropdown";
+import { DropdownCheckbox } from "../../components/ExploriNavbar/NavbarDropdown/DropdownCheckbox/DropdownCheckbox";
+import { resetPerformanceQueryState, setPerformanceQueryState } from "../../redux/PerformanceQuery/performancequery";
+import { PerformanceMetrics } from "../../redux/PerformanceQuery/performancequery.types";
+import { EdgeLabelMode } from "../../redux/UserSession/userSession.types";
 
 enum HighlightingModeName {
     NoHighlighting = "none",
@@ -82,13 +82,13 @@ const mapDispatchToProps = (dispatch: ThunkDispatch<any, any, any>, props: HomeP
     setGraphHorizontal: async (horizontal: boolean) => {
         dispatch(setGraphHorizontal(horizontal))
     },
-    setAlignmentMode: async(mode: string) => {
+    setAlignmentMode: async (mode: string) => {
         dispatch(setAlignmentMode(mode))
     },
-    setLegendPosition: async(position: string) => {
+    setLegendPosition: async (position: string) => {
         dispatch(setLegendPosition(position))
     },
-    setEdgeLabelMode: async(mode: EdgeLabelMode) => {
+    setEdgeLabelMode: async (mode: EdgeLabelMode) => {
         dispatch(setEdgeLabelMode(mode))
     },
     setDfmQuery: (state: AsyncApiState<DirectlyFollowsMultigraph>) => {
@@ -100,7 +100,7 @@ const mapDispatchToProps = (dispatch: ThunkDispatch<any, any, any>, props: HomeP
     setPerformanceQuery: (state: AsyncApiState<PerformanceMetrics>) => {
         dispatch(setPerformanceQueryState(state));
     },
-    resetPerformanceQuery:() => {
+    resetPerformanceQuery: () => {
         dispatch(resetPerformanceQueryState());
     }
 });
@@ -118,12 +118,12 @@ export const Home = connect<StateProps, DispatchProps, HomeProps, RootState>(map
     const [frozen, setFrozen] = useState<boolean>(false);
     const [infoboxEnabled, setInfoboxEnabled] = useState<boolean>(true);
 
-    const dfm_query = useAsyncAPI<DirectlyFollowsMultigraph>("/pm/dfm", {ocel: selectedOcel},
-        {state: props.dfmQuery, setState: props.setDfmQuery});
+    const dfm_query = useAsyncAPI<DirectlyFollowsMultigraph>("/pm/dfm", { ocel: selectedOcel },
+        { state: props.dfmQuery, setState: props.setDfmQuery });
     const performanceQuery = useAsyncAPI<PerformanceMetrics>("/pm/ocel-performance", {
         process_ocel: props.session.ocel,
         metrics_ocel: props.session.ocel,
-        threshold: props.session.threshold/100.0
+        threshold: props.session.threshold / 100.0
     }, {
         state: props.performanceQuery,
         setState: props.setPerformanceQuery
@@ -134,8 +134,7 @@ export const Home = connect<StateProps, DispatchProps, HomeProps, RootState>(map
 
     const highlightingModeInstance = useMemo(() => {
         if (props.session.highlightingMode === HighlightingModeName.Linear ||
-            props.session.highlightingMode === HighlightingModeName.Logarithmic)
-        {
+            props.session.highlightingMode === HighlightingModeName.Logarithmic) {
             let transform = undefined;
             if (props.session.highlightingMode === HighlightingModeName.Logarithmic)
                 transform = (count: number) => {
@@ -162,13 +161,13 @@ export const Home = connect<StateProps, DispatchProps, HomeProps, RootState>(map
     const navbarItems = (
         <React.Fragment>
             <NavbarButton icon={faShareFromSquare}
-                          onClick={() => graphRef.current?.exportAsJpg()}
-                          title="Export the graph as JPG.">
+                onClick={() => graphRef.current?.exportAsJpg()}
+                title="Export the graph as JPG.">
                 Export
             </NavbarButton>
             <NavbarButton icon={faSnowflake} active={frozen}
-                          onClick={() => setFrozen(!frozen)}
-                          title="Freeze or unfreeze the node positions.">
+                onClick={() => setFrozen(!frozen)}
+                title="Freeze or unfreeze the node positions.">
                 Freeze
             </NavbarButton>
             <VizSettings
@@ -180,7 +179,7 @@ export const Home = connect<StateProps, DispatchProps, HomeProps, RootState>(map
                 setAlignmentMode={props.setAlignmentMode}
                 selectedLegendPosition={(props.session.legendPosition as LegendPositionName) || LegendPositionName.None}
                 setLegendPosition={props.setLegendPosition}
-                selectedEdgeLabel={props.session.edgeLabelMode || { metric: "count", aggregate: "sum"}}
+                selectedEdgeLabel={props.session.edgeLabelMode || { metric: "count", aggregate: "sum" }}
                 setEdgeLabelMode={props.setEdgeLabelMode}
                 infoboxEnabled={infoboxEnabled}
                 setInfoboxEnabled={(enabled) => setInfoboxEnabled(enabled)}
@@ -190,25 +189,25 @@ export const Home = connect<StateProps, DispatchProps, HomeProps, RootState>(map
                 selectedObjectTypes={props.session.selectedObjectTypes}
                 setSelectedObjectTypes={props.setSelectedObjectTypes}
                 alreadySelectedAllObjectTypesInitially={alreadySelectedAllObjectTypesInitially}
-                selectAllObjectTypesInitially={true}/>
+                selectAllObjectTypesInitially={true} />
         </React.Fragment>);
 
     return (
         <React.Fragment>
             <div className="Home">
-                <ExploriNavbar lowerRowSlot={navbarItems}/>
+                <ExploriNavbar lowerRowSlot={navbarItems} />
                 <FilteredCytoDFM dfm={dfm_query.result}
-                                 performanceMetrics={performanceQuery.result ? performanceQuery.result : performanceQuery.preliminary}
-                                 threshold={props.session.threshold / 100}
-                                 selectedObjectTypes={props.session.selectedObjectTypes}
-                                 positionsFrozen={frozen}
-                                 highlightingMode={highlightingModeInstance}
-                                 graphHorizontal={props.session.graphHorizontal}
-                                 alignmentMode={props.session.alignmentMode}
-                                 legendPosition={props.session.legendPosition}
-                                 edgeLabelMode={props.session.edgeLabelMode}
-                                 infoboxEnabled={infoboxEnabled}
-                                 ref={graphRef}/>
+                    performanceMetrics={performanceQuery.result ? performanceQuery.result : performanceQuery.preliminary}
+                    threshold={props.session.threshold / 100}
+                    selectedObjectTypes={props.session.selectedObjectTypes}
+                    positionsFrozen={frozen}
+                    highlightingMode={highlightingModeInstance}
+                    graphHorizontal={props.session.graphHorizontal}
+                    alignmentMode={props.session.alignmentMode}
+                    legendPosition={props.session.legendPosition}
+                    edgeLabelMode={props.session.edgeLabelMode}
+                    infoboxEnabled={infoboxEnabled}
+                    ref={graphRef} />
                 {!dfm_query.result && !dfm_query.failed && (
                     <Box sx={{
                         display: 'flex',
@@ -218,7 +217,7 @@ export const Home = connect<StateProps, DispatchProps, HomeProps, RootState>(map
                         marginRight: '-50%',
                         transform: 'translate(-50%, -50%)'
                     }}>
-                        <CircularProgress/>
+                        <CircularProgress />
                     </Box>
                 )}
                 {!performanceQuery.result && performanceQuery.preliminary && (
@@ -228,11 +227,11 @@ export const Home = connect<StateProps, DispatchProps, HomeProps, RootState>(map
                         top: '7rem',
                         right: '2rem'
                     }}>
-                        <CircularProgress/>
+                        <CircularProgress />
                     </Box>
                 )}
                 {dfm_query.failed && (
-                    <Alert severity="error" sx={{'z-index': 999, 'padding-bottom': 0, 'padding-top': 0}}>Task failed due
+                    <Alert severity="error" sx={{ 'z-index': 999, 'padding-bottom': 0, 'padding-top': 0 }}>Task failed due
                         to server related reasons. (Received 200)</Alert>
                 )}
                 <div className="Home-DetailSlider">
@@ -240,16 +239,16 @@ export const Home = connect<StateProps, DispatchProps, HomeProps, RootState>(map
                         Less detail
                     </div>
                     <input type="range" min="0" max="100"
-                           className="Home-DetailSlider-Slider"
-                           value={props.session.threshold} onInput={(e) => {
-                        const newThreshold = Number.parseInt((e.target as HTMLInputElement).value);
-                        // stateChangeCallback({
-                        //     filteringThreshold: newThreshold
-                        // });
-                        props.resetAlignmentsQuery();
-                        props.resetPerformanceQuery();
-                        props.setThreshold(newThreshold);
-                    }}
+                        className="Home-DetailSlider-Slider"
+                        value={props.session.threshold} onInput={(e) => {
+                            const newThreshold = Number.parseInt((e.target as HTMLInputElement).value);
+                            // stateChangeCallback({
+                            //     filteringThreshold: newThreshold
+                            // });
+                            props.resetAlignmentsQuery();
+                            props.resetPerformanceQuery();
+                            props.setThreshold(newThreshold);
+                        }}
                     />
                     <div className="Home-DetailSlider-Label">
                         More detail
@@ -279,11 +278,11 @@ type VizSettingsProps = {
 const VizSettings = (props: VizSettingsProps) => {
     function setMetric(metric: "count" | "pooling_time" | "waiting_time") {
         if (metric === "count")
-            props.setEdgeLabelMode({metric: "count", aggregate: props.selectedEdgeLabel.aggregate});
+            props.setEdgeLabelMode({ metric: "count", aggregate: props.selectedEdgeLabel.aggregate });
         else if (props.selectedEdgeLabel.metric === "count" && props.selectedEdgeLabel.aggregate === "sum")
-            props.setEdgeLabelMode({metric, aggregate: "mean"})
+            props.setEdgeLabelMode({ metric, aggregate: "mean" })
         else
-            props.setEdgeLabelMode({metric, aggregate: props.selectedEdgeLabel.aggregate})
+            props.setEdgeLabelMode({ metric, aggregate: props.selectedEdgeLabel.aggregate })
     }
 
     function setAggregate(aggregate: "min" | "median" | "mean" | "max" | "stdev" | "sum") {
@@ -300,28 +299,28 @@ const VizSettings = (props: VizSettingsProps) => {
                 <DropdownCheckbox
                     selected={props.selectedAlignmentMode === AlignmentModeName.NoAlignments}
                     label="None"
-                    onClick={() => props.setAlignmentMode(AlignmentModeName.NoAlignments)}/>
+                    onClick={() => props.setAlignmentMode(AlignmentModeName.NoAlignments)} />
                 <DropdownCheckbox
                     selected={props.selectedAlignmentMode === AlignmentModeName.Simple}
                     label="Simple"
-                    onClick={() => props.setAlignmentMode(AlignmentModeName.Simple)}/>
+                    onClick={() => props.setAlignmentMode(AlignmentModeName.Simple)} />
                 <DropdownCheckbox
                     selected={props.selectedAlignmentMode === AlignmentModeName.Expansive}
                     label="Extended"
-                    onClick={() => props.setAlignmentMode(AlignmentModeName.Expansive)}/>
+                    onClick={() => props.setAlignmentMode(AlignmentModeName.Expansive)} />
                 <div className="VizSettings-Label" title={"Select mode for showing performance metrics on the edges."}>Edge metric</div>
                 <DropdownCheckbox
                     selected={props.selectedEdgeLabel.metric === "count"}
                     label="Counts (Default)"
-                    onClick={() => setMetric("count")}/>
+                    onClick={() => setMetric("count")} />
                 <DropdownCheckbox
                     selected={props.selectedEdgeLabel.metric === "pooling_time"}
                     label="Edge pooling time"
-                    onClick={() => setMetric("pooling_time")}/>
+                    onClick={() => setMetric("pooling_time")} />
                 <DropdownCheckbox
                     selected={props.selectedEdgeLabel.metric === "waiting_time"}
                     label="Edge waiting time"
-                    onClick={() => setMetric("waiting_time")}/>
+                    onClick={() => setMetric("waiting_time")} />
 
                 {
                     (props.selectedEdgeLabel.metric !== "count") && (
@@ -330,23 +329,23 @@ const VizSettings = (props: VizSettingsProps) => {
                             <DropdownCheckbox
                                 selected={props.selectedEdgeLabel.aggregate === "min"}
                                 label="Minimum"
-                                onClick={() => setAggregate("min")}/>
+                                onClick={() => setAggregate("min")} />
                             <DropdownCheckbox
                                 selected={props.selectedEdgeLabel.aggregate === "mean"}
                                 label="Mean"
-                                onClick={() => setAggregate("mean")}/>
+                                onClick={() => setAggregate("mean")} />
                             <DropdownCheckbox
                                 selected={props.selectedEdgeLabel.aggregate === "median"}
                                 label="Median"
-                                onClick={() => setAggregate("median")}/>
+                                onClick={() => setAggregate("median")} />
                             <DropdownCheckbox
                                 selected={props.selectedEdgeLabel.aggregate === "max"}
                                 label="Max"
-                                onClick={() => setAggregate("max")}/>
+                                onClick={() => setAggregate("max")} />
                             <DropdownCheckbox
                                 selected={props.selectedEdgeLabel.aggregate === "sum"}
                                 label="Total time"
-                                onClick={() => setAggregate("sum")}/>
+                                onClick={() => setAggregate("sum")} />
                         </React.Fragment>
                     )
                 }
@@ -355,52 +354,52 @@ const VizSettings = (props: VizSettingsProps) => {
                 <DropdownCheckbox
                     selected={props.selectedHighlightingMode === HighlightingModeName.NoHighlighting}
                     label="None"
-                    onClick={() => props.setSelectedHighlightingMode(HighlightingModeName.NoHighlighting)}/>
+                    onClick={() => props.setSelectedHighlightingMode(HighlightingModeName.NoHighlighting)} />
                 <DropdownCheckbox
                     selected={props.selectedHighlightingMode === HighlightingModeName.Linear}
                     label="Linear"
-                    onClick={() => props.setSelectedHighlightingMode(HighlightingModeName.Linear)}/>
+                    onClick={() => props.setSelectedHighlightingMode(HighlightingModeName.Linear)} />
                 <DropdownCheckbox
                     selected={props.selectedHighlightingMode === HighlightingModeName.Logarithmic}
                     label="Logarithmic"
-                    onClick={() => props.setSelectedHighlightingMode(HighlightingModeName.Logarithmic)}/>
+                    onClick={() => props.setSelectedHighlightingMode(HighlightingModeName.Logarithmic)} />
             </NavbarDropdown>
             <NavbarDropdown buttonIcon={faBrush} buttonText="Settings">
                 <div className="VizSettings-Label" title={"Select the direction in which the graph is rendered."}>Graph direction</div>
                 <DropdownCheckbox
                     selected={!props.graphHorizontal}
                     label="Top to down"
-                    onClick={() => props.setGraphHorizontal(false)}/>
+                    onClick={() => props.setGraphHorizontal(false)} />
                 <DropdownCheckbox
                     selected={props.graphHorizontal}
                     label="Left to right"
-                    onClick={() => props.setGraphHorizontal(true)}/>
+                    onClick={() => props.setGraphHorizontal(true)} />
                 <div className="VizSettings-Label" title={"Select the position of the object type legend."}>Legend position</div>
                 <DropdownCheckbox
                     selected={props.selectedLegendPosition === LegendPositionName.None}
                     label="None"
-                    onClick={() => props.setLegendPosition(LegendPositionName.None)}/>
+                    onClick={() => props.setLegendPosition(LegendPositionName.None)} />
                 <DropdownCheckbox
                     selected={props.selectedLegendPosition === LegendPositionName.TopLeft}
                     label="Top left"
-                    onClick={() => props.setLegendPosition(LegendPositionName.TopLeft)}/>
+                    onClick={() => props.setLegendPosition(LegendPositionName.TopLeft)} />
                 <DropdownCheckbox
                     selected={props.selectedLegendPosition === LegendPositionName.TopRight}
                     label="Top right"
-                    onClick={() => props.setLegendPosition(LegendPositionName.TopRight)}/>
+                    onClick={() => props.setLegendPosition(LegendPositionName.TopRight)} />
                 <DropdownCheckbox
                     selected={props.selectedLegendPosition === LegendPositionName.BottomLeft}
                     label="Bottom left"
-                    onClick={() => props.setLegendPosition(LegendPositionName.BottomLeft)}/>
+                    onClick={() => props.setLegendPosition(LegendPositionName.BottomLeft)} />
                 <DropdownCheckbox
                     selected={props.selectedLegendPosition === LegendPositionName.BottomRight}
                     label="Bottom right"
-                    onClick={() => props.setLegendPosition(LegendPositionName.BottomRight)}/>
+                    onClick={() => props.setLegendPosition(LegendPositionName.BottomRight)} />
                 <div className="VizSettings-Label" title={"Toggle for the infobox shown when clicking on edges or nodes."}>Infobox</div>
                 <DropdownCheckbox
                     selected={props.infoboxEnabled}
                     label={props.infoboxEnabled ? "Enabled" : "Disabled"}
-                    onClick={() => props.setInfoboxEnabled(!props.infoboxEnabled)}/>
+                    onClick={() => props.setInfoboxEnabled(!props.infoboxEnabled)} />
             </NavbarDropdown>
         </React.Fragment>
     )

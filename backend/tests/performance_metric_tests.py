@@ -15,8 +15,8 @@ class PerformanceTests(TestCase):
 
     # region Aligning time tests
     def test_run_activation_time_determination(self):
-        base_folder = os.path.join(self.get_resources_folder(), "p2p-normal")
-        ocel = os.path.join(base_folder, 'p2p-normal.jsonocel')
+        base_folder = os.path.join(self.get_resources_folder(), "demo-ocel")
+        ocel = os.path.join(base_folder, 'demo-ocel.jsonocel')
 
         with open(os.path.join(base_folder, 'alignments-MATERIAL.json'), 'r') as f:
             alignments = json.load(f)
@@ -130,8 +130,8 @@ class PerformanceTests(TestCase):
 
     # region Performance metric tests
     def test_run_ocel_performance_metrics_task(self):
-        base_folder = os.path.join(self.get_resources_folder(), "p2p-normal")
-        ocel = os.path.join(base_folder, 'p2p-normal.jsonocel')
+        base_folder = os.path.join(self.get_resources_folder(), "demo-ocel")
+        ocel = os.path.join(base_folder, 'demo-ocel.jsonocel')
         object_types = ['MATERIAL', 'PURCHORD', 'PURCHREQ', 'INVOICE', 'GDSRCPT']
         loaded_aligned_times = {}
         for ot in object_types:
