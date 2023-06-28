@@ -34,7 +34,7 @@ class FilteredDFG(BaseModel):
 SKIP_MOVE = ">>"
 
 class AlignElement(BaseModel):
-    activity: str | SKIP_MOVE
+    activity: str
 
 class TraceAlignment(BaseModel):
     log_alignment: List[AlignElement]
