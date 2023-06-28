@@ -1,7 +1,7 @@
 EMULATE_SERVER = False
 
 HOSTNAME = 'localhost'
-PORT = 8081
+PORT = 8080
 
 if __name__ == '__main__':
     if EMULATE_SERVER:
