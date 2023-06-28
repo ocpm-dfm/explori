@@ -2,7 +2,7 @@ import os
 from redis.client import Redis
 
 REDIS_HOST = os.environ.get('EXPLORI_REDIS_HOST', default='localhost')
-REDIS_PORT = os.environ.get('EXPLORI_REDIS_PORT', default='6380')
+REDIS_PORT = os.environ.get('EXPLORI_REDIS_PORT', default='6379')
 
 def run():
     redis = Redis(REDIS_HOST, REDIS_PORT)

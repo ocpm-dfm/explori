@@ -8,27 +8,27 @@ services:
     depends_on:
       - fastapi
     ports:
-      - "80:3000"
+      - "8081:3001"
   fastapi:
     build:
       context: backend/
       dockerfile: Dockerfile_fastapi
     environment:
       REDIS_HOST: "redis"
-      REDIS_PORT: 6380
+      REDIS_PORT: 6379
     depends_on:
       - celery
       - redis
       - _backend_base
     ports:
-      - "8080:8080"
+      - "8001:8001"
   celery:
     build:
       context: backend/
       dockerfile: Dockerfile_celery
     environment:
       REDIS_HOST: "redis"
-      REDIS_PORT: 6380
+      REDIS_PORT: 6379
     depends_on:
       - redis
       - _backend_base

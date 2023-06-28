@@ -91,7 +91,7 @@ class CollectedTimes(BaseModel):
     sojourn_times: Dict[Node, List[int]]
     pooling_times: Dict[Node, Dict[ObjectType, List[int]]]
     synchronization_times: Dict[Node, List[int]]
-    lagging_times: Dict[Node, List[int]]
+    lagging_times: Dict[Node, Dict[ObjectType, List[int]]]
     flow_times: Dict[Node, List[int]]
     edge_pooling_times: Dict[Node, Dict[Node, Dict[ObjectType, List[int]]]]
     edge_waiting_times: Dict[Node, Dict[Node, Dict[ObjectType, List[int]]]]
@@ -111,7 +111,7 @@ class NodePerformanceMetrics(BaseModel):
     waiting_time: AggregatedMetric | None
     sojourn_time: AggregatedMetric | None
     synchronization_time: AggregatedMetric | None
-    lagging_time: AggregatedMetric | None
+    lagging_time: Dict[ObjectType, AggregatedMetric]
     pooling_times: Dict[ObjectType, AggregatedMetric]
     flow_time: AggregatedMetric | None
 
@@ -142,8 +142,8 @@ def collect_times(ocel: DataFrame, aligned_times: Dict[ObjectType, Dict[str, Dic
     service_times: Dict[Node, List[int]] = {}
     sojourn_times: Dict[Node, List[int]] = {}
     pooling_times: Dict[Node, Dict[ObjectType, List[int]]] = {}
+    lagging_times: Dict[Node, Dict[ObjectType, List[int]]] = {}
     synchronization_times: Dict[Node, List[int]] = {}
-    lagging_times: Dict[Node, List[int]] = {}
     flow_times: Dict[Node, List[int]] = {}
     edge_pooling_times: Dict[Node, Dict[Node, Dict[ObjectType, List[int]]]] = {}
     edge_waiting_times: Dict[Node, Dict[Node, Dict[ObjectType, List[int]]]] = {}
@@ -164,6 +164,7 @@ def collect_times(ocel: DataFrame, aligned_times: Dict[ObjectType, Dict[str, Dic
 
         event_first_activation: Timestamp | None = None
         ot_activation_times: List[Timestamp] = []
+        ot_first_activation_times: Dict[str, Timestamp] = {}
 
         for (object_type, ot_times) in aligned_times.items():
             first_activation_time: Timestamp | None = None
@@ -208,11 +209,13 @@ def collect_times(ocel: DataFrame, aligned_times: Dict[ObjectType, Dict[str, Dic
                     if event_first_activation is None or activation_timestamp < event_first_activation:
                         event_first_activation = activation_timestamp
 
+            if first_activation_time is not None:
+                ot_first_activation_times[object_type] = first_activation_time
+
             if first_activation_time is not None and last_activation_time is not None:
                 pooling_time = last_activation_time - first_activation_time
                 pooling_times.setdefault(event_activity, {}).setdefault(object_type, []).append(
                     round(pooling_time.total_seconds()))
-
                 # Calculate and store the edge times.
                 for previous_activity in first_activation_time_by_previous_activity:
                     edge_pooling_time = last_activation_time_by_previous_activity[previous_activity] - \
@@ -233,19 +236,24 @@ def collect_times(ocel: DataFrame, aligned_times: Dict[ObjectType, Dict[str, Dic
 
                 ot_activation_times.append(last_activation_time)
 
+        for object_type in ot_first_activation_times:
+            lagging_time = ot_first_activation_times[object_type] - event_first_activation
+            lagging_times.setdefault(event_activity, {}).setdefault(object_type, []).append(
+                    round(lagging_time.total_seconds()))
         if len(ot_activation_times) > 0:
             first_ot_activation_time = min(ot_activation_times)
             last_ot_activation_time = max(ot_activation_times)
 
             waiting_time = event_start_timestamp - last_ot_activation_time
             sojourn_time = waiting_time + service_time
-            lagging_time = last_ot_activation_time - first_ot_activation_time
+            # lagging_time = last_ot_activation_time - first_ot_activation_time
+            
             synchronization_time = last_ot_activation_time - event_first_activation
-            flow_time = synchronization_time + service_time
+            flow_time = synchronization_time + sojourn_time
 
             waiting_times.setdefault(event_activity, []).append(round(waiting_time.total_seconds()))
             sojourn_times.setdefault(event_activity, []).append(round(sojourn_time.total_seconds()))
-            lagging_times.setdefault(event_activity, []).append(round(lagging_time.total_seconds()))
+            # lagging_times.setdefault(event_activity, []).append(round(lagging_time.total_seconds()))
             synchronization_times.setdefault(event_activity, []).append(round(synchronization_time.total_seconds()))
             flow_times.setdefault(event_activity, []).append(round(flow_time.total_seconds()))
 
@@ -301,18 +309,21 @@ def aggregate_times_to_frontend_friendly(collected_times: CollectedTimes) -> Fro
 
         waiting_time: AggregatedMetric | None = get_aggegated_node_metric_if_available(waiting_times, node)
         sojourn_time: AggregatedMetric | None = get_aggegated_node_metric_if_available(sojourn_times, node)
-        lagging_time: AggregatedMetric | None = get_aggegated_node_metric_if_available(lagging_times, node)
+        # lagging_time: AggregatedMetric | None = get_aggegated_node_metric_if_available(lagging_times, node)
         synchronization_time: AggregatedMetric | None = get_aggegated_node_metric_if_available(synchronization_times,
                                                                                                node)
         flow_time: AggregatedMetric | None = get_aggegated_node_metric_if_available(flow_times, node)
         node_pooling_times: Dict[ObjectType, AggregatedMetric] = {}
         if node in pooling_times:
             node_pooling_times = {object_type: aggregate(times) for (object_type, times) in pooling_times[node].items()}
+        node_lagging_times: Dict[ObjectType, AggregatedMetric] = {}
+        if node in lagging_times:
+            node_lagging_times = {object_type: aggregate(times) for (object_type, times) in lagging_times[node].items()}
 
         node_metrics[node] = NodePerformanceMetrics(service_time=service_time,
                                                     waiting_time=waiting_time,
                                                     sojourn_time=sojourn_time,
-                                                    lagging_time=lagging_time,
+                                                    lagging_time=node_lagging_times,
                                                     synchronization_time=synchronization_time,
                                                     flow_time=flow_time,
                                                     pooling_times=node_pooling_times)

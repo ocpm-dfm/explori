@@ -16,4 +16,4 @@ ONBUILD COPY tsconfig.json .
 FROM common_pre_build as dev_build
 
 FROM ${BUILD_ENV}_build
-CMD PORT=3000 npm run start
+CMD PORT=3001 npm run start

@@ -1,9 +1,9 @@
-import {ExploriNavbar} from "../../components/ExploriNavbar/ExploriNavbar";
-import  "../../components/DefaultLayout/DefaultLayout.css";
+import { ExploriNavbar } from "../../components/ExploriNavbar/ExploriNavbar";
+import "../../components/DefaultLayout/DefaultLayout.css";
 import "./Help.css";
-import React, {useState} from "react";
-import {Button, Stack, Pagination} from "@mui/material";
-import {getURI} from "../../hooks";
+import React, { useState } from "react";
+import { Button, Stack, Pagination } from "@mui/material";
+import { getURI } from "../../hooks";
 import DialogTitle from "@mui/material/DialogTitle";
 import DialogContent from "@mui/material/DialogContent";
 import DialogContentText from "@mui/material/DialogContentText";
@@ -16,14 +16,14 @@ import 'react-pdf/dist/esm/Page/AnnotationLayer.css';
 import 'react-pdf/dist/esm/Page/TextLayer.css';
 // @ts-ignore
 import Pdf from '../Help/User_manual.pdf'
-import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
-import {faUndo, faFileArchive, faBiohazard, faEye, faEyeSlash} from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faUndo, faFileArchive, faBiohazard, faEye, faEyeSlash } from "@fortawesome/free-solid-svg-icons";
 import '../../components/ExploriNavbar/NavbarButton/NavbarButton.css';
 
 /**
  * Clears the whole cache in the backend as attempt to fix Explori if something has gone seriously wrong.
  */
-async function clearCache(){
+async function clearCache() {
     const uri = getURI("/logs/clear_cache", {});
     await fetch(uri)
         .then((response) => response.json())
@@ -42,7 +42,7 @@ interface Props {
  * Resets the local storage item "explori-currentOcel" to the default value. After going back to the Home page
  * and refreshing, it should go back to show the default ocel.
  */
-function resetLocalStorage(){
+function resetLocalStorage() {
     // set to demo ocel
     localStorage.setItem("explori-currentOcel", "uploaded/demo_ocel.jsonocel");
 }
@@ -57,13 +57,13 @@ export function Help(props: Props) {
     const [pageNumber, setPageNumber] = useState(1);
 
     // @ts-ignore
-    const onDocumentLoadSuccess = ({numPages}) => {
+    const onDocumentLoadSuccess = ({ numPages }) => {
         setNumPages(numPages);
     }
 
     const setPage = (event: React.ChangeEvent<unknown>, value: number) => {
-        if (value >= 1 && numPages && value <= numPages){
-           setPageNumber(value);
+        if (value >= 1 && numPages && value <= numPages) {
+            setPageNumber(value);
         }
     }
 
@@ -127,30 +127,30 @@ export function Help(props: Props) {
                         Trouble-shoot & Docs
                     </h2>
                     <div className={'NavbarButton PanicButton'}
-                         onClick={() => setPanicButtonOpen(true)}
-                         title={"Clear the whole cache."}>
-                        <FontAwesomeIcon icon={faBiohazard} className="NavbarButton-Icon"/>
+                        onClick={() => setPanicButtonOpen(true)}
+                        title={"Clear the whole cache."}>
+                        <FontAwesomeIcon icon={faBiohazard} className="NavbarButton-Icon" />
                         Panic button
                     </div>
                     {panicButtonDialog}
                     <div className={'NavbarButton'}
-                         onClick={() => setResetQueryOpen(true)}
-                         title={"Resets the current query states."}>
-                        <FontAwesomeIcon icon={faUndo} className="NavbarButton-Icon"/>
+                        onClick={() => setResetQueryOpen(true)}
+                        title={"Resets the current query states."}>
+                        <FontAwesomeIcon icon={faUndo} className="NavbarButton-Icon" />
                         Clear queries
                     </div>
                     {resetQueryDialog}
                     <div className={'NavbarButton'}
-                         onClick={() => {setLocalStorageOpen(true);}}
-                         title={"Resets the local storage item to the default."}>
-                        <FontAwesomeIcon icon={faUndo} className="NavbarButton-Icon"/>
+                        onClick={() => { setLocalStorageOpen(true); }}
+                        title={"Resets the local storage item to the default."}>
+                        <FontAwesomeIcon icon={faUndo} className="NavbarButton-Icon" />
                         Reset localStorage
                     </div>
                     {localStorageDialog}
                     <div className={'NavbarButton'}
-                         title={"Opens the backend swagger interface in a new tab."}>
-                        <FontAwesomeIcon icon={faFileArchive} className="NavbarButton-Icon"/>
-                        <a className={"Help-a"} href="http://localhost:8080/docs" target="_blank" rel="noreferrer">
+                        title={"Opens the backend swagger interface in a new tab."}>
+                        <FontAwesomeIcon icon={faFileArchive} className="NavbarButton-Icon" />
+                        <a className={"Help-a"} href="http://localhost:8000/docs" target="_blank" rel="noreferrer">
                             Backend Docs
                         </a>
                     </div>
@@ -169,10 +169,10 @@ export function Help(props: Props) {
                             </Stack>
                             <Stack spacing={2} direction="row" justifyContent="center">
                                 <div className={'NavbarButton'}
-                                     onClick={toggleShowAll}
-                                     title={"Toggles the page view."}>
-                                    <FontAwesomeIcon icon={showAll? faEyeSlash: faEye} className="NavbarButton-Icon"/>
-                                    {!showAll? "Show all pages": "Hide all pages"}
+                                    onClick={toggleShowAll}
+                                    title={"Toggles the page view."}>
+                                    <FontAwesomeIcon icon={showAll ? faEyeSlash : faEye} className="NavbarButton-Icon" />
+                                    {!showAll ? "Show all pages" : "Hide all pages"}
                                 </div>
                             </Stack>
                         </Stack>
@@ -185,7 +185,7 @@ export function Help(props: Props) {
                             <React.Fragment>
                                 <div>
                                     {Array.from(new Array(numPages), (el, index) => (
-                                        <Page key={`page_${index + 1}`} pageNumber={index + 1} scale={1.7}/>
+                                        <Page key={`page_${index + 1}`} pageNumber={index + 1} scale={1.7} />
                                     ))}
                                 </div>
                             </React.Fragment>
@@ -194,10 +194,10 @@ export function Help(props: Props) {
                     {showAll &&
                         <Stack spacing={2} direction="row" justifyContent="center">
                             <div className={'NavbarButton'}
-                                 onClick={toggleShowAll}
-                                 title={"Toggles the page view."}>
-                                <FontAwesomeIcon icon={showAll? faEyeSlash: faEye} className="NavbarButton-Icon"/>
-                                {!showAll? "Show all pages": "Hide all pages"}
+                                onClick={toggleShowAll}
+                                title={"Toggles the page view."}>
+                                <FontAwesomeIcon icon={showAll ? faEyeSlash : faEye} className="NavbarButton-Icon" />
+                                {!showAll ? "Show all pages" : "Hide all pages"}
                             </div>
                         </Stack>
                     }
@@ -215,7 +215,7 @@ export function Help(props: Props) {
  * @param title - The title of the dialog
  * @param onClick - Function which determines what happens when "Yes" is clicked in the dialog.
  */
-function helpDialog(open: boolean, setOpen: { (value: React.SetStateAction<boolean>): void; }, text: any, title: any, onClick: any){
+function helpDialog(open: boolean, setOpen: { (value: React.SetStateAction<boolean>): void; }, text: any, title: any, onClick: any) {
     return (
         <Dialog
             open={open}

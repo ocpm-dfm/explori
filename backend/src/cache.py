@@ -110,7 +110,7 @@ class RedisCache(ShortTermCache):
 
 
 REDIS_HOST = os.environ.get('EXPLORI_REDIS_HOST', default='localhost')
-REDIS_PORT = os.environ.get('EXPLORI_REDIS_PORT', default='6380')
+REDIS_PORT = os.environ.get('EXPLORI_REDIS_PORT', default='6379')
 __SHORT_TERM_CACHE = RedisCache(REDIS_HOST, REDIS_PORT)
 
 
@@ -155,14 +155,13 @@ class FileBasedLongTermCache(LongTermCache):
             value_type: LongTermCacheEntryType = LongTermCacheEntryType.JSONABLE):
         filename = self.__get_file_name(ocel, key, value_type)
 
-        match value_type:
-            case LongTermCacheEntryType.JSONABLE:
-                with open(self.__get_file_name(ocel, key, value_type), 'w') as f:
-                    json.dump(make_json_serilizable(value), f)
-            case LongTermCacheEntryType.CLASSIC_EVENT_LOG:
-                pm4py.write_xes(value, filename)
-            case _:
-                raise NotImplementedError()
+        if value_type == LongTermCacheEntryType.JSONABLE:
+            with open(self.__get_file_name(ocel, key, value_type), 'w') as f:
+                json.dump(make_json_serilizable(value), f)
+        elif value_type == LongTermCacheEntryType.CLASSIC_EVENT_LOG:
+            pm4py.write_xes(value, filename)
+        else:
+            raise NotImplementedError()
 
     def has(self, ocel: str, key: str, value_type: LongTermCacheEntryType = LongTermCacheEntryType.JSONABLE) -> bool:
         return os.path.isfile(self.__get_file_name(ocel, key, value_type))
@@ -173,14 +172,14 @@ class FileBasedLongTermCache(LongTermCache):
         if not os.path.isfile(filename):
             return None
 
-        match value_type:
-            case LongTermCacheEntryType.JSONABLE:
-                with open(filename, 'r') as f:
-                    return json.load(f)
-            case LongTermCacheEntryType.CLASSIC_EVENT_LOG:
-                return pm4py.read_xes(filename)
-            case _:
-                raise NotImplementedError()
+        if value_type == LongTermCacheEntryType.JSONABLE:
+            with open(filename, 'r') as f:
+                return json.load(f)
+        elif value_type == LongTermCacheEntryType.CLASSIC_EVENT_LOG:
+            return pm4py.read_xes(filename)
+        else:
+            raise NotImplementedError()
+
 
     def get_folder(self, ocel: str) -> str:
         return self.__get_ocel_cache_folder(ocel)
