@@ -43,14 +43,14 @@ a simple restart is enough.
 
 #### Native
 - `cd backend/`
-- Start the backend server: `PYTHONPATH="src/" DEV=1 uvicorn server.main:app --host 0.0.0.0 --port 8000`
+- Start the backend server: `PYTHONPATH="src/" DEV=1 uvicorn server.main:app --host 0.0.0.0 --port 8001`
 - See backend address in terminal output
 
 #### Docker
 `docker-compose build _backend_base && docker-compose -f docker-compose.yml -f docker-compose.dev.yml up --build --detach fastapi`
 
 ### 4. Testing the backend API
-- __Assuming__ step 4 above signaled Uvicorn running at `http://0.0.0.0:8000`: The fastapi openapi can be found at `http://0.0.0.0:8000/docs`
+- __Assuming__ step 4 above signaled Uvicorn running at `http://0.0.0.0:8001`: The fastapi openapi can be found at `http://0.0.0.0:8001/docs`
 
 ### Backend IDE Alternative
 - Install Jetbrains PyCharm
