@@ -15,7 +15,7 @@ app = FastAPI()
 
 if DEVELOPMENT_MODE:
     # Allows accessing the api from a different origin. Required for development purposes, since the frontend will
-    # be served at localhost:3001, which is a different origin than localhost:8001.
+    # be served at localhost:3001, which is a different origin than localhost:8081.
     app.add_middleware(
         CORSMiddleware,
         allow_origins=['*'],

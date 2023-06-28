@@ -21,7 +21,7 @@ services:
       - redis
       - _backend_base
     ports:
-      - "8001:8001"
+      - "8081:8081"
   celery:
     build:
       context: backend/

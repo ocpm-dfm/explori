@@ -150,7 +150,7 @@ export function Help(props: Props) {
                     <div className={'NavbarButton'}
                         title={"Opens the backend swagger interface in a new tab."}>
                         <FontAwesomeIcon icon={faFileArchive} className="NavbarButton-Icon" />
-                        <a className={"Help-a"} href="http://localhost:8001/docs" target="_blank" rel="noreferrer">
+                        <a className={"Help-a"} href="http://localhost:8081/docs" target="_blank" rel="noreferrer">
                             Backend Docs
                         </a>
                     </div>

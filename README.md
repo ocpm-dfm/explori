@@ -50,7 +50,7 @@ a simple restart is enough.
 `docker-compose build _backend_base && docker-compose -f docker-compose.yml -f docker-compose.dev.yml up --build --detach fastapi`
 
 ### 4. Testing the backend API
-- __Assuming__ step 4 above signaled Uvicorn running at `http://0.0.0.0:8001`: The fastapi openapi can be found at `http://0.0.0.0:8001/docs`
+- __Assuming__ step 4 above signaled Uvicorn running at `http://0.0.0.0:8081`: The fastapi openapi can be found at `http://0.0.0.0:8081/docs`
 
 ### Backend IDE Alternative
 - Install Jetbrains PyCharm

@@ -5,7 +5,7 @@ let API_BASE_URL = 'https://production.com/api';
 // @ts-ignore
 if (window.webpackHotUpdate || (process.env.NODE_ENV !== "production" && process.env.NODE_ENV !== "test" && typeof console !== "undefined")
 ) {
-    API_BASE_URL = 'http://localhost:8001';
+    API_BASE_URL = 'http://localhost:8081';
 }
 
 const deepEqual = require("deep-equal");
