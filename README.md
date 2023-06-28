@@ -44,7 +44,7 @@ a simple restart is enough.
 **Note**: *MacOS >M1 users need to follow **Native** as Docker has issues with an issue with Numpy library*
 #### Native
 - `cd backend/`
-- Start the backend server: `PYTHONPATH="src/" DEV=1 uvicorn server.main:app --host 0.0.0.0 --port 80`
+- Start the backend server: `PYTHONPATH="src/" DEV=1 uvicorn server.main:app --host 0.0.0.0 --port 8080`
 - See backend address in terminal output
 
 #### Docker
@@ -70,7 +70,7 @@ a simple restart is enough.
     - Set the working directory to the `backend/` directory
 - You might need to tell PyCharm that these projects are part of a larger repository, to do so, go into Settings > Version Control > Directory Mappings
 
-## Development - Frontend
+## Development Setup - Frontend
 
 ### Requirements
 - Nodejs
@@ -87,6 +87,9 @@ a simple restart is enough.
 
 #### Docker
 - `docker-compose -f docker-compose.yml -f docker-compose.dev.yml up --build --detach webserver`
+
+The app runs in the development mode.\
+Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
 
 ### Frontend IDE Alternative
 - Install Jetbrains WebStorm
