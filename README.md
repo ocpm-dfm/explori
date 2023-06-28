@@ -1,10 +1,10 @@
-# Explori - Object-Centric Process Mining Using Directly-Follows Multigraphs (DFMs)
+# Explori - Object-Centric Process Mining Using Object-Centric Directly-Follows Graphs (OC-DFGs)
 
 ## Requirements
 - docker, docker-compose
 
 ## Getting started
-  - *The following automated deployment is currently only available in **Windows** and **Linux**. MacOS users need to follow development setup.*
+  **Note**: *The following automated deployment is currently only available in **Windows** and **Linux**. MacOS users need to follow development setup.*
   - `./app.sh --start optional/path/to/event/logs/`: start app in production mode and optionally specify path to a folder containing event logs to mount into the application
   - `./app.sh --start-dev`: start app in development mode
   - `./app.sh --stop`: stop app
@@ -28,7 +28,7 @@
 - `docker-compose -f docker-compose.yml -f docker-compose.dev.yml up --build --detach redis`
 
 ### 2. Celery
-- *MacOS >M1 users need to follow **Native** as Docker has issues with an issue with Numpy library*
+**Note**: *MacOS >M1 users need to follow **Native** as Docker has issues with an issue with Numpy library*
 #### Native (this does __not__ work on Windows as Celery doesn't fully support Windows)
 - `cd backend/`
 - ``PYTHONPATH="src/" celery -A worker.main.app worker --loglevel=INFO``
@@ -41,7 +41,7 @@ is mounted into the container. There's no need to rebuild the image or recreate 
 a simple restart is enough.
 
 ### 3. Fastapi
-- *MacOS >M1 users need to follow **Native** as Docker has issues with an issue with Numpy library*
+**Note**: *MacOS >M1 users need to follow **Native** as Docker has issues with an issue with Numpy library*
 #### Native
 - `cd backend/`
 - Start the backend server: `PYTHONPATH="src/" DEV=1 uvicorn server.main:app --host 0.0.0.0 --port 80`
