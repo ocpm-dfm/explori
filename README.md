@@ -43,7 +43,7 @@ a simple restart is enough.
 
 #### Native
 - `cd backend/`
-- Start the backend server: `PYTHONPATH="src/" DEV=1 uvicorn server.main:app --host 0.0.0.0 --port 8001`
+- Start the backend server: `PYTHONPATH="src/" DEV=1 uvicorn server.main:app --host 0.0.0.0 --port 8081`
 - See backend address in terminal output
 
 #### Docker
