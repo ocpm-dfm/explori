@@ -102,6 +102,20 @@ export const PerformanceMetricsPage = connect<StateProps, DispatchProps, Perform
                 <div className="DefaultLayout-Content Alignments-Card">
                     <div className="Alignments-Card-Title-Container">
                         <h2 className="Alignments-Card-Title">
+                            Lagging times
+                        </h2>
+                        <div className={'NavbarButton AlignmentsTable-Button'}
+                            onClick={() => exportNodeLaggingTimes(metrics)}
+                            title={"Export alignment data as json file."}>
+                            <FontAwesomeIcon icon={faShareFromSquare} className="NavbarButton-Icon" />
+                            Export
+                        </div>
+                    </div>
+                    <LaggingTimes metrics={metrics} objectTypeColors={objectTypeColors} />
+                </div>
+                <div className="DefaultLayout-Content Alignments-Card">
+                    <div className="Alignments-Card-Title-Container">
+                        <h2 className="Alignments-Card-Title">
                             Edge metrics
                         </h2>
                         <div className={'NavbarButton AlignmentsTable-Button'}
@@ -128,12 +142,11 @@ export const PerformanceMetricsPage = connect<StateProps, DispatchProps, Perform
 });
 
 function NodeMetrics(props: { metrics: PerformanceMetrics }) {
-    const metricsOrder = ["service_time", "waiting_time", "sojourn_time", "lagging_time", "synchronization_time", "flow_time"];
+    const metricsOrder = ["service_time", "waiting_time", "sojourn_time", "synchronization_time", "flow_time"];
     const metricDisplayNames: { [key: string]: string } = {
         "service_time": "Service time",
         "waiting_time": "Waiting time",
         "sojourn_time": "Sojourn time",
-        "lagging_time": "Lagging time",
         "synchronization_time": "Synchronization time",
         "flow_time": "Flow time",
     }
@@ -141,7 +154,6 @@ function NodeMetrics(props: { metrics: PerformanceMetrics }) {
         "service_time": true,
         "waiting_time": true,
         "sojourn_time": false,
-        "lagging_time": true,
         "synchronization_time": false,
         "flow_time": false
     });
@@ -190,12 +202,6 @@ function NodeMetrics(props: { metrics: PerformanceMetrics }) {
         "synchronization_time.max": number
         "synchronization_time.sum": number
         "synchronization_time.stdev": number
-        "lagging_time.min": number
-        "lagging_time.mean": number
-        "lagging_time.median": number
-        "lagging_time.max": number
-        "lagging_time.sum": number
-        "lagging_time.stdev": number
         "flow.min": number
         "flow.mean": number
         "flow.median": number
@@ -213,7 +219,6 @@ function NodeMetrics(props: { metrics: PerformanceMetrics }) {
             ...flatten_aggregated_metric(nodeMetrics.service_time, 'service_time'),
             ...flatten_aggregated_metric(nodeMetrics.sojourn_time, 'sojourn_time'),
             ...flatten_aggregated_metric(nodeMetrics.synchronization_time, 'synchronization_time'),
-            ...flatten_aggregated_metric(nodeMetrics.lagging_time, 'lagging_time'),
             ...flatten_aggregated_metric(nodeMetrics.flow_time, 'flow_time'),
         } as TableEntry)
     });
@@ -282,7 +287,6 @@ function NodeMetrics(props: { metrics: PerformanceMetrics }) {
                 <MetricCheckbox metric="service_time" />
                 <MetricCheckbox metric="waiting_time" />
                 <MetricCheckbox metric="sojourn_time" />
-                <MetricCheckbox metric="lagging_time" />
                 <MetricCheckbox metric="synchronization_time" />
                 <MetricCheckbox metric="flow_time" />
             </div>
@@ -333,6 +337,61 @@ function PoolingTimes(props: { metrics: PerformanceMetrics, objectTypeColors: { 
                 max: poolingTime.max,
                 sum: poolingTime.sum,
                 stdev: poolingTime.stdev
+            });
+        });
+    });
+
+    const columns = [
+        { name: "node", header: "Node" },
+        { name: "objectType", header: "Object Type" },
+        { name: "min", header: "Minimum", render: renderTime },
+        { name: "mean", header: "Mean", render: renderTime },
+        { name: "median", header: "Median", render: renderTime },
+        { name: "max", header: "Maximum", render: renderTime },
+        { name: "sum", header: "Total", render: renderTime },
+        { name: "stdev", header: "Standard deviation" },
+    ];
+
+    return <ReactDataGrid
+        idProperty="id"
+        theme={"blue-light"}
+        columns={columns}
+        dataSource={entries}
+        style={{ width: "100%" }}
+    />
+}
+
+function LaggingTimes(props: { metrics: PerformanceMetrics, objectTypeColors: { [key: string]: string } }) {
+    type TableEntry = {
+        node: string,
+        objectType: any,
+        min: number,
+        mean: number,
+        median: number,
+        max: number,
+        sum: number,
+        stdev: number
+    }
+
+    const entries: TableEntry[] = [];
+    Object.keys(props.metrics.nodes).forEach((node) => {
+        const nodeMetrics = props.metrics.nodes[node];
+        Object.entries(nodeMetrics.lagging_times).forEach(([objectType, laggingTime]) => {
+            const otCell = (
+                <div className="Performance-Lagging-OT" key={`Lagging-Time-${node}-${objectType}`}>
+                    <div className="Performance-Lagging-OTCircle"
+                        style={{ backgroundColor: props.objectTypeColors[objectType] }} />
+                    {objectType}
+                </div>)
+            entries.push({
+                node,
+                objectType: otCell,
+                min: laggingTime.min,
+                mean: laggingTime.mean,
+                median: laggingTime.median,
+                max: laggingTime.max,
+                sum: laggingTime.sum,
+                stdev: laggingTime.stdev
             });
         });
     });
@@ -556,7 +615,7 @@ function aggreatedMetricToCommaSeperatedListForExport(metric: AggregatedMetric |
 }
 
 function exportNodeMetrics(metrics: PerformanceMetrics) {
-    const simpleMetrics = ["service_time", "waiting_time", "sojourn_time", "lagging_time", "synchronization_time", "flow_time"];
+    const simpleMetrics = ["service_time", "waiting_time", "sojourn_time", "synchronization_time", "flow_time"];
     const header = ["node"]
         .concat(
             simpleMetrics
@@ -582,6 +641,18 @@ function exportNodePoolingTimes(metrics: PerformanceMetrics) {
                 .join('\n'))
     const blob = new Blob([[header].concat(entries).join('\n')], { type: 'text/csv;charset=utf-8;' });
     downloadBlob(blob, "node-pooling-times.csv");
+}
+
+function exportNodeLaggingTimes(metrics: PerformanceMetrics) {
+    const header = ["node", "object_type"].concat(EXPORT_AGGREGATE_ORDER).join(',')
+    const entries = Object.entries(metrics.nodes)
+        .map(([node, nodeMetrics]) =>
+            Object.entries(nodeMetrics.lagging_times)
+                .map(([objectType, laggingTime]) =>
+                    [node, objectType].concat(aggreatedMetricToCommaSeperatedListForExport(laggingTime)).join(','))
+                .join('\n'))
+    const blob = new Blob([[header].concat(entries).join('\n')], { type: 'text/csv;charset=utf-8;' });
+    downloadBlob(blob, "node-lagging-times.csv");
 }
 
 function exportEdgeMetrics(metrics: PerformanceMetrics) {

@@ -1300,7 +1300,6 @@ function InfoboxPerformanceMetrics(props: {
                             <AggregatedMetricRow metric={nodeMetric.waiting_time} title="Waiting time" />
                             <AggregatedMetricRow metric={nodeMetric.sojourn_time} title="Sojourn time" />
                             <div className="CytoDFM-Infobox-Metrics-Divider" />
-                            <AggregatedMetricRow metric={nodeMetric.lagging_time} title="Lagging time" />
                             <AggregatedMetricRow metric={nodeMetric.synchronization_time} title="Sync time" />
                             <AggregatedMetricRow metric={nodeMetric.flow_time} title="Flow time" />
                             <div className="CytoDFM-Infobox-Metrics-Divider" />
@@ -1312,7 +1311,7 @@ function InfoboxPerformanceMetrics(props: {
                                     props.availableObjectTypes.map((objectType, index) => {
                                         const metric = nodeMetric.pooling_times[objectType];
                                         if (!metric)
-                                            return <React.Fragment />
+                                            return null;
 
                                         const color = getObjectTypeColor(props.availableObjectTypes.length, index);
                                         const metricTitle = (
@@ -1324,6 +1323,30 @@ function InfoboxPerformanceMetrics(props: {
                                         )
 
                                         return <AggregatedMetricRow metric={metric} title={metricTitle} key={`pooling-time-${objectType}`} />;
+                                    })
+                                }
+                            </React.Fragment>
+                            <div className="CytoDFM-Infobox-Metrics-Divider" />
+                            <React.Fragment>
+                                <div className="CytoDFM-Infobox-Metrics-Cell CytoDFM-Infobox-Metrics-Divider">
+                                    Lagging time
+                                </div>
+                                {
+                                    props.availableObjectTypes.map((objectType, index) => {
+                                        const metric = nodeMetric.lagging_times[objectType];
+                                        if (!metric)
+                                            return null;
+
+                                        const color = getObjectTypeColor(props.availableObjectTypes.length, index);
+                                        const metricTitle = (
+                                            <React.Fragment>
+                                                <div className="CytoDFM-Legend-Circle" style={{ backgroundColor: color }}>
+                                                </div>
+                                                {objectType}
+                                            </React.Fragment>
+                                        )
+
+                                        return <AggregatedMetricRow metric={metric} title={metricTitle} key={`lagging-time-${objectType}`} />;
                                     })
                                 }
                             </React.Fragment>

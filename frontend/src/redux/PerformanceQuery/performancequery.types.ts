@@ -12,7 +12,7 @@ export type NodePerformanceMetrics = {
     waiting_time: AggregatedMetric | null
     sojourn_time: AggregatedMetric | null
     synchronization_time: AggregatedMetric | null
-    lagging_time: AggregatedMetric | null
+    lagging_times: { [key: string]: AggregatedMetric }
     pooling_times: { [key: string]: AggregatedMetric }
     flow_time: AggregatedMetric | null
 }

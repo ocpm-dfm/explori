@@ -44,3 +44,18 @@
 
     margin-right: .5rem;
 }
+
+.Performance-Lagging-OT {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+}
+
+.Performance-Lagging-OTCircle {
+    width: .75rem;
+    height: .75rem;
+    aspect-ratio: 1/1;
+    border-radius: 50%;
+
+    margin-right: .5rem;
+}

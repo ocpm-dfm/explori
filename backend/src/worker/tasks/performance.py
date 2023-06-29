@@ -111,7 +111,7 @@ class NodePerformanceMetrics(BaseModel):
     waiting_time: AggregatedMetric | None
     sojourn_time: AggregatedMetric | None
     synchronization_time: AggregatedMetric | None
-    lagging_time: Dict[ObjectType, AggregatedMetric]
+    lagging_times: Dict[ObjectType, AggregatedMetric]
     pooling_times: Dict[ObjectType, AggregatedMetric]
     flow_time: AggregatedMetric | None
 
@@ -323,7 +323,7 @@ def aggregate_times_to_frontend_friendly(collected_times: CollectedTimes) -> Fro
         node_metrics[node] = NodePerformanceMetrics(service_time=service_time,
                                                     waiting_time=waiting_time,
                                                     sojourn_time=sojourn_time,
-                                                    lagging_time=node_lagging_times,
+                                                    lagging_times=node_lagging_times,
                                                     synchronization_time=synchronization_time,
                                                     flow_time=flow_time,
                                                     pooling_times=node_pooling_times)
