@@ -34,7 +34,7 @@
 - ``PYTHONPATH="src/" celery -A worker.main.app worker --loglevel=INFO``
 
 #### Docker
-- `docker-compose build _backend_base && docker-compose -f docker-compose.yml -f docker-compose.dev.yml up --build --detach celery`
+- `docker-compose build _backend_base; docker-compose -f docker-compose.yml -f docker-compose.dev.yml up --build --detach celery`
 
 It is sufficient to restart the docker container when updating celery worker related code on the host machine as the code 
 is mounted into the container. There's no need to rebuild the image or recreate the container, 
@@ -48,7 +48,7 @@ a simple restart is enough.
 - See backend address in terminal output
 
 #### Docker
-`docker-compose build _backend_base && docker-compose -f docker-compose.yml -f docker-compose.dev.yml up --build --detach fastapi`
+`docker-compose build _backend_base; docker-compose -f docker-compose.yml -f docker-compose.dev.yml up --build --detach fastapi`
 
 ### 4. Testing the backend API
 - __Assuming__ step 4 above signaled Uvicorn running at `http://0.0.0.0:8080`: The fastapi openapi can be found at `http://0.0.0.0:8080/docs`
@@ -85,11 +85,13 @@ a simple restart is enough.
 - `cd frontend/`
 - Start the frontend server: `npm run start`
 
+The app runs in the development mode.\
+Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+
 #### Docker
 - `docker-compose -f docker-compose.yml -f docker-compose.dev.yml up --build --detach webserver`
 
-The app runs in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+Open [http://localhost:80](http://localhost:80) to view it in the browser.
 
 ### Frontend IDE Alternative
 - Install Jetbrains WebStorm
@@ -127,7 +129,7 @@ parallelize the build process, so it is not possible to guarantee that the commo
 its build process when docker tries to build celery and fastapi. Because of this we issue 2 separate 
 docker-compose commands to build the application:
 
-`docker-compose build _backend_base && docker-compose -f docker-compose.yml ... <same as before> ...`
+`docker-compose build _backend_base; docker-compose -f docker-compose.yml ... <same as before> ...`
 
 `_backend_base` is the name of a service simply building an image containing only said shared backend dependencies. 
 There's no entrypoint and there will never be a container running that image directly. This way we can guarantee 

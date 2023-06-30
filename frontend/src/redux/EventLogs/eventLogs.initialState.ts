@@ -1,5 +1,5 @@
 import { fetchEventLogs } from "./eventLogs.utils";
-import {EventLogMetadata} from "./eventLogs.types";
+import { EventLogMetadata } from "./eventLogs.types";
 
 const eventLogsList: EventLogMetadata[] = [] as EventLogMetadata[];
 

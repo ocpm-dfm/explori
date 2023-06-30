@@ -1,5 +1,5 @@
-import {getURI} from "../../hooks";
-import {EventLogMetadata} from "./eventLogs.types";
+import { getURI } from "../../hooks";
+import { EventLogMetadata } from "./eventLogs.types";
 
 export let compare = (a: { dir_type: string; }, b: { dir_type: string; }) => {
     if (a.dir_type < b.dir_type) {
